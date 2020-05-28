@@ -3,7 +3,7 @@ const fs = require("fs");
 
 const client = new Discord.Client();
 
-client.config = require("./config.json");
+client.config = require("./config.js");
 client.logger = require("./logger.js");
 client.commands = new Discord.Collection();
 
