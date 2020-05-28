@@ -3,18 +3,17 @@ const client = require('nekos.life');
 const { sfw } = new client();
 
 exports.run = async (client, message, args) => {
-    const msg = await message.channel.send("Generando...");
+    const text = args.join(" ");
+    if (!text) return message.reply("tenes que pasarle una pregunta!");
     const embed = new MessageEmbed()
         .setColor("RANDOM")
-        .setTitle((await sfw.catText()).cat)
-        .setImage((await sfw.meow()).url);
+        .setImage((await sfw["8Ball"]({ text: text })).url);
     message.channel.send(embed);
-    msg.delete();
 };
 
 exports.help = {
-    name: "cat",
-    description: "Cats!",
+    name: "8ball",
+    description: "8ball te respondera la pregunta!",
     category: "fun",
-    usage: "cat"
+    usage: "8ball <text>"
 };

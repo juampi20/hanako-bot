@@ -7,19 +7,19 @@ exports.run = async (client, message, args) => {
     const msg = await message.channel.send("Generando...");
     const embed = new MessageEmbed()
         .setColor("RANDOM")
-        .setTitle(await sfw.catText().then(res => res.cat));
+        .setTitle((await sfw.catText()).cat);
     if (nsfwChannel === "nsfw") {
-        embed.setImage(await nsfw.nekoGif().then(res => res.url));
+        embed.setImage((await nsfw.neko()).url);
     } else {
-        embed.setImage(await sfw.nekoGif().then(res => res.url));
+        embed.setImage((await sfw.neko()).url);
     }
     message.channel.send(embed);
     msg.delete();
 };
 
 exports.help = {
-    name: "nekoGif",
-    description: "NekosGifs!",
-    category: "fun",
-    usage: "nekoGif"
+    name: "neko",
+    description: "Nekos!",
+    category: "nsfw",
+    usage: "neko"
 };
