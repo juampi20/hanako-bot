@@ -11,7 +11,7 @@ exports.run = async (client, message, args) => {
         "no lo creo.",
         "nunca!",
         "podes intentarlo...",
-        "depende de usted!",
+        "depende de vos!",
     ];
     const question = args.join(" ");
     if (!question.endsWith("?")) return message.reply("Umm... ¿cual es la pregunta?");
