@@ -1,10 +1,12 @@
 exports.run = async (client, message, args) => {
+    if(message.author.id !== client.config.ownerID) return message.reply("no tienes permiso para usar este comando!");
+
     const user = message.mentions.users.first();
     const amount = !!parseInt(args[0]) ? parseInt(args[0]) : parseInt(args[1])
 
     if (!amount) return message.reply('especifique una cantidad para eliminar!');
     if (!amount && !user) return message.reply('especifique un usuario y la cantidad, o solamente la cantidad, de mensajes a eliminar!');
-    
+
     message.delete();
     message.channel.messages.fetch({
         limit: 100,
