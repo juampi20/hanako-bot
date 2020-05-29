@@ -1,18 +1,21 @@
 exports.run = async (client, message, args) => {
-    if (!message.member.hasPermission("MANAGE_MESSAGES")) return message.reply("no tienes permisos suficientes!");
     const user = message.mentions.users.first();
-    const amount = !!parseInt(args[0]) ? parseInt(args[0]) : parseInt(args[1]);
+    const amount = !!parseInt(args[0]) ? parseInt(args[0]) : parseInt(args[1])
+
+    if (!amount) return message.reply('especifique una cantidad para eliminar!');
+    if (!amount && !user) return message.reply('especifique un usuario y la cantidad, o solamente la cantidad, de mensajes a eliminar!');
+    
     message.delete();
-
-    if (!amount) return message.reply('debes especificar una cantidad!');
-    if (!amount && !user) return message.reply('debes especificar usuario y cantidad, o solo cantidad, de mensajes a eliminar!');
-
-    await message.channel.messages.fetch({ limit: amount }).then((messages) => {
+    message.channel.messages.fetch({
+        limit: 100,
+    }).then((messages) => {
         if (user) {
             const filterBy = user ? user.id : client.user.id;
             messages = messages.filter(m => m.author.id === filterBy).array().slice(0, amount);
+        } else {
+            messages = parseInt(amount);
         }
-        message.channel.bulkDelete(messages, true).catch(error => client.logger.log(error.stack, "error"));
+        message.channel.bulkDelete(messages).catch(error => console.log(error.stack));
     });
 };
 
@@ -20,5 +23,5 @@ exports.help = {
     name: "purge",
     description: "Eliminar mensajes.",
     category: "moderation",
-    usage: "purge <amount> or <mention> <amount>"
+    usage: "purge <amount> or <user> <amount>"
 };
