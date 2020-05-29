@@ -7,7 +7,7 @@ module.exports = (client, message) => {
     // Devuelve el prefijo cuando el bot es mencionado, utiliza una expresion regular
     const prefixMention = new RegExp(`<@!?${client.user.id}>( |)$`);
     if (message.content.match(prefixMention)) {
-        return message.reply(`Mi prefix es: \`${settings.prefix}\``);
+        return message.reply(`Mi prefix es: \`${client.config.prefix}\``);
     }
 
     // Ignora los mensajes que no empiecen con el prefijo
