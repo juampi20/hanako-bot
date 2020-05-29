@@ -1,7 +1,7 @@
 exports.run = (client, message, args) => {
     const user = message.mentions.users.first();
 
-    const amount = !!parseInt(args[1]) ? parseInt(args[1]) : parseInt(args[2]);
+    const amount = !!parseInt(args[0]) ? parseInt(args[0]) : parseInt(args[1]);
     if (!amount) return message.reply('debes especificar una cantidad!');
     if (!amount && !user) return message.reply('debes especificar usuario y cantidad, o solo cantidad, de mensajes a eliminar!');
 
