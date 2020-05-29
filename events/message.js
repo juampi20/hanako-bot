@@ -3,6 +3,13 @@ const talkedRecently = new Set();
 module.exports = (client, message) => {
     // Ignora todos los bots
     if(message.author.bot) return;
+
+    // Devuelve el prefijo cuando el bot es mencionado, utiliza una expresion regular
+    const prefixMention = new RegExp(`<@!?${client.user.id}>( |)$`);
+    if (message.content.match(prefixMention)) {
+        return message.reply(`Mi prefix es: \`${settings.prefix}\``);
+    }
+
     // Ignora los mensajes que no empiecen con el prefijo
     if (message.content.indexOf(client.config.prefix) !== 0) return;
 
