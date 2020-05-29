@@ -18,7 +18,7 @@ const init = async () => {
         });
     });
 
-    const stuff = ["fun", "nsfw", "misc"];
+    const stuff = ["fun", "nsfw", "misc", "moderation"];
     stuff.forEach(folders => {
         fs.readdir(`./commands/${folders}`, (err, files) => {
             if (err) return client.logger.log(err, "error");
