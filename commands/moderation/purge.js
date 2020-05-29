@@ -1,20 +1,19 @@
-exports.run = (client, message, args) => {
+exports.run = async (client, message, args) => {
+    if (!message.member.hasPermission("MANAGE_MESSAGES")) return message.reply("no tienes permisos suficientes!");
     const user = message.mentions.users.first();
-
     const amount = !!parseInt(args[0]) ? parseInt(args[0]) : parseInt(args[1]);
+    message.delete();
+
     if (!amount) return message.reply('debes especificar una cantidad!');
     if (!amount && !user) return message.reply('debes especificar usuario y cantidad, o solo cantidad, de mensajes a eliminar!');
 
-    message.delete();
-
-    message.channel.messages.fetch({ limit: amount })
-        .then((messages) => {
-            if (user) {
-                const filterBy = user ? user.id : client.user.id;
-                messages = messages.filter(m => m.author.id === filterBy).array().slice(0, amount);
-            }
-            message.channel.bulkDelete(messages).catch(error => client.logger.log(error.stack, "error"));
-        });
+    await message.channel.messages.fetch({ limit: amount }).then((messages) => {
+        if (user) {
+            const filterBy = user ? user.id : client.user.id;
+            messages = messages.filter(m => m.author.id === filterBy).array().slice(0, amount);
+        }
+        message.channel.bulkDelete(messages, true).catch(error => client.logger.log(error.stack, "error"));
+    });
 };
 
 exports.help = {
