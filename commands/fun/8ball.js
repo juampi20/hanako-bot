@@ -3,12 +3,20 @@ const client = require('nekos.life');
 const { sfw } = new client();
 
 exports.run = async (client, message, args) => {
+    var eightball = [ // sets the answers to an eightball
+        "si!",
+        "no...",
+        "tal vez?",
+        "probablemente",
+        "no lo creo.",
+        "nunca!",
+        "podes intentarlo...",
+        "depende de usted!",
+    ];
+    if (!args.endsWith("?")) return message.reply("Umm, cual es la pregunta?");
     const text = args.join(" ");
-    if (!text) return message.reply("tenes que pasarle una pregunta!");
-    const embed = new MessageEmbed()
-        .setColor("RANDOM")
-        .setImage((await sfw["8Ball"]({ text: text })).url);
-    message.channel.send(embed);
+    
+    message.reply(eightball[Math.floor(Math.random() * eightball.length)]);
 };
 
 exports.help = {
