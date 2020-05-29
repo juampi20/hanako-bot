@@ -1,4 +1,4 @@
-exports.run = (client, message, args) => {
+exports.run = async (client, message, args) => {
     const user = message.mentions.users.first();
 
     const amount = !!parseInt(args[0]) ? parseInt(args[0]) : parseInt(args[1]);
@@ -7,7 +7,7 @@ exports.run = (client, message, args) => {
 
     message.delete();
 
-    message.channel.messages.fetch({ limit: amount })
+    await message.channel.messages.fetch({ limit: amount })
         .then((messages) => {
             if (user) {
                 const filterBy = user ? user.id : client.user.id;
@@ -21,5 +21,5 @@ exports.help = {
     name: "purge",
     description: "Eliminar mensajes.",
     category: "moderation",
-    usage: "purge <mention> <amount>"
+    usage: "purge <amount> or <mention> <amount>"
 };
