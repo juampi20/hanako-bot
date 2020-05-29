@@ -1,17 +1,19 @@
 exports.run = (client, message, args) => {
     const user = message.mentions.users.first();
 
-    const amount = !!parseInt(message.content.split(' ')[1]) ? parseInt(message.content.split(' ')[1]) : parseInt(message.content.split(' ')[2])
+    const amount = !!parseInt(args[1]) ? parseInt(args[1]) : parseInt(args[2]);
     if (!amount) return message.reply('debes especificar una cantidad!');
     if (!amount && !user) return message.reply('debes especificar usuario y cantidad, o solo cantidad, de mensajes a eliminar!');
 
-    message.channel.messages.fetch({ limit: amount }).then((messages) => {
+    message.channel.messages.fetch({
+        limit: 100,
+       }).then((messages) => {
         if (user) {
-            const filterBy = user ? user.id : client.user.id;
-            messages = messages.filter(m => m.author.id === filterBy).array().slice(0, amount);
+        const filterBy = user ? user.id : client.user.id;
+        messages = messages.filter(m => m.author.id === filterBy).array().slice(0, amount);
         }
-        message.channel.bulkDelete(messages).catch(error => console.log(error.stack));
-    });
+        message.channel.bulkDelete(messages).catch(error => client.logger.log(error.stack));
+       });
 };
 
 exports.help = {
