@@ -1,4 +1,4 @@
-exports.run = async (client, message, args) => {
+exports.run = (client, message, args) => {
     const user = message.mentions.users.first();
 
     const amount = !!parseInt(args[0]) ? parseInt(args[0]) : parseInt(args[1]);
@@ -7,7 +7,7 @@ exports.run = async (client, message, args) => {
 
     message.delete();
 
-    await message.channel.messages.fetch({ limit: amount })
+    message.channel.messages.fetch({ limit: amount })
         .then((messages) => {
             if (user) {
                 const filterBy = user ? user.id : client.user.id;
