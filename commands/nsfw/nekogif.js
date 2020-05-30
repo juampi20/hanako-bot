@@ -19,7 +19,7 @@ exports.run = async (client, message, args) => {
 
 exports.help = {
     name: "nekoGif",
-    description: "NekosGifs!",
+    description: "Gif de Nekos.",
     category: "nsfw",
     usage: "nekoGif"
 };

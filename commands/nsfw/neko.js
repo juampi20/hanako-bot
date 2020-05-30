@@ -19,7 +19,7 @@ exports.run = async (client, message, args) => {
 
 exports.help = {
     name: "neko",
-    description: "Nekos!",
+    description: "Imagen de Nekos.",
     category: "nsfw",
     usage: "neko"
 };

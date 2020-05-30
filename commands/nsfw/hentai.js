@@ -60,7 +60,7 @@ exports.run = async (client, message, args) => {
 
 exports.help = {
     name: "hentai",
-    description: "Image/Gif of Hentai!",
+    description: "Imagen/Gif de Hentai.",
     category: "nsfw",
     usage: "hentai"
 };
