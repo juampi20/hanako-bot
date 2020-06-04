@@ -21,8 +21,7 @@ module.exports = (client, message) => {
 
         if ((message.content.split(" ")).length > 1) {
             const addXP = Math.floor(Math.random() * 40) + 10;
-            const currentXP = score.points;
-            score.points = currentXP + addXP;
+            score.points += addXP;
         }
 
         const currentLevel = Math.floor(0.1 * Math.sqrt(score.points));
