@@ -4,7 +4,7 @@ exports.run = (client, message, args) => {
     const data = [];
     if (!args.length) {
         embed.setTitle("__**LISTA DE COMANDOS**__");
-        const stuff = ["misc", "fun", "nsfw"];
+        const stuff = ["misc", "fun", "leveling", "nsfw"];
         stuff.forEach( category => {
             data.push(`\`\`\``);
             data.push(`== ${category.toUpperCase()} ==`);

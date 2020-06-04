@@ -1,11 +1,13 @@
 const Discord = require("discord.js");
 const fs = require("fs");
+const SQLite = require("better-sqlite3");
 
 const client = new Discord.Client();
 
 client.config = require("./config.js");
 client.logger = require("./logger.js");
 client.commands = new Discord.Collection();
+client.sql = new SQLite('./data/scores.sqlite');
 
 const init = async () => {
     fs.readdir("./events/", (err, files) => {
@@ -18,7 +20,7 @@ const init = async () => {
         });
     });
 
-    const stuff = ["dev", "fun", "nsfw", "misc", "moderation"];
+    const stuff = ["misc", "fun", "leveling","nsfw", "moderation", "dev"];
     stuff.forEach(folders => {
         fs.readdir(`./commands/${folders}`, (err, files) => {
             if (err) return client.logger.log(err, "error");
