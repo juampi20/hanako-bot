@@ -44,8 +44,6 @@ exports.run = async (client, message, args) => {
     const embed = new MessageEmbed()
         .setColor("RANDOM")
         .setTitle((await sfw.catText()).cat);
-        // .setFooter(message.author.username, message.author.avatarURL())
-        // .setTimestamp();
 
     if (nsfwChannel === "nsfw") {
         embed.setImage((await (functionArray[Math.floor(Math.random() * functionArray.length)])).url);

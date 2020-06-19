@@ -14,7 +14,7 @@ exports.run = (client, message, args) => {
 
     let userLevel = Math.floor(0.1 * Math.sqrt(userscore.points));
     userscore.level = userLevel;
-    
+
     client.setScore.run(userscore);
     return message.channel.send(`${user.tag} ha recibido ${addXP} puntos y ahora tiene ${userscore.points} puntos.`);
 };

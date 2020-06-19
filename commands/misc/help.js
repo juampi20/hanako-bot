@@ -5,10 +5,10 @@ exports.run = (client, message, args) => {
     if (!args.length) {
         embed.setTitle("__**LISTA DE COMANDOS**__");
         const stuff = ["misc", "fun", "leveling", "nsfw"];
-        stuff.forEach( category => {
+        stuff.forEach(category => {
             data.push(`\`\`\``);
             data.push(`== ${category.toUpperCase()} ==`);
-            client.commands.forEach( command => {
+            client.commands.forEach(command => {
                 if (command.help.category === category) {
                     data.push(`• ${command.help.name} :: ${command.help.description}`);
                 };
@@ -17,7 +17,7 @@ exports.run = (client, message, args) => {
         });
         embed.setFooter(`Use ${client.config.prefix}help <comando> para mas detalles.`)
     } else {
-        client.commands.forEach( command => {
+        client.commands.forEach(command => {
             if (command.help.name === args[0]) {
                 embed.setTitle(`**Comando ${command.help.name} :**`);
                 data.push(`**Descripcion:** ${command.help.description}`);

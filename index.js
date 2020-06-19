@@ -20,7 +20,7 @@ const init = async () => {
         });
     });
 
-    const stuff = ["misc", "fun", "leveling","nsfw", "moderation", "dev"];
+    const stuff = ["misc", "fun", "leveling", "nsfw", "moderation", "dev"];
     stuff.forEach(folders => {
         fs.readdir(`./commands/${folders}`, (err, files) => {
             if (err) return client.logger.log(err, "error");

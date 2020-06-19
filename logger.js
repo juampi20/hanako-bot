@@ -22,7 +22,8 @@ exports.log = (content, type = "log") => {
         case "ready": {
             return console.log(`${timestamp} ${chalk.black.bgGreen(type.toUpperCase())} ${content} `);
         }
-        default: throw new TypeError("El tipo de Logger debe ser warn, debug, log, ready, cmd o error.");
+        default:
+            throw new TypeError("El tipo de Logger debe ser warn, debug, log, ready, cmd o error.");
     }
 };
 
