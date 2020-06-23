@@ -1,5 +1,6 @@
-exports.run = (client, message, args) => {
-    const sayMessage = args.join(" ");
+exports.run = async (client, message, args) => {
+    let sayMessage = args.join(" ");
+    message.delete();
     message.channel.send(sayMessage).catch(e => {
         client.logger.log(e, "error");
         message.channel.send("Error al ejecutar el comando").then(msg => {
