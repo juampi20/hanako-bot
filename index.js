@@ -20,16 +20,18 @@ const init = async () => {
         });
     });
 
-    const stuff = ["misc", "fun", "leveling", "nsfw", "moderation", "dev"];
-    stuff.forEach(folders => {
-        fs.readdir(`./commands/${folders}`, (err, files) => {
-            if (err) return client.logger.log(err, "error");
-            client.logger.log(`Cargando un total de ${files.length} comandos (${folders}).`);
-            files.forEach(file => {
-                if (!file.endsWith(".js")) return;
-                let props = require(`./commands/${folders}/${file}`);
-                let commandName = file.split(".")[0];
-                client.commands.set(commandName, props);
+    fs.readdir(`./commands/`, (err, folders) => {
+        if (err) return client.logger.log(err, "error");
+        folders.forEach(folder => {
+            fs.readdir(`./commands/${folder}`, (err, files) => {
+                if (err) return client.logger.log(err, "error");
+                client.logger.log(`Cargando un total de ${files.length} comandos (${folder}).`);
+                files.forEach(file => {
+                    if (!file.endsWith(".js")) return;
+                    let props = require(`./commands/${folder}/${file}`);
+                    let commandName = file.split(".")[0];
+                    client.commands.set(commandName, props);
+                });
             });
         });
     });
