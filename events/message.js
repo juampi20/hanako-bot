@@ -6,6 +6,7 @@ module.exports = (client, message) => {
     if (message.author.bot) return;
 
     // SQLite Level System
+    /*
     if (message.guild) {
         let score = client.getScore.get(message.author.id, message.guild.id);
 
@@ -45,6 +46,7 @@ module.exports = (client, message) => {
         }
         client.setScore.run(score);
     }
+    */
 
     // Ignora los mensajes que no empiecen con el prefijo
     if (message.content.indexOf(client.config.prefix) !== 0) return;

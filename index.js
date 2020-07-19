@@ -1,13 +1,13 @@
 const Discord = require("discord.js");
 const fs = require("fs");
-const SQLite = require("better-sqlite3");
+//const SQLite = require("better-sqlite3");
 
 const client = new Discord.Client();
 
 client.config = require("./config.js");
 client.logger = require("./logger.js");
 client.commands = new Discord.Collection();
-client.sql = new SQLite('./data/scores.sqlite');
+//client.sql = new SQLite('./data/scores.sqlite');
 
 const init = async () => {
     fs.readdir("./events/", (err, files) => {
