@@ -1,5 +1,6 @@
 const Discord = require("discord.js");
 const fs = require("fs");
+const path = require('path');
 //const SQLite = require("better-sqlite3");
 
 const client = new Discord.Client();
@@ -9,34 +10,42 @@ client.logger = require("./logger.js");
 client.commands = new Discord.Collection();
 //client.sql = new SQLite('./data/scores.sqlite');
 
-const init = async () => {
-    fs.readdir("./events/", (err, files) => {
+(async () => {
+    client.login(client.config.token);
+    await eventsHandler(client, 'events');
+    await commandsHandler(client, 'commands')
+})();
+
+// Events Handler
+async function eventsHandler(client, dir) {
+    fs.readdir(path.join(__dirname,'events'), (err, files) => {
         if (err) return client.logger.log(err, "error");
         client.logger.log(`Cargando un total de ${files.length} eventos.`);
         files.forEach(file => {
-            const event = require(`./events/${file}`);
+            // const event = require(`./events/${file}`);
+            let event = require(path.join(__dirname,'events',file));
             let eventName = file.split(".")[0];
             client.on(eventName, event.bind(null, client));
         });
     });
+};
 
-    fs.readdir(`./commands/`, (err, folders) => {
+// Commands Handlers
+async function commandsHandler(client, dir) {
+    fs.readdir(path.join(__dirname, dir), (err, folders) => {
         if (err) return client.logger.log(err, "error");
         folders.forEach(folder => {
-            fs.readdir(`./commands/${folder}`, (err, files) => {
+            fs.readdir(path.join(__dirname, dir, folder), (err, files) => {
                 if (err) return client.logger.log(err, "error");
                 client.logger.log(`Cargando un total de ${files.length} comandos (${folder}).`);
                 files.forEach(file => {
                     if (!file.endsWith(".js")) return;
-                    let props = require(`./commands/${folder}/${file}`);
+                    // let props = require(`./commands/${folder}/${file}`);
+                    let props = require(path.join(__dirname, dir, folder, file));
                     let commandName = file.split(".")[0];
                     client.commands.set(commandName, props);
                 });
             });
         });
     });
-
-    client.login(client.config.token);
 };
-
-init();
