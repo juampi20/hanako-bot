@@ -2,4 +2,4 @@
 web: echo "I don't want a web process"
 
 # I wanna be a service process
-service: npm start 
+service: npm run start 
