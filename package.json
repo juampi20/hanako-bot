@@ -1,0 +1,28 @@
+{
+  "name": "hanako-bot",
+  "version": "1.0.0",
+  "description": "A simple bot.",
+  "main": "src/index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node ./src/index.js",
+    "dev": "nodemon ./src/index.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/juampi20/hanako-bot.git"
+  },
+  "author": "Jester",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/juampi20/hanako-bot/issues"
+  },
+  "homepage": "https://github.com/juampi20/hanako-bot#readme",
+  "dependencies": {
+    "chalk": "^4.0.0",
+    "discord.js": "^12.2.0",
+    "dotenv": "^8.2.0",
+    "moment": "^2.26.0"
+  },
+  "devDependencies": {}
+}
