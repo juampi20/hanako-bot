@@ -1,3 +1,9 @@
+const Discord = require("discord.js");
+const client = new Discord.Client();
+const config = require("./config.json");
+const SQLite = require("better-sqlite3");
+const sql = new SQLite('./scores.sqlite');
+
 module.exports = (client) => {
     const table = sql.prepare("SELECT count(*) FROM sqlite_master WHERE type='table' AND name = 'scores';").get();
     if (!table['count(*)']) {
