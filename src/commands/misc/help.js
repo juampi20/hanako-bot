@@ -5,7 +5,7 @@ exports.run = (client, message, args) => {
     let data = [];
     if (!args.length) {
         embed.setTitle("**Hanako Commands**");
-        const stuff = ["misc", "fun", "nsfw"];
+        const stuff = ["misc", "fun"];
         stuff.forEach(category => {
             client.commands.forEach(command => {
                 if (command.help.category === category) {
@@ -19,9 +19,9 @@ exports.run = (client, message, args) => {
     } else {
         client.commands.forEach(command => {
             if (command.help.name === args[0]) {
-                let title = `**Informacion del comando:** \`${client.config.prefix}${command.help.name}\``;
+                let title = `**Informacion del comando:** \`${command.help.name}\``;
                 data.push(`Categoria: \`${command.help.category}\``);
-                data.push(`Uso: \`${client.config.prefix}${command.help.usage}\`\n`);
+                data.push(`Uso: \`${client.config.prefix}\` \`${command.help.usage}\`\n`);
                 data.push(`${command.help.description}`);
                 embed.setTitle(title).setDescription(data);
             };

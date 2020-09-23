@@ -1,6 +1,4 @@
 const { MessageEmbed } = require("discord.js");
-const client = require('nekos.life');
-const { sfw } = new client();
 
 exports.run = async (client, message, args) => {
     var eightball = [
