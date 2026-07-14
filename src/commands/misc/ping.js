@@ -7,7 +7,7 @@ exports.run = async (client, message, args) => {
         embed.setTitle(`🏓 Pong!`)
         .setDescription(`**Latencia:** \`${ping}ms\``)
         msg.edit(embed);
-    }).catch(err => client.looger.log(err, "error"));
+    }).catch(err => client.logger.log(err, "error"));
 };
 
 exports.help = {

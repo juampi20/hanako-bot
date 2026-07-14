@@ -27,7 +27,7 @@ exports.run = (client, message, args) => {
             };
         });
     };
-    message.channel.send(embed).catch(err => client.looger.log(err, "error"));
+    message.channel.send(embed).catch(err => client.logger.log(err, "error"));
 };
 
 exports.help = {

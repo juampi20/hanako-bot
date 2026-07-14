@@ -23,5 +23,10 @@ module.exports = (client, message) => {
     if (!cmd) return;
 
     client.logger.log(`${message.author.username} (${message.author.id}) ejecuto el comando ${cmd.help.name}`, "cmd");
-    cmd.run(client, message, args);
+    try {
+        cmd.run(client, message, args);
+    } catch (err) {
+        client.logger.log(err, "error");
+        message.channel.send("Error: Ha ocurrido un error al ejecutar este comando.");
+    }
 }

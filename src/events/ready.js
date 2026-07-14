@@ -1,6 +1,3 @@
-const Discord = require("discord.js");
-const client = new Discord.Client();
-const config = require("./config.json");
 const SQLite = require("better-sqlite3");
 const sql = new SQLite('./scores.sqlite');
 

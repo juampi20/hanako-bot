@@ -1,6 +1,9 @@
 const { MessageEmbed } = require("discord.js");
 
 exports.run = (client, message, args) => {
+    if (!client.sql) {
+        return message.channel.send("Error: SQLite database no disponible. Cómando no disponible actualmente.");
+    }
     const top10 = client.sql.prepare("SELECT * FROM scores WHERE guild = ? ORDER BY points DESC LIMIT 10;").all(message.guild.id);
 
     const embed = new MessageEmbed()
