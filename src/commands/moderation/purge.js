@@ -22,8 +22,8 @@ exports.run = async (client, message, args) => {
 exports.data = new SlashCommandBuilder()
     .setName("purge")
     .setDescription("Elimina mensajes del canal")
-    .addUserOption(opt => opt.setName("user").setDescription("Usuario cuyos mensajes eliminar").setRequired(false))
     .addIntegerOption(opt => opt.setName("amount").setDescription("Cantidad de mensajes").setRequired(true).setMinValue(1).setMaxValue(100))
+    .addUserOption(opt => opt.setName("user").setDescription("Usuario cuyos mensajes eliminar").setRequired(false))
     .setDefaultMemberPermissions(PermissionFlagsBits.ManageMessages);
 
 exports.execute = async (client, interaction) => {

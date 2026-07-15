@@ -41,28 +41,23 @@ async function loadEvents(client) {
 }
 
 async function loadCommands(client) {
-    return new Promise((resolve) => {
-        const dir = path.resolve(__dirname, '..', 'commands');
-        fs.readdir(dir, (err, folders) => {
-            if (err) {return client.logger.log(err, 'error');}
-            folders.forEach(folder => {
-                fs.readdir(path.join(dir, folder), (err, files) => {
-                    if (err) {return client.logger.log(err, 'error');}
-                    client.logger.log(`Cargando un total de ${files.length} comandos (${folder}).`);
-                    files.forEach(file => {
-                        if (!file.endsWith('.js')) {return;}
-                        const props = require(path.join(dir, folder, file));
-                        const commandName = file.split('.')[0];
-                        client.commands.set(commandName, props);
-                        if (props.data) {
-                            client.interactions.set(commandName, props);
-                        }
-                    });
-                });
-            });
-            resolve();
+    const dir = path.resolve(__dirname, '..', 'commands');
+    const folders = await fs.promises.readdir(dir);
+    const promises = folders.map(async (folder) => {
+        const folderPath = path.join(dir, folder);
+        const files = await fs.promises.readdir(folderPath);
+        client.logger.log(`Cargando un total de ${files.length} comandos (${folder}).`);
+        files.forEach(file => {
+            if (!file.endsWith('.js')) {return;}
+            const props = require(path.join(folderPath, file));
+            const commandName = file.split('.')[0];
+            client.commands.set(commandName, props);
+            if (props.data) {
+                client.interactions.set(commandName, props);
+            }
         });
     });
+    await Promise.all(promises);
 }
 
 async function loadMiddleware(client) {
