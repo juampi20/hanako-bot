@@ -1,4 +1,4 @@
-const { EmbedBuilder } = require("discord.js");
+const { SlashCommandBuilder, EmbedBuilder } = require("discord.js");
 
 exports.run = (client, message, args) => {
     const embed = new EmbedBuilder().setColor(0x3498DB);
@@ -8,7 +8,7 @@ exports.run = (client, message, args) => {
         const stuff = ["misc", "fun"];
         stuff.forEach(category => {
             client.commands.forEach(command => {
-                if (command.help.category === category) {
+                if (command.help.category === category && command.data) {
                     data.push(`\`${command.help.name}\``);
                 };
             });
@@ -30,9 +30,32 @@ exports.run = (client, message, args) => {
     message.channel.send({ embeds: [embed] }).catch(err => client.logger.log(err, "error"));
 };
 
+exports.data = new SlashCommandBuilder()
+    .setName("help")
+    .setDescription("Muestra todos los comandos disponibles");
+
+exports.execute = async (client, interaction) => {
+    const embed = new EmbedBuilder().setColor(0x3498DB).setTitle("**Hanako Commands**");
+    let data = [];
+    const categories = ["misc", "fun", "moderation", "leveling", "dev"];
+    categories.forEach(category => {
+        client.interactions.forEach(command => {
+            if (command.help?.category === category && command.data) {
+                data.push(`\`${command.help.name}\``);
+            };
+        });
+        if (data.length > 0) {
+            embed.addFields({ name: `${category.toUpperCase()}`, value: data.join(", "), inline: true });
+            data = [];
+        }
+    });
+    await interaction.reply({ embeds: [embed] });
+};
+
 exports.help = {
     name: "help",
     description: "Imprime todos los comandos o individualmente.",
     category: "misc",
-    usage: "help <command>"
+    usage: "help <command>",
+    hintSlash: "help"
 }

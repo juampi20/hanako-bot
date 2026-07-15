@@ -1,19 +1,27 @@
-exports.run = (client, message, args) => {
-    if (message.author.id !== client.config.ownerID) {return;}
-    const user = message.mentions.users.first();
-    if (!user) {return message.reply("debes mencionar alguna persona.");}
+const { SlashCommandBuilder } = require("discord.js");
 
-    const addXP = parseInt(args[1], 10);
-    if (!addXP) {return message.reply("debes decirme cuanto xp dar ...");}
+exports.data = new SlashCommandBuilder()
+    .setName("give")
+    .setDescription("Da puntos a otro usuario")
+    .addUserOption(opt => opt.setName("user").setDescription("Usuario a dar puntos").setRequired(true))
+    .addIntegerOption(opt => opt.setName("amount").setDescription("Cantidad de puntos").setRequired(true).setMinValue(1));
 
-    const result = client.levelingService.givePoints(message.author.id, user.id, message.guild.id, addXP);
-    if (!result) {return message.reply("No puedes dar tantos puntos.");}
+exports.execute = async (client, interaction) => {
+    const target = interaction.options.getUser("user");
+    const amount = interaction.options.getInteger("amount");
+
+    const result = client.levelingService.givePoints(interaction.user.id, target.id, interaction.guild.id, amount);
+    if (!result) {
+        return interaction.reply({ content: "No puedes dar tantos puntos.", ephemeral: true });
+    }
     
-    return message.channel.send(`${user.tag} ha recibido ${addXP} puntos y ahora tiene ${result.target.points} puntos.`);
+    await interaction.reply(`${target.tag} ha recibido ${amount} puntos y ahora tiene ${result.target.points} puntos.`);
 };
+
 exports.help = {
     name: "give",
     description: "Dar xp a alguna persona.",
     category: "leveling",
-    usage: "give <user> <xp>"
+    usage: "give <user> <xp>",
+    ownerOnly: true
 };

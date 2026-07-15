@@ -55,5 +55,10 @@ module.exports = async (client, message) => {
         }
         return middleware(client, message, cmd, next);
     };
-    next().catch(err => client.logger.log(err, "error"));
+    next().then(() => {
+        if (cmd.help && cmd.help.hintSlash) {
+            message.channel.send(`💡 Probá también /${cmd.help.hintSlash}`)
+                .catch(() => {});
+        }
+    }).catch(err => client.logger.log(err, "error"));
 };

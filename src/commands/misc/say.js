@@ -9,10 +9,22 @@ exports.run = async (client, message, args) => {
     });
 };
 
+const { SlashCommandBuilder } = require("discord.js");
+
+exports.data = new SlashCommandBuilder()
+    .setName("say")
+    .setDescription("Hace que el bot diga algo")
+    .addStringOption(opt => opt.setName("message").setDescription("Mensaje a repetir").setRequired(true));
+
+exports.execute = async (client, interaction) => {
+    const message = interaction.options.getString("message");
+    await interaction.reply(message);
+};
 
 exports.help = {
     name: "say",
     description: "Hanako-kun habla!",
     category: "misc",
-    usage: "say <text>"
+    usage: "say <text>",
+    hintSlash: "say"
 };
