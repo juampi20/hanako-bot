@@ -1,4 +1,5 @@
-const { EmbedBuilder, SlashCommandBuilder } = require("discord.js");
+const { EmbedBuilder, SlashCommandBuilder, InteractionContextType } = require("discord.js");
+const { baseEmbed } = require("../../utils/embed");
 
 exports.run = async (client, message, _args) => {
     const embed = new EmbedBuilder()
@@ -13,16 +14,16 @@ exports.run = async (client, message, _args) => {
 
 exports.data = new SlashCommandBuilder()
     .setName("ping")
-    .setDescription("Chequea la latencia del bot");
+    .setDescription("Chequea la latencia del bot")
+    .setContexts(InteractionContextType.Guild);
 
 exports.execute = async (client, interaction) => {
-    const embed = new EmbedBuilder()
+    const embed = baseEmbed(client)
         .setTitle("🏓 Pong!")
-        .setDescription("Calculando...")
-        .setColor(0x3498DB);
+        .setDescription("Calculando...");
     const sent = await interaction.reply({ embeds: [embed], fetchReply: true });
     const ping = sent.createdTimestamp - interaction.createdTimestamp;
-    embed.setDescription(`**Latencia:** \`${ping}ms\``);
+    embed.setDescription(`**Latencia:** \`${ping}ms\`\n**Ping WebSocket:** \`${client.ws.ping}ms\``);
     await interaction.editReply({ embeds: [embed] });
 };
 
