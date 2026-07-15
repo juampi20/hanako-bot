@@ -1,8 +1,7 @@
 const { MessageEmbed } = require("discord.js");
 
 exports.run = (client, message, args) => {
-    let score = client.getScore.get(message.author.id, message.guild.id);
-    if (!score) score = { points: 0, level: 1 };
+    const score = client.levelingService.getScore(message.author.id, message.guild.id);
     const embed = new MessageEmbed()
         .setAuthor(message.author.username, message.author.avatarURL())
         .setColor("RANDOM")

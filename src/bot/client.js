@@ -6,6 +6,7 @@ function createClient() {
     client.logger = require('../logger.js');
     client.commands = new Discord.Collection();
     client.middleware = [];
+    client.levelingService = null;
     return client;
 }
 

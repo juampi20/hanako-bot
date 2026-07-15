@@ -6,19 +6,11 @@ exports.run = (client, message, args) => {
     const addXP = parseInt(args[1], 10);
     if (!addXP) return message.reply("debes decirme cuanto xp dar ...");
 
-    let userscore = client.getScore.get(user.id, message.guild.id);
-    if (!userscore) {
-        userscore = { id: `${message.guild.id}-${user.id}`, user: user.id, guild: message.guild.id, points: 0, level: 1 }
-    }
-    userscore.points += addXP;
-
-    let userLevel = Math.floor(0.1 * Math.sqrt(userscore.points));
-    userscore.level = userLevel;
-
-    client.setScore.run(userscore);
-    return message.channel.send(`${user.tag} ha recibido ${addXP} puntos y ahora tiene ${userscore.points} puntos.`);
+    const result = client.levelingService.givePoints(message.author.id, user.id, message.guild.id, addXP);
+    if (!result) return message.reply("No puedes dar tantos puntos.");
+    
+    return message.channel.send(`${user.tag} ha recibido ${addXP} puntos y ahora tiene ${result.target.points} puntos.`);
 };
-
 exports.help = {
     name: "give",
     description: "Dar xp a alguna persona.",

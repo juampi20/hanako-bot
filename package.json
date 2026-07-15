@@ -19,7 +19,6 @@
   },
   "homepage": "https://github.com/juampi20/hanako-bot#readme",
   "dependencies": {
-    "better-sqlite3": "^5.0.0",
     "chalk": "^4.0.0",
     "discord.js": "^12.2.0",
     "dotenv": "^8.2.0",
