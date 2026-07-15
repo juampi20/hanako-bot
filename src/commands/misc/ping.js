@@ -1,13 +1,14 @@
 const { EmbedBuilder } = require("discord.js");
 
 exports.run = async (client, message, _args) => {
-    const embed = new EmbedBuilder().setColor(0x3498DB);
-    message.channel.send({ embeds: [embed] }).then(msg =>{
-        const ping = msg.createdTimestamp - message.createdTimestamp;
-        embed.setTitle(`🏓 Pong!`)
-        .setDescription(`**Latencia:** \`${ping}ms\``);
-        msg.edit({ embeds: [embed] });
-    }).catch(err => client.logger.log(err, "error"));
+    const embed = new EmbedBuilder()
+        .setTitle("🏓 Pong!")
+        .setDescription("Calculando...")
+        .setColor(0x3498DB);
+    const sent = await message.channel.send({ embeds: [embed] });
+    const ping = sent.createdTimestamp - message.createdTimestamp;
+    embed.setDescription(`**Latencia:** \`${ping}ms\``);
+    sent.edit({ embeds: [embed] }).catch(err => client.logger.log(err, "error"));
 };
 
 exports.help = {

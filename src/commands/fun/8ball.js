@@ -24,7 +24,7 @@ exports.run = async (client, message, args) => {
     ];
     const question = args.join(" ");
     if (!question.endsWith("?")) {return message.reply("Umm... ¿cual es la pregunta?");}
-    message.channel.send(eightball[Math.floor(Math.random() * eightball.length)]);
+    await message.channel.send(eightball[Math.floor(Math.random() * eightball.length)]);
 };
 
 exports.help = {

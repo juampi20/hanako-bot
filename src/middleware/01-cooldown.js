@@ -17,5 +17,5 @@ module.exports = (client, message, command, next) => {
 
     cooldowns.set(key, now + cooldownTime);
     setTimeout(() => cooldowns.delete(key), cooldownTime);
-    next();
+    return next();
 };
