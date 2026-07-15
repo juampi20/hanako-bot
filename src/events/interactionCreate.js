@@ -12,11 +12,7 @@ module.exports = async (client, interaction) => {
         const next = async (context = interaction) => {
             const middleware = client.middleware[index++];
             if (!middleware) {
-                try {
-                    await cmd.execute(client, interaction);
-                } catch (err) {
-                    throw err;
-                }
+                await cmd.execute(client, interaction);
             } else {
                 return middleware(client, context, cmd, next);
             }

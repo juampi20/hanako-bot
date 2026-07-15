@@ -15,7 +15,7 @@ try {
         getDb().close();
         try { fs.unlinkSync(TEST_DB); } catch { /* ok */ }
     });
-} catch (e) {
+} catch {
     // If database setup fails, we still want to run the tests that don't need it
     console.log('Database setup not available for this test');
 }
