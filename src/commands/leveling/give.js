@@ -1,4 +1,5 @@
 const { SlashCommandBuilder, InteractionContextType } = require("discord.js");
+const { baseEmbed, COLORS } = require("../../utils/embed");
 
 exports.data = new SlashCommandBuilder()
     .setName("give")
@@ -16,7 +17,16 @@ exports.execute = async (client, interaction) => {
         return interaction.reply({ content: "No puedes dar tantos puntos.", ephemeral: true });
     }
     
-    await interaction.reply(`${target.tag} ha recibido ${amount} puntos y ahora tiene ${result.target.points} puntos.`);
+    const embed = baseEmbed(client, { color: COLORS.SUCCESS })
+        .setThumbnail(target.displayAvatarURL())
+        .setTitle(`🎁 Puntos otorgados`)
+        .addFields(
+            { name: "Usuario", value: `${target.tag}`, inline: true },
+            { name: "Puntos otorgados", value: `${amount}`, inline: true },
+            { name: "Puntos totales", value: `${result.target.points}`, inline: true }
+        );
+    
+    await interaction.reply({ embeds: [embed] });
 };
 
 exports.help = {
