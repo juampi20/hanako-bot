@@ -1,14 +1,16 @@
-const { EmbedBuilder, SlashCommandBuilder, InteractionContextType } = require("discord.js");
-const { baseEmbed } = require("../../utils/embed");
+const { SlashCommandBuilder, InteractionContextType } = require("discord.js");
+const { baseEmbed, COLORS } = require("../../utils/embed");
 
 exports.run = async (client, message, _args) => {
-    const embed = new EmbedBuilder()
+    const apiPing = client.ws.ping;
+    const embed = baseEmbed(client, { color: COLORS.FUN })
         .setTitle("🏓 Pong!")
-        .setDescription("Calculando...")
-        .setColor(0x3498DB);
+        .setDescription(`**Calculando...**\n**Ping WebSocket:** \`${apiPing}ms\``);
     const sent = await message.channel.send({ embeds: [embed] });
-    const ping = sent.createdTimestamp - message.createdTimestamp;
-    embed.setDescription(`**Latencia:** \`${ping}ms\``);
+    const roundTripPing = sent.createdTimestamp - message.createdTimestamp;
+    embed.setDescription(
+        `**Latencia:** \`${roundTripPing}ms\`\n**Ping WebSocket:** \`${apiPing}ms\``
+    );
     sent.edit({ embeds: [embed] }).catch(err => client.logger.log(err, "error"));
 };
 
@@ -18,12 +20,15 @@ exports.data = new SlashCommandBuilder()
     .setContexts(InteractionContextType.Guild);
 
 exports.execute = async (client, interaction) => {
-    const embed = baseEmbed(client)
+    const apiPing = client.ws.ping;
+    const embed = baseEmbed(client, { color: COLORS.FUN })
         .setTitle("🏓 Pong!")
-        .setDescription("Calculando...");
+        .setDescription(`**Calculando...**\n**Ping WebSocket:** \`${apiPing}ms\``);
     const sent = await interaction.reply({ embeds: [embed], fetchReply: true });
-    const ping = sent.createdTimestamp - interaction.createdTimestamp;
-    embed.setDescription(`**Latencia:** \`${ping}ms\`\n**Ping WebSocket:** \`${client.ws.ping}ms\``);
+    const roundTripPing = sent.createdTimestamp - interaction.createdTimestamp;
+    embed.setDescription(
+        `**Latencia:** \`${roundTripPing}ms\`\n**Ping WebSocket:** \`${apiPing}ms\``
+    );
     await interaction.editReply({ embeds: [embed] });
 };
 
