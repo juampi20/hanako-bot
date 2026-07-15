@@ -18,6 +18,14 @@ module.exports = [
         },
     },
     {
+        files: ["src/__tests__/**"],
+        languageOptions: {
+            globals: {
+                ...globals.jest,
+            },
+        },
+    },
+    {
         ignores: ["node_modules/", ".git/"],
     },
 ];

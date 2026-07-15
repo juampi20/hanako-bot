@@ -13,7 +13,7 @@ exports.run = (client, message, args) => {
         if (typeof evaled !== "string")
             {evaled = require("util").inspect(evaled);}
 
-        message.channel.send(clean(evaled), { code: "xl" });
+        message.channel.send(`\`\`\`xl\n${clean(evaled)}\n\`\`\``);
     } catch (err) {
         message.channel.send(`\`ERROR\` \`\`\`xl\n${clean(err)}\n\`\`\``);
     }

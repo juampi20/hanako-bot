@@ -11,7 +11,7 @@ exports.run = async (client, message, args) => {
     }).then((messages) => {
         if (user) {
             const filterBy = user ? user.id : client.user.id;
-            messages = messages.filter(m => m.author.id === filterBy).array().slice(0, amount);
+            messages = Array.from(messages.filter(m => m.author.id === filterBy).values()).slice(0, amount);
         } else {
             messages = parseInt(amount);
         }

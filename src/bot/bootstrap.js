@@ -2,6 +2,10 @@ const { createClient } = require('./client.js');
 const fs = require('fs');
 const path = require('path');
 
+const EVENT_ALIASES = {
+    message: 'messageCreate',
+};
+
 async function start() {
     const client = createClient();
     
@@ -21,7 +25,7 @@ async function loadEvents(client) {
             client.logger.log(`Cargando un total de ${files.length} eventos.`);
             files.forEach(file => {
                 const event = require(path.join(dir, file));
-                const eventName = file.split('.')[0];
+                const eventName = EVENT_ALIASES[file.split('.')[0]] || file.split('.')[0];
                 client.on(eventName, event.bind(null, client));
             });
             resolve();

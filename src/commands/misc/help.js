@@ -1,7 +1,7 @@
-const { MessageEmbed } = require("discord.js");
+const { EmbedBuilder } = require("discord.js");
 
 exports.run = (client, message, args) => {
-    const embed = new MessageEmbed().setColor("BLUE");
+    const embed = new EmbedBuilder().setColor(0x3498DB);
     let data = [];
     if (!args.length) {
         embed.setTitle("**Hanako Commands**");
@@ -12,7 +12,7 @@ exports.run = (client, message, args) => {
                     data.push(`\`${command.help.name}\``);
                 };
             });
-            embed.addField(`${category.toUpperCase()}`, data.join(", "), true);
+            embed.addFields({ name: `${category.toUpperCase()}`, value: data.join(", "), inline: true });
             data = [];
         });
         embed.setDescription(`Use \`${client.config.prefix}help command\` para ver mas detalles acerca de un comando en particular.`)
@@ -23,11 +23,11 @@ exports.run = (client, message, args) => {
                 data.push(`Categoria: \`${command.help.category}\``);
                 data.push(`Uso: \`${client.config.prefix}\` \`${command.help.usage}\`\n`);
                 data.push(`${command.help.description}`);
-                embed.setTitle(title).setDescription(data);
+                embed.setTitle(title).setDescription(data.join('\n'));
             };
         });
     };
-    message.channel.send(embed).catch(err => client.logger.log(err, "error"));
+    message.channel.send({ embeds: [embed] }).catch(err => client.logger.log(err, "error"));
 };
 
 exports.help = {

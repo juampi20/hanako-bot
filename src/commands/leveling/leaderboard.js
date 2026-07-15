@@ -1,18 +1,21 @@
-const { MessageEmbed } = require("discord.js");
+const { EmbedBuilder } = require("discord.js");
 
 exports.run = (client, message, _args) => {
     const top10 = client.levelingService.getLeaderboard(message.guild.id, 10);
     
-    const embed = new MessageEmbed()
+    const embed = new EmbedBuilder()
         .setTitle("Tabla de clasificación")
-        .setAuthor(client.user.username, client.user.avatarURL())
+        .setAuthor({ name: client.user.username, iconURL: client.user.avatarURL() })
         .setDescription("Nuestros 10 principales líderes de puntos!")
-        .setColor("RANDOM");
+        .setColor(0x9B59B6);
     
     for (const data of top10) {
-        embed.addFields({ name: client.users.cache.get(data.user).tag, value: `${data.points} puntos (nivel ${data.level})` });
+        const user = client.users.cache.get(data.user);
+        if (user) {
+            embed.addFields({ name: user.username, value: `${data.points} puntos (nivel ${data.level})` });
+        }
     }
-    return message.channel.send({ embed });
+    return message.channel.send({ embeds: [embed] });
 };
 
 exports.help = {

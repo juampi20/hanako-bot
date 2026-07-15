@@ -4,9 +4,7 @@ exports.run = async (client, message, args) => {
     message.channel.send(sayMessage).catch(e => {
         client.logger.log(e, "error");
         message.channel.send("Error al ejecutar el comando").then(msg => {
-            msg.delete({
-                timeout: 5000,
-            });
+            setTimeout(() => msg.delete(), 5000);
         });
     });
 };
