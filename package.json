@@ -6,6 +6,7 @@
   "scripts": {
     "start": "node ./src/index.js",
     "dev": "nodemon ./src/index.js",
+    "test": "jest",
     "lint": "eslint src/",
     "lint:fix": "eslint src/ --fix"
   },
@@ -28,6 +29,7 @@
   "devDependencies": {
     "@eslint/js": "^10.0.1",
     "eslint": "^10.7.0",
-    "globals": "^17.7.0"
+    "globals": "^17.7.0",
+    "jest": "^30.4.2"
   }
 }
