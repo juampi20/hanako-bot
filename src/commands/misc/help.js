@@ -1,8 +1,8 @@
-const { SlashCommandBuilder, EmbedBuilder, InteractionContextType } = require("discord.js");
-const { baseEmbed } = require("../../utils/embed");
+const { SlashCommandBuilder, InteractionContextType } = require("discord.js");
+const { baseEmbed, COLORS } = require("../../utils/embed");
 
 exports.run = (client, message, args) => {
-    const embed = new EmbedBuilder().setColor(0x3498DB);
+    const embed = baseEmbed(client, { color: COLORS.INFO });
     let data = [];
     if (!args.length) {
         embed.setTitle("**Hanako Commands**");
@@ -45,7 +45,7 @@ exports.execute = async (client, interaction) => {
         if (!cmd || !cmd.help) {
             return interaction.reply({ content: `No encontre el comando \`${commandName}\`.`, ephemeral: true });
         }
-        const embed = baseEmbed(client)
+        const embed = baseEmbed(client, { color: COLORS.INFO })
             .setTitle(`**Informacion del comando:** \`${cmd.help.name}\``)
             .setDescription([
                 `Categoria: \`${cmd.help.category}\``,
@@ -55,7 +55,7 @@ exports.execute = async (client, interaction) => {
         return interaction.reply({ embeds: [embed] });
     }
 
-    const embed = baseEmbed(client)
+    const embed = baseEmbed(client, { color: COLORS.INFO })
         .setTitle("**Hanako Commands**");
     let data = [];
     const categories = ["misc", "fun", "moderation", "leveling", "dev"];
