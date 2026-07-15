@@ -1,21 +1,27 @@
-const { EmbedBuilder, SlashCommandBuilder, InteractionContextType } = require("discord.js");
+const { SlashCommandBuilder, InteractionContextType } = require("discord.js");
+const { baseEmbed, COLORS } = require("../../utils/embed");
 
-exports.run = (client, message, _args) => {
-    const top10 = client.levelingService.getLeaderboard(message.guild.id, 10);
-    
-    const embed = new EmbedBuilder()
-        .setTitle("Tabla de clasificación")
-        .setAuthor({ name: client.user.username, iconURL: client.user.avatarURL() })
-        .setDescription("Nuestros 10 principales líderes de puntos!")
-        .setColor(0x9B59B6);
-    
-    for (const data of top10) {
+const MEDALS = ["🥇", "🥈", "🥉"];
+
+function buildLeaderboard(client, guildId) {
+    const top10 = client.levelingService.getLeaderboard(guildId, 10);
+    const descriptionLines = top10.map((data, i) => {
         const user = client.users.cache.get(data.user);
-        if (user) {
-            embed.addFields({ name: user.username, value: `${data.points} puntos (nivel ${data.level})` });
-        }
-    }
-    return message.channel.send({ embeds: [embed] });
+        const prefix = i < 3 ? MEDALS[i] : `${i + 1}.`;
+        const name = user ? user.username : "Usuario desconocido";
+        return `${prefix} **${name}** — ${data.points} pts (nivel ${data.level})`;
+    });
+
+    const embed = baseEmbed(client, { color: COLORS.LEVELING })
+        .setTitle("🏆 Tabla de clasificación")
+        .setAuthor({ name: client.user.username, iconURL: client.user.avatarURL() })
+        .setDescription(descriptionLines.length > 0 ? descriptionLines.join("\n") : "No hay datos aún.");
+    return embed;
+}
+
+exports.run = async (client, message, _args) => {
+    const embed = buildLeaderboard(client, message.guild.id);
+    await message.channel.send({ embeds: [embed] });
 };
 
 exports.data = new SlashCommandBuilder()
@@ -24,20 +30,7 @@ exports.data = new SlashCommandBuilder()
     .setContexts(InteractionContextType.Guild);
 
 exports.execute = async (client, interaction) => {
-    const top10 = client.levelingService.getLeaderboard(interaction.guild.id, 10);
-    
-    const embed = new EmbedBuilder()
-        .setTitle("Tabla de clasificación")
-        .setAuthor({ name: client.user.username, iconURL: client.user.avatarURL() })
-        .setDescription("Nuestros 10 principales líderes de puntos!")
-        .setColor(0x9B59B6);
-    
-    for (const data of top10) {
-        const user = client.users.cache.get(data.user);
-        if (user) {
-            embed.addFields({ name: user.username, value: `${data.points} puntos (nivel ${data.level})` });
-        }
-    }
+    const embed = buildLeaderboard(client, interaction.guild.id);
     await interaction.reply({ embeds: [embed] });
 };
 
