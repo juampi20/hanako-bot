@@ -55,10 +55,18 @@ describe('LevelingService', () => {
     });
 
     describe('addXP', () => {
-        test('adds XP and recalculates level', () => {
+        test('adds XP and recalculates level (Mee6 formula)', () => {
             const result = svc.addXP('xptest', 'guild1', 100);
             expect(result.points).toBe(100);
-            expect(result.level).toBe(Math.floor(0.1 * Math.sqrt(100)));
+            // Mee6: level 1 requires 100 XP
+            expect(result.level).toBe(1);
+        });
+
+        test('returns oldLevel for level-up detection', () => {
+            const result = svc.addXP('leveluptest', 'guild1', 200);
+            expect(result.level).toBe(2);
+            expect(result.oldLevel).toBe(1); // started at level 1
+            expect(result.level).toBeGreaterThan(result.oldLevel);
         });
 
         test('returns null for zero XP', () => {

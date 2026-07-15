@@ -1,5 +1,23 @@
 const { getDb } = require('./database');
 
+/**
+ * Mee6-style formula: XP needed for level N
+ *   xp = 5(N-1)^2 + 50(N-1) + 100
+ *
+ * Inverted to get level from XP:
+ *   k = floor((-50 + sqrt(500 + 20*xp)) / 10)
+ *   level = max(k + 1, 1)
+ */
+function getLevelFromXP(xp) {
+    const k = Math.floor((-50 + Math.sqrt(500 + 20 * xp)) / 10);
+    return Math.max(k + 1, 1);
+}
+
+function getXPForLevel(level) {
+    const n = Math.max(level - 1, 0);
+    return 5 * n * n + 50 * n + 100;
+}
+
 class LevelingService {
     constructor() {
         const db = getDb();
@@ -42,16 +60,18 @@ class LevelingService {
         
         const current = this.getScore(userId, guildId);
         const newPoints = current.points + amount;
-        const newLevel = Math.floor(0.1 * Math.sqrt(newPoints));
-        
-        const updated = {
-            ...current,
+        const newLevel = getLevelFromXP(newPoints);
+        const oldLevel = current.level;
+
+        this.upsertScoreStmt.run({
+            id: current.id,
+            user: current.user,
+            guild: current.guild,
             points: newPoints,
             level: newLevel
-        };
+        });
         
-        this.upsertScoreStmt.run(updated);
-        return updated;
+        return { id: current.id, user: current.user, guild: current.guild, points: newPoints, level: newLevel, oldLevel };
     }
 
     getLeaderboard(guildId, limit = 10) {
@@ -77,30 +97,48 @@ class LevelingService {
         
         this.db.exec('BEGIN');
         try {
-            const senderUpdated = {
-                ...senderScore,
-                points: senderScore.points - amount,
-                level: Math.floor(0.1 * Math.sqrt(senderScore.points - amount))
-            };
-            this.upsertScoreStmt.run(senderUpdated);
+            const senderPoints = senderScore.points - amount;
+            const senderLevel = getLevelFromXP(senderPoints);
+            const senderOldLevel = senderScore.level;
+
+            this.upsertScoreStmt.run({
+                id: senderScore.id,
+                user: senderScore.user,
+                guild: senderScore.guild,
+                points: senderPoints,
+                level: senderLevel
+            });
             
             const targetScore = this.getScore(targetId, guildId);
-            const targetUpdated = {
-                ...targetScore,
-                points: targetScore.points + amount,
-                level: Math.floor(0.1 * Math.sqrt(targetScore.points + amount))
-            };
-            this.upsertScoreStmt.run(targetUpdated);
+            const targetPoints = targetScore.points + amount;
+            const targetLevel = getLevelFromXP(targetPoints);
+            const targetOldLevel = targetScore.level;
+
+            this.upsertScoreStmt.run({
+                id: targetScore.id,
+                user: targetScore.user,
+                guild: targetScore.guild,
+                points: targetPoints,
+                level: targetLevel
+            });
             
             this.db.exec('COMMIT');
             return {
-                sender: senderUpdated,
-                target: targetUpdated
+                sender: { id: senderScore.id, user: senderScore.user, guild: senderScore.guild, points: senderPoints, level: senderLevel, oldLevel: senderOldLevel },
+                target: { id: targetScore.id, user: targetScore.user, guild: targetScore.guild, points: targetPoints, level: targetLevel, oldLevel: targetOldLevel }
             };
         } catch (err) {
             this.db.exec('ROLLBACK');
             throw err;
         }
+    }
+
+    static getLevelFromXP(xp) {
+        return getLevelFromXP(xp);
+    }
+
+    static getXPForLevel(level) {
+        return getXPForLevel(level);
     }
 }
 
