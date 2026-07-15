@@ -52,28 +52,22 @@ exports.execute = async (client, interaction) => {
         withResponse: true,
     });
 
-    let confirmed = false;
     try {
         const confirmation = await response.resource.message.awaitMessageComponent({
             filter: i => i.user.id === interaction.user.id,
             time: 30_000,
         });
 
-        if (confirmation.customId === "purge_confirm") {
-            confirmed = true;
-            await confirmation.update({ content: "Eliminando mensajes...", components: [] });
-        } else {
+        if (confirmation.customId !== "purge_confirm") {
             await confirmation.update({ content: "Operación cancelada.", components: [] });
             return;
         }
+
+        await confirmation.update({ content: "Eliminando mensajes...", components: [] });
     } catch {
         await interaction.editReply({ content: "Tiempo de espera agotado. Operación cancelada.", components: [] });
         return;
     }
-
-    if (!confirmed) return;
-
-    await interaction.editReply({ content: "Eliminando mensajes...", components: [] });
     const fetched = await interaction.channel.messages.fetch({ limit: 100 });
     let toDelete;
     if (user) {
