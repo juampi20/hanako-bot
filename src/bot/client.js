@@ -14,6 +14,7 @@ function createClient() {
     client.commands = new Collection();
     client.middleware = [];
     client.levelingService = null;
+    client.interactions = new Collection();
     return client;
 }
 

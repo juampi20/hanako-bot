@@ -1,17 +1,26 @@
 const cooldowns = new Map();
 
-module.exports = (client, message, command, next) => {
+module.exports = (client, context, command, next) => {
     const cooldownTime = (command.help && command.help.cooldown) || 3000;
     if (cooldownTime <= 0) {return next();}
 
-    const key = `${message.author.id}:${message.guild ? message.guild.id : 'dm'}`;
+    const userId = context.author?.id || context.user?.id;
+    const guildId = context.guild?.id || 'dm';
+    const key = `${userId}:${guildId}`;
     const now = Date.now();
 
     if (cooldowns.has(key)) {
         const expiration = cooldowns.get(key);
         if (now < expiration) {
             const remaining = ((expiration - now) / 1000).toFixed(1);
-            return message.reply(`tomate un tiempo. Esperá ${remaining} segundos.`);
+            if (context.reply) {
+                return context.reply({
+                    content: `tomate un tiempo. Esperá ${remaining} segundos.`,
+                    ephemeral: true
+                });
+            } else if (context.isReplied) {
+                return context.send(`tomate un tiempo. Esperá ${remaining} segundos.`);
+            }
         }
     }
 

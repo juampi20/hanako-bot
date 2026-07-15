@@ -6,6 +6,8 @@ const EVENT_ALIASES = {
     message: 'messageCreate',
 };
 
+// Handle interactionCreate separately because it's not an EVENT_ALIASES pattern
+
 async function start() {
     const client = createClient();
     
@@ -23,11 +25,16 @@ async function loadEvents(client) {
         fs.readdir(dir, (err, files) => {
             if (err) {return client.logger.log(err, 'error');}
             client.logger.log(`Cargando un total de ${files.length} eventos.`);
-            files.forEach(file => {
-                const event = require(path.join(dir, file));
-                const eventName = EVENT_ALIASES[file.split('.')[0]] || file.split('.')[0];
+        files.forEach(file => {
+            const event = require(path.join(dir, file));
+            const eventName = EVENT_ALIASES[file.split('.')[0]] || file.split('.')[0];
+            // Special handling for interactionCreate.js since it's not in EVENT_ALIASES
+            if (file === 'interactionCreate.js') {
+                client.on('interactionCreate', event.bind(null, client));
+            } else {
                 client.on(eventName, event.bind(null, client));
-            });
+            }
+        });
             resolve();
         });
     });
@@ -47,6 +54,9 @@ async function loadCommands(client) {
                         const props = require(path.join(dir, folder, file));
                         const commandName = file.split('.')[0];
                         client.commands.set(commandName, props);
+                        if (props.data) {
+                            client.interactions.set(commandName, props);
+                        }
                     });
                 });
             });
