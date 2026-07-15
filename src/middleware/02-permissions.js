@@ -4,5 +4,5 @@ module.exports = (client, message, command, next) => {
             return message.reply("no tienes permiso para usar este comando!");
         }
     }
-    next();
+    return next();
 };
