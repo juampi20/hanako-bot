@@ -1,9 +1,9 @@
 exports.run = async (client, message, args) => {
     const user = message.mentions.users.first();
-    const amount = !!parseInt(args[0]) ? parseInt(args[0]) : parseInt(args[1])
+    const amount = parseInt(args[0]) ? parseInt(args[0]) : parseInt(args[1])
 
-    if (!amount) return message.reply('especifique una cantidad para eliminar!');
-    if (!amount && !user) return message.reply('especifique un usuario y la cantidad, o solamente la cantidad, de mensajes a eliminar!');
+    if (!amount) {return message.reply('especifique una cantidad para eliminar!');}
+    if (!amount && !user) {return message.reply('especifique un usuario y la cantidad, o solamente la cantidad, de mensajes a eliminar!');}
 
     message.delete();
     message.channel.messages.fetch({

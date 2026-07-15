@@ -2,7 +2,7 @@ const cooldowns = new Map();
 
 module.exports = (client, message, command, next) => {
     const cooldownTime = (command.help && command.help.cooldown) || 3000;
-    if (cooldownTime <= 0) return next();
+    if (cooldownTime <= 0) {return next();}
 
     const key = `${message.author.id}:${message.guild ? message.guild.id : 'dm'}`;
     const now = Date.now();

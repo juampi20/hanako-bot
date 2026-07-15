@@ -1,7 +1,5 @@
-const { MessageEmbed } = require("discord.js");
-
 exports.run = async (client, message, args) => {
-    var eightball = [
+    const eightball = [
 
         "Si.",
         "En mi opinión, sí.",
@@ -25,7 +23,7 @@ exports.run = async (client, message, args) => {
         "No lo creo.",
     ];
     const question = args.join(" ");
-    if (!question.endsWith("?")) return message.reply("Umm... ¿cual es la pregunta?");
+    if (!question.endsWith("?")) {return message.reply("Umm... ¿cual es la pregunta?");}
     message.channel.send(eightball[Math.floor(Math.random() * eightball.length)]);
 };
 

@@ -1,6 +1,6 @@
 const { MessageEmbed } = require("discord.js");
 
-exports.run = (client, message, args) => {
+exports.run = (client, message, _args) => {
     const top10 = client.levelingService.getLeaderboard(message.guild.id, 10);
     
     const embed = new MessageEmbed()

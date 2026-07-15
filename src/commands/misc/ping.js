@@ -1,9 +1,9 @@
 const { MessageEmbed } = require("discord.js");
 
-exports.run = async (client, message, args) => {
+exports.run = async (client, message, _args) => {
     const embed = new MessageEmbed().setColor("BLUE")
     message.channel.send(embed).then(msg =>{
-        let ping = msg.createdTimestamp - message.createdTimestamp;
+        const ping = msg.createdTimestamp - message.createdTimestamp;
         embed.setTitle(`🏓 Pong!`)
         .setDescription(`**Latencia:** \`${ping}ms\``)
         msg.edit(embed);

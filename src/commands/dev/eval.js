@@ -1,9 +1,9 @@
 exports.run = (client, message, args) => {
     const clean = (text) => {
         if (typeof (text) === "string")
-            return text.replace(/`/g, "`" + String.fromCharCode(8203)).replace(/@/g, "@" + String.fromCharCode(8203));
+            {return text.replace(/`/g, "`" + String.fromCharCode(8203)).replace(/@/g, "@" + String.fromCharCode(8203));}
         else
-            return text;
+            {return text;}
     }
 
     try {
@@ -11,7 +11,7 @@ exports.run = (client, message, args) => {
         let evaled = eval(code);
 
         if (typeof evaled !== "string")
-            evaled = require("util").inspect(evaled);
+            {evaled = require("util").inspect(evaled);}
 
         message.channel.send(clean(evaled), { code: "xl" });
     } catch (err) {

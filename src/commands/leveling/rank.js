@@ -1,6 +1,6 @@
 const { MessageEmbed } = require("discord.js");
 
-exports.run = (client, message, args) => {
+exports.run = (client, message, _args) => {
     const score = client.levelingService.getScore(message.author.id, message.guild.id);
     const embed = new MessageEmbed()
         .setAuthor(message.author.username, message.author.avatarURL())

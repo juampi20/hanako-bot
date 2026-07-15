@@ -19,7 +19,7 @@ exports.run = (client, message, args) => {
     } else {
         client.commands.forEach(command => {
             if (command.help.name === args[0]) {
-                let title = `**Informacion del comando:** \`${command.help.name}\``;
+                const title = `**Informacion del comando:** \`${command.help.name}\``;
                 data.push(`Categoria: \`${command.help.category}\``);
                 data.push(`Uso: \`${client.config.prefix}\` \`${command.help.usage}\`\n`);
                 data.push(`${command.help.description}`);

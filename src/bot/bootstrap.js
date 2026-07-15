@@ -17,7 +17,7 @@ async function loadEvents(client) {
     return new Promise((resolve) => {
         const dir = path.resolve(__dirname, '..', 'events');
         fs.readdir(dir, (err, files) => {
-            if (err) return client.logger.log(err, 'error');
+            if (err) {return client.logger.log(err, 'error');}
             client.logger.log(`Cargando un total de ${files.length} eventos.`);
             files.forEach(file => {
                 const event = require(path.join(dir, file));
@@ -33,13 +33,13 @@ async function loadCommands(client) {
     return new Promise((resolve) => {
         const dir = path.resolve(__dirname, '..', 'commands');
         fs.readdir(dir, (err, folders) => {
-            if (err) return client.logger.log(err, 'error');
+            if (err) {return client.logger.log(err, 'error');}
             folders.forEach(folder => {
                 fs.readdir(path.join(dir, folder), (err, files) => {
-                    if (err) return client.logger.log(err, 'error');
+                    if (err) {return client.logger.log(err, 'error');}
                     client.logger.log(`Cargando un total de ${files.length} comandos (${folder}).`);
                     files.forEach(file => {
-                        if (!file.endsWith('.js')) return;
+                        if (!file.endsWith('.js')) {return;}
                         const props = require(path.join(dir, folder, file));
                         const commandName = file.split('.')[0];
                         client.commands.set(commandName, props);
@@ -55,10 +55,10 @@ async function loadMiddleware(client) {
     return new Promise((resolve) => {
         const dir = path.resolve(__dirname, '..', 'middleware');
         fs.readdir(dir, (err, files) => {
-            if (err) return client.logger.log(err, 'error');
+            if (err) {return client.logger.log(err, 'error');}
             const middleware = [];
             files.forEach(file => {
-                if (!file.endsWith('.js')) return;
+                if (!file.endsWith('.js')) {return;}
                 try {
                     const middlewareFn = require(path.join(dir, file));
                     middleware.push(middlewareFn);

@@ -1,5 +1,5 @@
 exports.run = async (client, message, args) => {
-    let sayMessage = args.join(" ");
+    const sayMessage = args.join(" ");
     message.delete();
     message.channel.send(sayMessage).catch(e => {
         client.logger.log(e, "error");
