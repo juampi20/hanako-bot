@@ -1,8 +1,9 @@
 const { SlashCommandBuilder, InteractionContextType } = require("discord.js");
-const { baseEmbed } = require("../../utils/embed");
+const { baseEmbed, COLORS } = require("../../utils/embed");
 
 exports.run = (client, message, _args) => {
-    message.channel.send("Boop!");
+    const embed = baseEmbed(client, { color: COLORS.FUN }).setTitle("🔊 Beep!");
+    message.channel.send({ embeds: [embed] });
 };
 
 exports.data = new SlashCommandBuilder()
@@ -11,7 +12,7 @@ exports.data = new SlashCommandBuilder()
     .setContexts(InteractionContextType.Guild);
 
 exports.execute = async (client, interaction) => {
-    const embed = baseEmbed(client).setDescription("🤖");
+    const embed = baseEmbed(client, { color: COLORS.FUN }).setTitle("🔊 Beep!");
     await interaction.reply({ embeds: [embed] });
 };
 
