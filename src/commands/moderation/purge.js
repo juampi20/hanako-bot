@@ -1,6 +1,4 @@
 exports.run = async (client, message, args) => {
-    if (message.author.id !== client.config.ownerID) return message.reply("no tienes permiso para usar este comando!");
-
     const user = message.mentions.users.first();
     const amount = !!parseInt(args[0]) ? parseInt(args[0]) : parseInt(args[1])
 
@@ -25,5 +23,6 @@ exports.help = {
     name: "purge",
     description: "Eliminar mensajes.",
     category: "moderation",
-    usage: "purge <amount> or <user> <amount>"
+    usage: "purge <amount> or <user> <amount>",
+    ownerOnly: true
 };

@@ -7,6 +7,7 @@ async function start() {
     
     await loadEvents(client);
     await loadCommands(client);
+    await loadMiddleware(client);
     await client.login(client.config.token);
     
     return client;
@@ -45,6 +46,29 @@ async function loadCommands(client) {
                     });
                 });
             });
+            resolve();
+        });
+    });
+}
+
+async function loadMiddleware(client) {
+    return new Promise((resolve) => {
+        const dir = path.resolve(__dirname, '..', 'middleware');
+        fs.readdir(dir, (err, files) => {
+            if (err) return client.logger.log(err, 'error');
+            const middleware = [];
+            files.forEach(file => {
+                if (!file.endsWith('.js')) return;
+                try {
+                    const middlewareFn = require(path.join(dir, file));
+                    middleware.push(middlewareFn);
+                } catch (err) {
+                    client.logger.log(err, 'error');
+                }
+            });
+            middleware.sort();
+            client.middleware = middleware;
+            client.logger.log(`Cargando un total de ${middleware.length} middleware.`);
             resolve();
         });
     });
