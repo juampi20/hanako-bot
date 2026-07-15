@@ -1,5 +1,4 @@
-exports.run = (client, message, args) => {
-    const { SlashCommandBuilder } = require("discord.js");
+const { SlashCommandBuilder } = require("discord.js");
 
 const clean = (text) => {
         if (typeof (text) === "string")
@@ -8,6 +7,7 @@ const clean = (text) => {
             {return text;}
     }
 
+exports.run = (client, message, args) => {
     try {
         const code = args.join(" ");
         let evaled = eval(code);
