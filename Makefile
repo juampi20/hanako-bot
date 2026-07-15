@@ -15,13 +15,13 @@ lint-fix:
 test:
 	npx jest
 
-docker-build:
+build:
 	docker compose build
 
-docker-run:
+run:
 	docker compose up -d
 
-docker-stop:
+stop:
 	docker compose down
 
 clean:
