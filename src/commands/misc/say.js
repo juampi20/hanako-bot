@@ -9,16 +9,26 @@ exports.run = async (client, message, args) => {
     });
 };
 
-const { SlashCommandBuilder } = require("discord.js");
+const { SlashCommandBuilder, InteractionContextType } = require("discord.js");
 
 exports.data = new SlashCommandBuilder()
     .setName("say")
     .setDescription("Hace que el bot diga algo")
-    .addStringOption(opt => opt.setName("message").setDescription("Mensaje a repetir").setRequired(true));
+    .addStringOption(opt => opt.setName("message").setDescription("Mensaje a repetir").setRequired(true))
+    .setContexts(InteractionContextType.Guild);
 
 exports.execute = async (client, interaction) => {
     const message = interaction.options.getString("message");
-    await interaction.reply(message);
+    try {
+        await interaction.reply(message);
+    } catch (error) {
+        client.logger.log(error, "error");
+        if (interaction.replied || interaction.deferred) {
+            await interaction.followUp({ content: "Error al enviar el mensaje.", ephemeral: true });
+        } else {
+            await interaction.reply({ content: "Error al enviar el mensaje.", ephemeral: true });
+        }
+    }
 };
 
 exports.help = {

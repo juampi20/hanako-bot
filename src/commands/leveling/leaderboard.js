@@ -1,4 +1,4 @@
-const { EmbedBuilder, SlashCommandBuilder } = require("discord.js");
+const { EmbedBuilder, SlashCommandBuilder, InteractionContextType } = require("discord.js");
 
 exports.run = (client, message, _args) => {
     const top10 = client.levelingService.getLeaderboard(message.guild.id, 10);
@@ -20,7 +20,8 @@ exports.run = (client, message, _args) => {
 
 exports.data = new SlashCommandBuilder()
     .setName("leaderboard")
-    .setDescription("Muestra el top 10 del servidor");
+    .setDescription("Muestra el top 10 del servidor")
+    .setContexts(InteractionContextType.Guild);
 
 exports.execute = async (client, interaction) => {
     const top10 = client.levelingService.getLeaderboard(interaction.guild.id, 10);

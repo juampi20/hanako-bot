@@ -1,4 +1,4 @@
-const { SlashCommandBuilder } = require("discord.js");
+const { SlashCommandBuilder, InteractionContextType } = require("discord.js");
 
 const clean = (text) => {
         if (typeof (text) === "string")
@@ -24,7 +24,8 @@ exports.run = (client, message, args) => {
 exports.data = new SlashCommandBuilder()
     .setName("eval")
     .setDescription("Ejecuta codigo JavaScript (owner only)")
-    .addStringOption(opt => opt.setName("code").setDescription("Codigo a ejecutar").setRequired(true));
+    .addStringOption(opt => opt.setName("code").setDescription("Codigo a ejecutar").setRequired(true))
+    .setContexts(InteractionContextType.Guild);
 
 exports.execute = async (client, interaction) => {
     try {
@@ -43,5 +44,6 @@ exports.help = {
     description: "Una función que evalúa cualquier cadena como código javascript y realmente la ejecuta.",
     category: "dev",
     usage: "eval <code>",
-    ownerOnly: true
+    ownerOnly: true,
+    hintSlash: "eval"
 };

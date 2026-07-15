@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, PermissionFlagsBits } = require("discord.js");
+const { SlashCommandBuilder, PermissionFlagsBits, InteractionContextType } = require("discord.js");
 
 exports.run = async (client, message, args) => {
     const user = message.mentions.users.first();
@@ -24,7 +24,8 @@ exports.data = new SlashCommandBuilder()
     .setDescription("Elimina mensajes del canal")
     .addIntegerOption(opt => opt.setName("amount").setDescription("Cantidad de mensajes").setRequired(true).setMinValue(1).setMaxValue(100))
     .addUserOption(opt => opt.setName("user").setDescription("Usuario cuyos mensajes eliminar").setRequired(false))
-    .setDefaultMemberPermissions(PermissionFlagsBits.ManageMessages);
+    .setDefaultMemberPermissions(PermissionFlagsBits.ManageMessages)
+    .setContexts(InteractionContextType.Guild);
 
 exports.execute = async (client, interaction) => {
     await interaction.deferReply({ ephemeral: true });

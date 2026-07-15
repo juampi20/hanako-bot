@@ -1,4 +1,4 @@
-const { EmbedBuilder, SlashCommandBuilder } = require("discord.js");
+const { EmbedBuilder, SlashCommandBuilder, InteractionContextType } = require("discord.js");
 
 exports.run = (client, message, _args) => {
     const score = client.levelingService.getScore(message.author.id, message.guild.id);
@@ -12,7 +12,8 @@ exports.run = (client, message, _args) => {
 exports.data = new SlashCommandBuilder()
     .setName("rank")
     .setDescription("Muestra tu nivel y XP")
-    .addUserOption(opt => opt.setName("user").setDescription("Usuario a consultar").setRequired(false));
+    .addUserOption(opt => opt.setName("user").setDescription("Usuario a consultar").setRequired(false))
+    .setContexts(InteractionContextType.Guild);
 
 exports.execute = async (client, interaction) => {
     const target = interaction.options.getUser("user") || interaction.user;

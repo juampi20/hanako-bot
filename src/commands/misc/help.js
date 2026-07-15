@@ -1,4 +1,5 @@
-const { SlashCommandBuilder, EmbedBuilder } = require("discord.js");
+const { SlashCommandBuilder, EmbedBuilder, InteractionContextType } = require("discord.js");
+const { baseEmbed } = require("../../utils/embed");
 
 exports.run = (client, message, args) => {
     const embed = new EmbedBuilder().setColor(0x3498DB);
@@ -33,27 +34,29 @@ exports.run = (client, message, args) => {
 exports.data = new SlashCommandBuilder()
     .setName("help")
     .setDescription("Muestra todos los comandos disponibles")
-    .addStringOption(opt => opt.setName("command").setDescription("Comando especifico").setRequired(false));
+    .addStringOption(opt => opt.setName("command").setDescription("Comando especifico").setRequired(false))
+    .setContexts(InteractionContextType.Guild);
 
 exports.execute = async (client, interaction) => {
     const commandName = interaction.options.getString("command");
-    const embed = new EmbedBuilder().setColor(0x3498DB);
 
     if (commandName) {
         const cmd = client.interactions.get(commandName);
         if (!cmd || !cmd.help) {
             return interaction.reply({ content: `No encontre el comando \`${commandName}\`.`, ephemeral: true });
         }
-        embed.setTitle(`**Informacion del comando:** \`${cmd.help.name}\``);
-        embed.setDescription([
-            `Categoria: \`${cmd.help.category}\``,
-            `Uso: \`/${cmd.help.name}\`\n`,
-            `${cmd.help.description}`
-        ].join('\n'));
+        const embed = baseEmbed(client)
+            .setTitle(`**Informacion del comando:** \`${cmd.help.name}\``)
+            .setDescription([
+                `Categoria: \`${cmd.help.category}\``,
+                `Uso: \`/${cmd.help.name}\`\n`,
+                `${cmd.help.description}`
+            ].join('\n'));
         return interaction.reply({ embeds: [embed] });
     }
 
-    embed.setTitle("**Hanako Commands**");
+    const embed = baseEmbed(client)
+        .setTitle("**Hanako Commands**");
     let data = [];
     const categories = ["misc", "fun", "moderation", "leveling", "dev"];
     categories.forEach(category => {
