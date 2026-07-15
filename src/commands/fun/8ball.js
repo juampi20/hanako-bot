@@ -1,4 +1,5 @@
 const { SlashCommandBuilder, InteractionContextType } = require("discord.js");
+const { baseEmbed, COLORS } = require("../../utils/embed");
 
 // Extract 8ball responses to module-level constant
 const EIGHTBALL_ANSWERS = [
@@ -25,7 +26,11 @@ const EIGHTBALL_ANSWERS = [
 exports.run = async (client, message, args) => {
     const question = args.join(" ");
     if (!question.endsWith("?")) {return message.reply("Umm... ¿cual es la pregunta?");}
-    await message.channel.send(EIGHTBALL_ANSWERS[Math.floor(Math.random() * EIGHTBALL_ANSWERS.length)]);
+    const answer = EIGHTBALL_ANSWERS[Math.floor(Math.random() * EIGHTBALL_ANSWERS.length)];
+    const embed = baseEmbed(client, { color: COLORS.FUN })
+        .setTitle("🔮 8Ball")
+        .setDescription(`**Pregunta:** ${question}\n\n**Respuesta:** ${answer}`);
+    await message.channel.send({ embeds: [embed] });
 };
 
 exports.data = new SlashCommandBuilder()
@@ -39,7 +44,11 @@ exports.execute = async (client, interaction) => {
     if (!question.endsWith("?")) {
         return interaction.reply("Umm... ¿cual es la pregunta?");
     }
-    await interaction.reply(EIGHTBALL_ANSWERS[Math.floor(Math.random() * EIGHTBALL_ANSWERS.length)]);
+    const answer = EIGHTBALL_ANSWERS[Math.floor(Math.random() * EIGHTBALL_ANSWERS.length)];
+    const embed = baseEmbed(client, { color: COLORS.FUN })
+        .setTitle("🔮 8Ball")
+        .setDescription(`**Pregunta:** ${question}\n\n**Respuesta:** ${answer}`);
+    await interaction.reply({ embeds: [embed] });
 };
 
 exports.help = {
