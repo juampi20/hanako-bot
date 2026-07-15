@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, PermissionFlagsBits, InteractionContextType } = require("discord.js");
+const { SlashCommandBuilder, PermissionFlagsBits, InteractionContextType, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require("discord.js");
 
 exports.run = async (client, message, args) => {
     const user = message.mentions.users.first();
@@ -28,10 +28,52 @@ exports.data = new SlashCommandBuilder()
     .setContexts(InteractionContextType.Guild);
 
 exports.execute = async (client, interaction) => {
-    await interaction.deferReply({ ephemeral: true });
     const user = interaction.options.getUser("user");
     const amount = interaction.options.getInteger("amount");
+    const targetDesc = user ? ` de **${user.tag}**` : "";
+    const countLabel = `${amount} mensaje${amount !== 1 ? "s" : ""}`;
 
+    const confirm = new ButtonBuilder()
+        .setCustomId("purge_confirm")
+        .setLabel("Confirmar")
+        .setStyle(ButtonStyle.Danger);
+
+    const cancel = new ButtonBuilder()
+        .setCustomId("purge_cancel")
+        .setLabel("Cancelar")
+        .setStyle(ButtonStyle.Secondary);
+
+    const row = new ActionRowBuilder().addComponents(cancel, confirm);
+
+    const response = await interaction.reply({
+        content: `¿Eliminar ${countLabel}${targetDesc}?`,
+        components: [row],
+        ephemeral: true,
+        withResponse: true,
+    });
+
+    let confirmed = false;
+    try {
+        const confirmation = await response.resource.message.awaitMessageComponent({
+            filter: i => i.user.id === interaction.user.id,
+            time: 30_000,
+        });
+
+        if (confirmation.customId === "purge_confirm") {
+            confirmed = true;
+            await confirmation.update({ content: "Eliminando mensajes...", components: [] });
+        } else {
+            await confirmation.update({ content: "Operación cancelada.", components: [] });
+            return;
+        }
+    } catch {
+        await interaction.editReply({ content: "Tiempo de espera agotado. Operación cancelada.", components: [] });
+        return;
+    }
+
+    if (!confirmed) return;
+
+    await interaction.editReply({ content: "Eliminando mensajes...", components: [] });
     const fetched = await interaction.channel.messages.fetch({ limit: 100 });
     let toDelete;
     if (user) {
@@ -41,7 +83,11 @@ exports.execute = async (client, interaction) => {
         toDelete = amount;
     }
     await interaction.channel.bulkDelete(toDelete);
-    await interaction.editReply({ content: `Eliminados ${typeof toDelete === 'number' ? toDelete : toDelete.length} mensajes.` });
+    const deletedCount = typeof toDelete === "number" ? toDelete : toDelete.length;
+    await interaction.editReply({
+        content: `✅ Eliminados ${deletedCount} mensaje${deletedCount !== 1 ? "s" : ""}${targetDesc}.`,
+        components: [],
+    });
 };
 
 exports.help = {
