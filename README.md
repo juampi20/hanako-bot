@@ -1,6 +1,6 @@
 # hanako-bot
 
-A Discord bot for leveling and moderation, built with discord.js v12.
+A Discord bot for leveling and moderation, built with discord.js v14.
 
 ## Structure
 
@@ -28,11 +28,25 @@ src/
     └── moderation/purge.js
 ```
 
-## Run
+## Quick start
 
 ```bash
-npm install
-npm start         # or: npm run dev (nodemon)
+cp .env.example .env    # edit with your token and owner ID
+make start              # or: npm start
 ```
 
-Requires Node.js 22+ and a `.env` file with `DISCORD_TOKEN` and `BOT_OWNER_ID`.
+## Docker
+
+```bash
+make docker-build
+make docker-run          # docker compose up -d
+make docker-stop         # docker compose down
+```
+
+## Commands
+
+```bash
+make lint       # ESLint
+make test       # Jest
+make dev        # nodemon
+```
