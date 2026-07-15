@@ -36,7 +36,7 @@ exports.execute = async (client, interaction) => {
     const confirm = new ButtonBuilder()
         .setCustomId("purge_confirm")
         .setLabel("Confirmar")
-        .setStyle(ButtonStyle.Danger);
+        .setStyle(ButtonStyle.Success);
 
     const cancel = new ButtonBuilder()
         .setCustomId("purge_cancel")
