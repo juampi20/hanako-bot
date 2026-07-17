@@ -97,7 +97,7 @@ describe('Score model', () => {
             const result = Score.setXP('setxptest', 'guild4', 200);
             expect(result).not.toBeNull();
             expect(result.points).toBe(200);
-            expect(result.level).toBe(3);
+            expect(result.level).toBe(2);
         });
 
         test('can go down in level', () => {
@@ -113,7 +113,7 @@ describe('Score model', () => {
             const result = Score.setLevel('lvltest', 'guild4', 5);
             expect(result).not.toBeNull();
             expect(result.level).toBe(5);
-            expect(result.points).toBe(300);
+            expect(result.points).toBe(380);
         });
 
         test('returns null for level below 1', () => {

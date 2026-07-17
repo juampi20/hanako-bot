@@ -6,11 +6,13 @@ const TEST_DB = path.join(os.tmpdir(), `hanako-test-${Date.now()}.sqlite`);
 
 // Set up test database like leveling.test.js
 try {
-    const { initialize, getDb } = require('../services/database');
+    const { initialize, getDb } = require('../database/connect');
+    const { loadModels } = require('../database/models');
     beforeAll(() => {
-        initialize(TEST_DB);
+        const db = initialize(TEST_DB);
+        loadModels(db);
     });
-    
+
     afterAll(() => {
         getDb().close();
         try { fs.unlinkSync(TEST_DB); } catch { /* ok */ }
@@ -24,7 +26,7 @@ try {
 // Verify that command data.toJSON() produces the expected shape for at least 3 different commands
 describe('Registration JSON output', () => {
     const { SlashCommandBuilder } = require('discord.js');
-    
+
     test('8ball command structure', () => {
         const { data } = require('../commands/fun/8ball.js');
         expect(data).toBeInstanceOf(SlashCommandBuilder);
@@ -36,7 +38,7 @@ describe('Registration JSON output', () => {
         expect(json.options.length).toBeGreaterThan(0);
         expect(json.options[0]).toHaveProperty('name', 'question');
     });
-    
+
     test('ping command structure', () => {
         const { data } = require('../commands/misc/ping.js');
         expect(data).toBeInstanceOf(SlashCommandBuilder);
@@ -46,7 +48,7 @@ describe('Registration JSON output', () => {
         expect(json).toHaveProperty('options');
         expect(Array.isArray(json.options)).toBe(true);
     });
-    
+
     test('purge command structure', () => {
         const { data } = require('../commands/moderation/purge.js');
         expect(data).toBeInstanceOf(SlashCommandBuilder);
@@ -64,37 +66,37 @@ describe('Registration JSON output', () => {
 describe('Middleware dual-context', () => {
     // Import permissions middleware at the top level
     const permissionsMiddleware = require('../middleware/02-permissions');
-    
+
     test('middleware works with message-like object', () => {
         const mockClient = { config: { ownerID: '123456789' } };
         const mockNext = jest.fn();
-        
+
         const fakeMessageContext = {
             author: { id: '123456789' }, // owner
             reply: null,
             send: null,
             isReplied: false
         };
-        
+
         const mockCommand = { help: { ownerOnly: true } };
-        
+
         permissionsMiddleware(mockClient, fakeMessageContext, mockCommand, mockNext);
         expect(mockNext).toHaveBeenCalled();
     });
-    
+
     test('middleware works with interaction-like object', () => {
         const mockClient = { config: { ownerID: '123456789' } };
         const mockNext = jest.fn();
-        
+
         const fakeInteractionContext = {
             user: { id: '123456789' }, // owner
             reply: null,
             send: null,
             isReplied: false
         };
-        
+
         const mockCommand = { help: { ownerOnly: true } };
-        
+
         permissionsMiddleware(mockClient, fakeInteractionContext, mockCommand, mockNext);
         expect(mockNext).toHaveBeenCalled();
     });
@@ -105,30 +107,31 @@ describe('Middleware dual-context', () => {
 // Verify give.js exports data and execute but NOT run
 describe('Command data structure', () => {
     const path = require('path');
-    
+
     // Get all command files recursively
     const getCommandFiles = (dir) => {
         const files = [];
         const fs = require('fs');
         const items = fs.readdirSync(dir);
-        
+
         for (const item of items) {
             const fullPath = path.join(dir, item);
             const stat = fs.statSync(fullPath);
-            
+
             if (stat.isFile() && item.endsWith('.js')) {
                 files.push(fullPath);
             } else if (stat.isDirectory()) {
                 files.push(...getCommandFiles(fullPath));
             }
         }
-        
+
         return files;
     };
-    
+
     const commandsDir = path.join(__dirname, '../commands');
-    const commandFiles = getCommandFiles(commandsDir).filter(file => !file.endsWith('/give.js'));
-    
+    const noRunCommands = ['/set-xp.js', '/set-level.js', '/delete-reward.js', '/create-reward.js', '/rewards.js'];
+    const commandFiles = getCommandFiles(commandsDir).filter(file => !noRunCommands.some(c => file.endsWith(c)));
+
     test('non-owner commands have run, data, and execute exports', () => {
         commandFiles.forEach(file => {
             const command = require(file);
@@ -137,12 +140,15 @@ describe('Command data structure', () => {
             expect(command).toHaveProperty('execute');
         });
     });
-    
-    test('give command has data and execute but NOT run (owner only)', () => {
-        const command = require('../commands/leveling/give.js');
-        expect(command).toHaveProperty('data');
-        expect(command).toHaveProperty('execute');
-        expect(command).not.toHaveProperty('run');
+
+    test('slash-only commands have data and execute but NOT run', () => {
+        const slashOnly = ['set-xp', 'set-level', 'delete-reward', 'create-reward', 'rewards'];
+        slashOnly.forEach(name => {
+            const command = require(`../commands/leveling/${name}.js`);
+            expect(command).toHaveProperty('data');
+            expect(command).toHaveProperty('execute');
+            expect(command).not.toHaveProperty('run');
+        });
     });
 });
 
@@ -151,30 +157,30 @@ describe('Command data structure', () => {
 describe('Migration hints', () => {
     test('commands with hintSlash property have string values', () => {
         const path = require('path');
-        
+
         // Get all command files recursively
         const getAllCommandFiles = (dir) => {
             const files = [];
             const fs = require('fs');
             const items = fs.readdirSync(dir);
-            
+
             for (const item of items) {
                 const fullPath = path.join(dir, item);
                 const stat = fs.statSync(fullPath);
-                
+
                 if (stat.isFile() && item.endsWith('.js')) {
                     files.push(fullPath);
                 } else if (stat.isDirectory()) {
                     files.push(...getAllCommandFiles(fullPath));
                 }
             }
-            
+
             return files;
         };
-        
+
         const commandsDir = path.join(__dirname, '../commands');
         const commandFiles = getAllCommandFiles(commandsDir);
-        
+
         commandFiles.forEach(file => {
             const command = require(file);
             if (command.help && command.help.hintSlash) {
