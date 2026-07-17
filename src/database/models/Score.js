@@ -149,6 +149,16 @@ class Score {
         return Score.findByUser(userId, guildId);
     }
 
+    /** Expose Mee6 formula — used by rank command */
+    static getXPForLevel(level) {
+        return getXPForLevel(level);
+    }
+
+    /** Expose inverse formula — used internally and by tests */
+    static getLevelFromXP(xp) {
+        return getLevelFromXP(xp);
+    }
+
     /** Set XP directly, recalculate level. Can go up or down. */
     static setXP(userId, guildId, xp) {
         if (xp < 0) return null;
