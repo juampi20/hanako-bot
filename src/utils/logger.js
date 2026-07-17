@@ -27,7 +27,7 @@ exports.log = (content, type = "log") => {
     }
 };
 
-exports.error = (...args) => this.log(...args, "error");
-exports.warn = (...args) => this.log(...args, "warn");
-exports.debug = (...args) => this.log(...args, "debug");
-exports.cmd = (...args) => this.log(...args, "cmd");
+exports.error = (...args) => exports.log(args.map(a => typeof a === 'object' ? a?.message || String(a) : String(a)).join(' '), "error");
+exports.warn = (...args) => exports.log(args.map(a => typeof a === 'object' ? a?.message || String(a) : String(a)).join(' '), "warn");
+exports.debug = (...args) => exports.log(args.map(a => typeof a === 'object' ? a?.message || String(a) : String(a)).join(' '), "debug");
+exports.cmd = (...args) => exports.log(args.map(a => typeof a === 'object' ? a?.message || String(a) : String(a)).join(' '), "cmd");

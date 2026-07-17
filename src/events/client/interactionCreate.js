@@ -6,7 +6,7 @@ module.exports = async (client, interaction) => {
             return interaction.reply({ content: 'Unknown command', ephemeral: true });
         }
         
-        client.logger.log(`${interaction.user.username} (${interaction.user.id}) ejecuto el comando ${cmd.help.name}`, "cmd");
+        client.logger.log(`${interaction.user.username} (${interaction.user.id}) ejecuto el comando ${cmd.help.name} en ${interaction.guild?.name || interaction.guild?.id || "DM"}`, "cmd");
         
         let index = 0;
         const next = async (context = interaction) => {
