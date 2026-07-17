@@ -7,7 +7,7 @@ function getDb() {
 }
 
 /**
- * Mee6-style formula: XP needed for level N
+ * Formula: XP needed for level N
  *   xp = 5(N-1)^2 + 50(N-1) + 100
  *
  * Inverted to get level from XP:
@@ -141,7 +141,7 @@ class Score {
         };
     }
 
-// ── Compatibility aliases ────────────────────────────
+    // ── Compatibility aliases ────────────────────────────
     // These match the method names used by existing commands.
 
     /** Alias for findByUser — used by rank command */
@@ -149,7 +149,7 @@ class Score {
         return Score.findByUser(userId, guildId);
     }
 
-    /** Expose Mee6 formula — used by rank command */
+    /** Expose formula — used by rank command */
     static getXPForLevel(level) {
         return getXPForLevel(level);
     }
@@ -165,7 +165,7 @@ class Score {
         const current = Score.findByUser(userId, guildId);
         const oldLevel = current.level;
         const newLevel = getLevelFromXP(xp);
-        
+
         Score.upsert({
             id: current.id,
             user: current.user,
@@ -173,7 +173,7 @@ class Score {
             points: xp,
             level: newLevel,
         });
-        
+
         return { points: xp, level: newLevel, oldLevel };
     }
 
@@ -183,7 +183,7 @@ class Score {
         const minXP = getXPForLevel(level);
         const current = Score.findByUser(userId, guildId);
         const oldLevel = current.level;
-        
+
         Score.upsert({
             id: current.id,
             user: current.user,
@@ -191,7 +191,7 @@ class Score {
             points: minXP,
             level: level,
         });
-        
+
         return { points: minXP, level, oldLevel };
     }
 }

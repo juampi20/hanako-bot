@@ -38,11 +38,12 @@ exports.execute = async (client, interaction) => {
     }
 
     const embed = baseEmbed(client, { color: COLORS.SUCCESS })
-        .setTitle(`🎉 Rol asignado para nivel ${level}`)
+        .setTitle(`🎉 Rol asignado`)
         .addFields(
+            { name: "ID", value: result.id.toString(), inline: true },
             { name: "Nivel", value: `${level}`, inline: true },
-            { name: "Rol", value: role.toString(), inline: true },
-            { name: "ID de recompensa", value: result.id.toString(), inline: true }
+            { name: "Rol", value: role.toString(), inline: true }
+
         );
 
     await interaction.reply({ embeds: [embed] });

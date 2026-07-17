@@ -34,11 +34,11 @@ exports.execute = async (client, interaction) => {
     const roleName = role ? role.name : `#${reward.role_id}`;
 
     const embed = baseEmbed(client, { color: COLORS.ERROR })
-        .setTitle(`🗑️ Recompensa eliminada`)
+        .setTitle(`🗑️ Rol desasignado`)
         .addFields(
+            { name: "ID de recompensa", value: rewardId.toString(), inline: true },
             { name: "Nivel", value: `${reward.level}`, inline: true },
-            { name: "Rol", value: roleName, inline: true },
-            { name: "ID de recompensa", value: rewardId.toString(), inline: true }
+            { name: "Rol", value: roleName, inline: true }
         )
         .setFooter({ text: "Recompensa eliminada correctamente." });
 
