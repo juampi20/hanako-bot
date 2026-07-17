@@ -77,7 +77,7 @@ module.exports = async (client, message) => {
 
             if (result) {
                 // Assign reward for current level (handles both level-up and retroactive)
-                const assignedRole = await assignLevelReward(client, message, result.level);
+                await assignLevelReward(client, message, result.level);
 
                 if (result.level > result.oldLevel) {
                     const channelId = client.config.levelUpChannel;
@@ -87,9 +87,16 @@ module.exports = async (client, message) => {
 
                     if (targetChannel) {
                         let msg = `🎉 ¡${message.author} subió al nivel **${result.level}**!`;
-                        if (assignedRole) {
-                            msg += `\n📜 Has recibido el rol **${assignedRole}**`;
+
+                        // Look up reward role for this level to announce it
+                        const reward = client.rewardService?.findByGuildAndLevel(message.guild.id, result.level);
+                        if (reward) {
+                            const role = message.guild.roles.cache.get(reward.role_id);
+                            if (role) {
+                                msg += `\n📜 Has recibido el rol **${role.name}**`;
+                            }
                         }
+
                         targetChannel.send(msg)
                             .catch(err => client.logger.log(`Level-up notify error: ${err}`, 'error'));
                     }
