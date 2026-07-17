@@ -36,5 +36,6 @@ exports.help = {
     description: "Hanako-kun habla!",
     category: "misc",
     usage: "say <text>",
+    moderatorOnly: true,
     hintSlash: "say"
 };

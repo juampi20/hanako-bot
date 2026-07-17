@@ -1,6 +1,6 @@
 const cooldowns = new Map();
 
-module.exports = (client, context, command, next) => {
+const cooldown = (client, context, command, next) => {
     const cooldownTime = (command.help && command.help.cooldown) || 3000;
     if (cooldownTime <= 0) {return next();}
 
@@ -28,3 +28,6 @@ module.exports = (client, context, command, next) => {
     setTimeout(() => cooldowns.delete(key), cooldownTime);
     return next();
 };
+
+cooldown.priority = 10;
+module.exports = cooldown;

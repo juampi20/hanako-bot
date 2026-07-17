@@ -1,4 +1,4 @@
-module.exports = async (client, context, command, next) => {
+const errorBoundary = async (client, context, command, next) => {
     try {
         await next();
     } catch (err) {
@@ -12,3 +12,6 @@ module.exports = async (client, context, command, next) => {
         }
     }
 };
+
+errorBoundary.priority = 30;
+module.exports = errorBoundary;

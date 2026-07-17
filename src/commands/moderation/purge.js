@@ -1,6 +1,15 @@
 const { SlashCommandBuilder, PermissionFlagsBits, InteractionContextType, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require("discord.js");
 
 exports.run = async (client, message, args) => {
+    // Permission check: require ManageMessages (same as slash version)
+    const isMod = client.config.moderatorIds.includes(message.author.id);
+    const isOwner = message.author.id === client.config.ownerID;
+    const hasPerms = message.member?.permissions.has(PermissionFlagsBits.ManageMessages);
+
+    if (!hasPerms && !isMod && !isOwner) {
+        return message.reply('no tenés permiso para usar este comando.');
+    }
+
     const user = message.mentions.users.first();
     const amount = parseInt(args[0]) ? parseInt(args[0]) : parseInt(args[1])
 
@@ -89,6 +98,5 @@ exports.help = {
     description: "Eliminar mensajes.",
     category: "moderation",
     usage: "purge <amount> or <user> <amount>",
-    ownerOnly: true,
     hintSlash: "purge"
 };

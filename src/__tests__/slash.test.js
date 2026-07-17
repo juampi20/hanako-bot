@@ -65,7 +65,7 @@ describe('Registration JSON output', () => {
 // Test that the permission middleware works with both a fake message-like object (has .author) and a fake interaction-like object (has .user)
 describe('Middleware dual-context', () => {
     // Import permissions middleware at the top level
-    const permissionsMiddleware = require('../middleware/02-permissions');
+    const permissionsMiddleware = require('../middleware/permissions');
 
     test('middleware works with message-like object', () => {
         const mockClient = { config: { ownerID: '123456789' } };

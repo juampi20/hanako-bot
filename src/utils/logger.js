@@ -1,8 +1,10 @@
 const chalk = require("chalk");
-const moment = require("moment");
+
+function pad(n) { return String(n).padStart(2, '0'); }
 
 exports.log = (content, type = "log") => {
-    const timestamp = `[${moment().format("DD-MM-YYYY HH:mm:ss")}]`;
+    const d = new Date();
+    const timestamp = `[${pad(d.getDate())}-${pad(d.getMonth() + 1)}-${d.getFullYear()} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}]`;
     switch (type) {
         case "log": {
             return console.log(`${timestamp} ${chalk.bgBlue(type.toUpperCase())} ${content} `);

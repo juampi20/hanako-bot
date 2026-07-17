@@ -12,6 +12,7 @@ async function start() {
             GatewayIntentBits.GuildMembers,
             GatewayIntentBits.GuildMessages,
             GatewayIntentBits.MessageContent,
+            GatewayIntentBits.GuildVoiceStates,
         ],
     });
 
@@ -50,7 +51,7 @@ async function loadMiddleware(client) {
         }
     }
 
-    middleware.sort();
+    middleware.sort((a, b) => (a.priority || 50) - (b.priority || 50));
     client.middleware = middleware;
     client.logger.log(
         `Cargando un total de ${middleware.length} middleware.`,

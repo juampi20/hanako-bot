@@ -1,63 +1,13 @@
 const xpCooldowns = new Map();
 const XP_COOLDOWN_MS = 60000;
 
+const { assignLevelReward, notifyLevelUp } = require('../../utils/leveling');
+
 /**
  * Return a random integer between min and max (inclusive).
  */
 function randomInt(min, max) {
     return Math.floor(Math.random() * (max - min + 1)) + min;
-}
-
-/**
- * Assign a level reward role to a member if one exists for their current level
- * and they don't already have the role.
- * Returns the assigned role name or null.
- */
-async function assignLevelReward(client, message, level) {
-    if (!client.rewardService) {
-        return null;
-    }
-    const reward = client.rewardService.findByGuildAndLevel(message.guild.id, level);
-    if (!reward) {
-        return null;
-    }
-
-    try {
-        const member = await message.guild.members.fetch(message.author.id).catch(() => null);
-        if (!member) {
-            return null;
-        }
-
-        const role = message.guild.roles.cache.get(reward.role_id);
-        if (!role) {
-            return null;
-        }
-
-        // Skip if they already have the role
-        if (member.roles.cache.has(role.id)) {
-            return null;
-        }
-
-        // Remove previous reward roles (they're mutually exclusive per guild)
-        const allRewards = client.rewardService.findAllByGuild(message.guild.id);
-        const prevRoleIds = allRewards
-            .filter(r => r.role_id !== reward.role_id)
-            .map(r => r.role_id)
-            .filter(id => member.roles.cache.has(id));
-
-        const botMember = message.guild.members.me;
-        if (botMember.roles.highest.comparePositionTo(role) >= 0 && botMember.permissions.has('MANAGE_ROLES')) {
-            await member.roles.remove(prevRoleIds);
-            await member.roles.add(role.id);
-            return role.name;
-        } else {
-            client.logger.log(`assignLevelReward: hierarchy/permission blocked: guild ${message.guild.id}, user ${message.author.id}, role ${reward.role_id}`, 'warn');
-            return null;
-        }
-    } catch (err) {
-        client.logger.log(`assignLevelReward: exception for ${message.author.id}: ${err}`, 'error');
-        return null;
-    }
 }
 
 module.exports = async (client, message) => {
@@ -77,29 +27,11 @@ module.exports = async (client, message) => {
 
             if (result) {
                 // Assign reward for current level (handles both level-up and retroactive)
-                await assignLevelReward(client, message, result.level);
+                const member = message.member || await message.guild.members.fetch(message.author.id).catch(() => null);
+                if (member) await assignLevelReward(client, message.guild, member, result.level);
 
                 if (result.level > result.oldLevel) {
-                    const channelId = client.config.levelUpChannel;
-                    const targetChannel = channelId
-                        ? await client.channels.fetch(channelId).catch(() => null)
-                        : message.channel;
-
-                    if (targetChannel) {
-                        let msg = `🎉 ¡${message.author} subió al nivel **${result.level}**!`;
-
-                        // Look up reward role for this level to announce it
-                        const reward = client.rewardService?.findByGuildAndLevel(message.guild.id, result.level);
-                        if (reward) {
-                            const role = message.guild.roles.cache.get(reward.role_id);
-                            if (role) {
-                                msg += `\n📜 Has recibido el rol **${role.name}**`;
-                            }
-                        }
-
-                        targetChannel.send(msg)
-                            .catch(err => client.logger.log(`Level-up notify error: ${err}`, 'error'));
-                    }
+                    await notifyLevelUp(client, message.guild, message.member, result.level);
                 }
             }
         }
