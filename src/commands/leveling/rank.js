@@ -1,5 +1,6 @@
 const { SlashCommandBuilder, InteractionContextType } = require("discord.js");
 const { baseEmbed, COLORS } = require("../../utils/embed");
+const { progressBar } = require("../../utils/progress");
 
 function buildRankEmbed(client, target, score) {
     const levelingService = client.levelingService;
@@ -7,18 +8,23 @@ function buildRankEmbed(client, target, score) {
     const currentXP = score.points;
     const xpForCurrent = levelingService.getXPForLevel(currentLevel);
     const xpForNext = levelingService.getXPForLevel(currentLevel + 1);
-    const progress = Math.min(Math.floor(((currentXP - xpForCurrent) / (xpForNext - xpForCurrent)) * 10), 10);
-    const bar = "▰".repeat(Math.max(progress, 0)) + "▱".repeat(Math.max(10 - progress, 0));
+
+    // XP floor for the current level (0 for level 1, getXPForLevel for 2+)
+    const xpFloor = currentLevel <= 1 ? 0 : xpForCurrent;
+    const xpIntoLevel = Math.max(0, currentXP - xpFloor);
+    const xpNeeded = xpForNext - xpFloor;
+    const bar = progressBar(xpIntoLevel, xpNeeded);
+    const pct = xpNeeded > 0 ? Math.round((xpIntoLevel / xpNeeded) * 100) : 100;
 
     // Find rank position
-    const leaderboard = levelingService.getLeaderboard(target ? target.guild?.id || target.guild : client.guilds.cache.first()?.id, 100);
+    const leaderboard = levelingService.getLeaderboard(target ? score.guild : client.guilds.cache.first()?.id, 100);
     const rank = leaderboard.findIndex(entry => entry.user === target.id) + 1;
 
     const embed = baseEmbed(client, { color: COLORS.LEVELING })
         .setAuthor({ name: target.username, iconURL: target.avatarURL() })
         .setDescription([
-            `${bar}`,
-            `**${currentXP} / ${xpForNext}** XP`
+            `${bar}  ${pct}%`,
+            `**${currentXP} / ${xpForNext}** XP hacia el nivel **${currentLevel + 1}**`
         ].join("\n"))
         .addFields(
             { name: "Nivel", value: `${currentLevel}`, inline: true },
