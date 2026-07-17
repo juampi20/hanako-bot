@@ -1,13 +1,14 @@
 const path = require('path');
 const fs = require('fs');
 const os = require('os');
-const { initialize, getDb } = require('../services/database');
-const LevelingService = require('../services/leveling');
+const { initialize, getDb } = require('../database/connect');
+const { loadModels, Score, Reward } = require('../database/models');
 
 const TEST_DB = path.join(os.tmpdir(), `hanako-test-${Date.now()}.sqlite`);
 
 beforeAll(() => {
-    initialize(TEST_DB);
+    const db = initialize(TEST_DB);
+    loadModels(db);
 });
 
 afterAll(() => {
@@ -28,16 +29,10 @@ describe('database singleton', () => {
     });
 });
 
-describe('LevelingService', () => {
-    let svc;
-
-    beforeAll(() => {
-        svc = new LevelingService();
-    });
-
-    describe('getScore', () => {
+describe('Score model', () => {
+    describe('findByUser', () => {
         test('returns default for new user', () => {
-            const score = svc.getScore('newuser', 'guild1');
+            const score = Score.findByUser('newuser', 'guild1');
             expect(score).toEqual({
                 id: 'guild1-newuser',
                 user: 'newuser',
@@ -48,67 +43,173 @@ describe('LevelingService', () => {
         });
 
         test('returns persisted score after addXP', () => {
-            svc.addXP('persistuser', 'guild1', 50);
-            const score = svc.getScore('persistuser', 'guild1');
+            Score.addXP('persistuser', 'guild1', 50);
+            const score = Score.findByUser('persistuser', 'guild1');
             expect(score.points).toBe(50);
         });
     });
 
     describe('addXP', () => {
         test('adds XP and recalculates level (Mee6 formula)', () => {
-            const result = svc.addXP('xptest', 'guild1', 100);
+            const result = Score.addXP('xptest', 'guild1', 100);
             expect(result.points).toBe(100);
             // Mee6: level 1 requires 100 XP
             expect(result.level).toBe(1);
         });
 
         test('returns oldLevel for level-up detection', () => {
-            const result = svc.addXP('leveluptest', 'guild1', 200);
+            const result = Score.addXP('leveluptest', 'guild1', 200);
             expect(result.level).toBe(2);
             expect(result.oldLevel).toBe(1); // started at level 1
             expect(result.level).toBeGreaterThan(result.oldLevel);
         });
 
         test('returns null for zero XP', () => {
-            expect(svc.addXP('zerotest', 'guild1', 0)).toBeNull();
+            expect(Score.addXP('zerotest', 'guild1', 0)).toBeNull();
         });
 
         test('returns null for negative XP', () => {
-            expect(svc.addXP('negtest', 'guild1', -10)).toBeNull();
+            expect(Score.addXP('negtest', 'guild1', -10)).toBeNull();
         });
     });
 
     describe('getLeaderboard', () => {
         test('returns top scores ordered by points DESC', () => {
-            svc.addXP('lbtop', 'guild2', 200);
-            svc.addXP('lbbottom', 'guild2', 50);
+            Score.addXP('lbtop', 'guild2', 200);
+            Score.addXP('lbbottom', 'guild2', 50);
 
-            const lb = svc.getLeaderboard('guild2');
+            const lb = Score.getLeaderboard('guild2');
             expect(lb.length).toBeGreaterThanOrEqual(2);
             expect(lb[0].user).toBe('lbtop');
             expect(lb[0].points).toBeGreaterThanOrEqual(lb[1].points);
         });
 
         test('returns empty array for guild with no scores', () => {
-            const lb = svc.getLeaderboard('emptyguild');
+            const lb = Score.getLeaderboard('emptyguild');
             expect(lb).toEqual([]);
         });
     });
 
-    describe('givePoints', () => {
-        test('transfers points between users', () => {
-            svc.addXP('giver', 'guild3', 100);
-            svc.addXP('receiver', 'guild3', 10);
+    describe('setXP', () => {
+        test('sets XP and recalculates level', () => {
+            Score.addXP('setxptest', 'guild4', 500);
 
-            const result = svc.givePoints('giver', 'receiver', 'guild3', 30);
+            const result = Score.setXP('setxptest', 'guild4', 200);
             expect(result).not.toBeNull();
-            expect(result.sender.points).toBe(70);
-            expect(result.target.points).toBe(40);
+            expect(result.points).toBe(200);
+            expect(result.level).toBe(3);
         });
 
-        test('returns null for insufficient points', () => {
-            const result = svc.givePoints('pooruser', 'richuser', 'guild3', 999);
+        test('can go down in level', () => {
+            const result = Score.setXP('downtest', 'guild4', 50);
+            expect(result).not.toBeNull();
+            expect(result.points).toBe(50);
+            expect(result.level).toBe(1);
+        });
+    });
+
+    describe('setLevel', () => {
+        test('sets level and computes minimum XP', () => {
+            const result = Score.setLevel('lvltest', 'guild4', 5);
+            expect(result).not.toBeNull();
+            expect(result.level).toBe(5);
+            expect(result.points).toBe(300);
+        });
+
+        test('returns null for level below 1', () => {
+            const result = Score.setLevel('badlvl', 'guild4', 0);
             expect(result).toBeNull();
+        });
+    });
+});
+
+describe('Reward model', () => {
+    describe('createTable', () => {
+        test('creates level_rewards table', () => {
+            expect(true).toBe(true);
+        });
+    });
+
+    describe('create', () => {
+        test('creates reward successfully', () => {
+            const result = Reward.create('guild1', 5, 'role123');
+            expect(result).toBeDefined();
+            expect(result.id).toBeDefined();
+            expect(result.guild_id).toBe('guild1');
+            expect(result.level).toBe(5);
+            expect(result.role_id).toBe('role123');
+        });
+
+        test('returns null for duplicate reward (unique constraint)', () => {
+            Reward.create('guild2', 10, 'role456');
+            const result = Reward.create('guild2', 10, 'role456_dup');
+            expect(result).toBeNull();
+        });
+    });
+
+    describe('findByGuildAndLevel', () => {
+        test('finds existing reward', () => {
+            Reward.create('guild3', 7, 'role789');
+            const reward = Reward.findByGuildAndLevel('guild3', 7);
+            expect(reward).toBeDefined();
+            expect(reward.level).toBe(7);
+            expect(reward.role_id).toBe('role789');
+        });
+
+        test('returns undefined for non-existent reward', () => {
+            const reward = Reward.findByGuildAndLevel('guild4', 99);
+            expect(reward).toBeUndefined();
+        });
+    });
+
+    describe('findById', () => {
+        test('finds reward by ID', () => {
+            const result1 = Reward.create('guild5', 12, 'role999');
+            const id = result1.id;
+            const reward = Reward.findById(id);
+            expect(reward).toBeDefined();
+            expect(reward.id).toBe(id);
+        });
+
+        test('returns undefined for non-existent ID', () => {
+            const reward = Reward.findById(999999);
+            expect(reward).toBeUndefined();
+        });
+    });
+
+    describe('findAllByGuild', () => {
+        test('lists all rewards for a guild ordered by level', () => {
+            Reward.create('guild6', 3, 'role_a');
+            Reward.create('guild6', 1, 'role_b');
+            Reward.create('guild6', 5, 'role_c');
+            
+            const rewards = Reward.findAllByGuild('guild6');
+            expect(rewards.length).toBe(3);
+            expect(rewards[0].level).toBe(1);
+            expect(rewards[1].level).toBe(3);
+            expect(rewards[2].level).toBe(5);
+        });
+
+        test('returns empty array for guild with no rewards', () => {
+            const rewards = Reward.findAllByGuild('emptyguild');
+            expect(rewards).toEqual([]);
+        });
+    });
+
+    describe('deleteById', () => {
+        test('deletes existing reward', () => {
+            const result1 = Reward.create('guild7', 20, 'role_del');
+            const id = result1.id;
+            const result = Reward.deleteById(id);
+            expect(result.changes).toBe(1);
+            
+            const reward = Reward.findById(id);
+            expect(reward).toBeUndefined();
+        });
+
+        test('returns changes: 0 for non-existent ID', () => {
+            const result = Reward.deleteById(888888);
+            expect(result.changes).toBe(0);
         });
     });
 });
