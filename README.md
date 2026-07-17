@@ -28,7 +28,7 @@ src/
 │       └── Reward.js              # Recompensas por nivel
 ├── events/
 │   └── client/
-│       ├── ready.js               # Inicialización DB + slash commands
+│       ├── clientReady.js         # Inicialización DB + slash commands
 │       ├── interactionCreate.js   # Slash command handler con middleware
 │       └── messageCreate.js       # XP automática + level-up rewards
 ├── handlers/
