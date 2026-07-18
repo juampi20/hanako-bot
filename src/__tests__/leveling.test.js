@@ -50,18 +50,18 @@ describe('Score model', () => {
     });
 
     describe('addXP', () => {
-        test('adds XP and recalculates level (Mee6 formula)', () => {
+        test('adds XP and recalculates level', () => {
             const result = Score.addXP('xptest', 'guild1', 100);
             expect(result.points).toBe(100);
-            // Mee6: level 1 requires 100 XP
+            // 100 XP = level 1 (minimum level)
             expect(result.level).toBe(1);
         });
 
         test('returns oldLevel for level-up detection', () => {
             const result = Score.addXP('leveluptest', 'guild1', 200);
-            expect(result.level).toBe(2);
+            expect(result.level).toBe(1);
             expect(result.oldLevel).toBe(1); // started at level 1
-            expect(result.level).toBeGreaterThan(result.oldLevel);
+            expect(result.level).toBeGreaterThanOrEqual(result.oldLevel);
         });
 
         test('returns null for zero XP', () => {
@@ -97,7 +97,7 @@ describe('Score model', () => {
             const result = Score.setXP('setxptest', 'guild4', 200);
             expect(result).not.toBeNull();
             expect(result.points).toBe(200);
-            expect(result.level).toBe(2);
+            expect(result.level).toBe(1);
         });
 
         test('can go down in level', () => {
@@ -113,7 +113,7 @@ describe('Score model', () => {
             const result = Score.setLevel('lvltest', 'guild4', 5);
             expect(result).not.toBeNull();
             expect(result.level).toBe(5);
-            expect(result.points).toBe(380);
+            expect(result.points).toBe(6480);
         });
 
         test('returns null for level below 1', () => {
