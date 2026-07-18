@@ -15,7 +15,7 @@ function getDb() {
  *   level = max(k + 1, 1)
  */
 function getLevelFromXP(xp) {
-    if (xp <= 0) return 1;
+    if (xp <= 0) {return 1;}
     const k = Math.floor((-300 + Math.sqrt(90000 + 1320 * xp)) / 660);
     return Math.max(k + 1, 1);
 }
