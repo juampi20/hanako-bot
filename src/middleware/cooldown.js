@@ -13,6 +13,7 @@ const cooldown = (client, context, command, next) => {
         const expiration = cooldowns.get(key);
         if (now < expiration) {
             const remaining = ((expiration - now) / 1000).toFixed(1);
+            client.logger?.debug?.(`Cooldown: block for ${userId}:${guildId}, remaining=${remaining}s`);
             if (context.reply) {
                 return context.reply({
                     content: `tomate un tiempo. Esperá ${remaining} segundos.`,

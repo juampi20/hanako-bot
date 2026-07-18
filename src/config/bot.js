@@ -21,7 +21,8 @@ const config = {
     levelUpChannel: process.env.LEVEL_UP_CHANNEL_ID || null,
     devGuildId: process.env.DEV_GUILD_ID || null,
     voiceXpInterval: parseInt(process.env.VOICE_XP_INTERVAL, 10) || 60,
-    voiceXpAmount: parseInt(process.env.VOICE_XP_AMOUNT, 10) || 10,
+    voiceXpAmount: parseInt(process.env.VOICE_XP_AMOUNT, 10) || 4,
+    levelUpNotifyInterval: parseInt(process.env.LEVEL_UP_NOTIFY_INTERVAL, 10) || 5,
     colors: COLORS,
 };
 

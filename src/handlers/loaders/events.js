@@ -15,6 +15,8 @@ module.exports = (client) => {
             .readdirSync(categoryPath)
             .filter((f) => f.endsWith(".js"));
 
+        client.logger?.debug?.(`Events: scanning category ${category} for ${files.length} files`);
+
         for (const file of files) {
             const eventName = file.split(".")[0];
             const eventPath = path.join(categoryPath, file);
@@ -28,6 +30,7 @@ module.exports = (client) => {
                 }
             });
             totalLoaded++;
+            client.logger?.debug?.(`Events: loaded event ${eventName} from ${file}`);
         }
     }
 

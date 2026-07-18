@@ -16,6 +16,7 @@ exports.log = (content, type = "log") => {
             return console.log(`${timestamp} ${chalk.bgRed(type.toUpperCase())} ${content} `);
         }
         case "debug": {
+            if (!process.env.DEBUG) {return;}
             return console.log(`${timestamp} ${chalk.green(type.toUpperCase())} ${content} `);
         }
         case "cmd": {

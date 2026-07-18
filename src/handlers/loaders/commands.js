@@ -22,6 +22,7 @@ function loadCommands(client) {
             `Cargando un total de ${files.length} comandos (${folder}).`,
             "log"
         );
+        client.logger?.debug?.(`Commands: scanning folder ${folder} for ${files.length} files`);
 
         for (const file of files) {
             const props = require(path.join(folderPath, file));
@@ -31,6 +32,7 @@ function loadCommands(client) {
             if (props.data) {
                 client.interactions.set(commandName, props);
             }
+            client.logger?.debug?.(`Commands: loaded command ${commandName} from ${file}`);
         }
     }
 }

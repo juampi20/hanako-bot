@@ -11,6 +11,7 @@ const permissions = (client, context, command, next) => {
 
     // ownerOnly — only the configured owner may run this command
     if (command.help.ownerOnly && userId !== client.config.ownerID) {
+        client.logger?.debug?.(`Permissions: owner-only denied for ${userId} on command ${command.help.name}`);
         return deny(context, 'no tenés permiso para usar este comando.');
     }
 
@@ -19,6 +20,7 @@ const permissions = (client, context, command, next) => {
         const isModerator = client.config.moderatorIds.includes(userId);
         const isOwner = userId === client.config.ownerID;
         if (!isModerator && !isOwner) {
+            client.logger?.debug?.(`Permissions: moderator-only denied for ${userId} on command ${command.help.name}`);
             return deny(context, 'no tenés permiso para usar este comando.');
         }
     }

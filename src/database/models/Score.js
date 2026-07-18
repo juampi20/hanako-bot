@@ -161,7 +161,7 @@ class Score {
 
     /** Set XP directly, recalculate level. Can go up or down. */
     static setXP(userId, guildId, xp) {
-        if (xp < 0) return null;
+        if (xp < 0) {return null;}
         const current = Score.findByUser(userId, guildId);
         const oldLevel = current.level;
         const newLevel = getLevelFromXP(xp);
@@ -179,7 +179,7 @@ class Score {
 
     /** Set level directly, compute minimum XP for that level. */
     static setLevel(userId, guildId, level) {
-        if (level < 1) return null;
+        if (level < 1) {return null;}
         const minXP = getXPForLevel(level);
         const current = Score.findByUser(userId, guildId);
         const oldLevel = current.level;

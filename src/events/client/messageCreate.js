@@ -23,15 +23,18 @@ module.exports = async (client, message) => {
             setTimeout(() => xpCooldowns.delete(key), XP_COOLDOWN_MS);
 
             const xpAmount = randomInt(client.config.xpMin, client.config.xpMax);
+            client.logger?.debug?.(`Message XP: processing XP for ${message.author.id} in ${message.guild.id}, amount=${xpAmount}`);
             const result = client.levelingService.addXP(message.author.id, message.guild.id, xpAmount);
 
             if (result) {
+                client.logger?.debug?.(`Message XP: XP recorded - user=${message.author.id} old=${result.oldLevel} new=${result.level}`);
                 // Assign reward for current level (handles both level-up and retroactive)
                 const member = message.member || await message.guild.members.fetch(message.author.id).catch(() => null);
-                if (member) await assignLevelReward(client, message.guild, member, result.level);
+                if (member) {await assignLevelReward(client, message.guild, member, result.level);}
 
                 if (result.level > result.oldLevel) {
                     await notifyLevelUp(client, message.guild, message.member, result.level);
+                    client.logger?.debug?.(`Message XP: level-up for ${message.author.id} to level ${result.level}`);
                 }
             }
         }
@@ -43,9 +46,12 @@ module.exports = async (client, message) => {
     const command = args.shift().toLowerCase();
 
     const cmd = client.commands.get(command);
-    if (!cmd) { return; }
+    if (!cmd) {
+        client.logger?.debug?.(`MessageCreate: command not found: ${command}`);
+        return;
+    }
 
-    client.logger.log(`${message.author.username} (${message.author.id}) ejecuto el comando ${cmd.help.name} en ${message.guild?.name || message.guild?.id || "DM"}`, "cmd");
+    client.logger.debug(`${message.author.username} (${message.author.id}) ejecuto el comando ${cmd.help.name} en ${message.guild?.name || message.guild?.id || "DM"}`);
 
     let index = 0;
     const next = async () => {
