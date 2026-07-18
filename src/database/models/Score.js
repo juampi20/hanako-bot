@@ -8,20 +8,21 @@ function getDb() {
 
 /**
  * Formula: XP needed for level N
- *   xp = 5(N-1)^2 + 50(N-1) + 100
+ *   xp = 330(N-1)^2 + 300(N-1)
  *
  * Inverted to get level from XP:
- *   k = floor((-50 + sqrt(500 + 20*xp)) / 10)
+ *   k = floor((-300 + sqrt(90000 + 1320*xp)) / 660)
  *   level = max(k + 1, 1)
  */
 function getLevelFromXP(xp) {
-    const k = Math.floor((-50 + Math.sqrt(500 + 20 * xp)) / 10);
+    if (xp <= 0) return 1;
+    const k = Math.floor((-300 + Math.sqrt(90000 + 1320 * xp)) / 660);
     return Math.max(k + 1, 1);
 }
 
 function getXPForLevel(level) {
     const n = Math.max(level - 1, 0);
-    return 5 * n * n + 50 * n + 100;
+    return 330 * n * n + 300 * n;
 }
 
 class Score {
@@ -60,7 +61,7 @@ class Score {
                 user: row.user,
                 guild: row.guild,
                 points: row.points,
-                level: row.level,
+                level: getLevelFromXP(row.points),  // recalculate from points
             };
         }
         return {
