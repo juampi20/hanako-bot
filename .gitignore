@@ -1,4 +1,44 @@
-node_modules
+# ── Dependencies ──────────────────────────────────────────
+node_modules/
+.pnp
+.pnp.js
+
+# ── Environment ───────────────────────────────────────────
 .env
+.env.local
+.env.production
+.env.development
+
+# ── Runtime data ──────────────────────────────────────────
 data/
+*.db
+*.db-wal
+*.db-shm
+
+# ── Logs ──────────────────────────────────────────────────
+logs/
+*.log
+npm-debug.log*
+
+# ── Test & coverage ───────────────────────────────────────
+coverage/
+.nyc_output/
+
+# ── Local caches & indexes ────────────────────────────────
 .atl/
+.codegraph/
+.cache/
+
+# ── IDE & editor ──────────────────────────────────────────
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+
+# ── Build artifacts ───────────────────────────────────────
+dist/
+build/
+*.tsbuildinfo
