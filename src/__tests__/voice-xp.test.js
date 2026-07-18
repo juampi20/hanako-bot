@@ -425,13 +425,14 @@ describe('initSessions()', () => {
         const client = makeMockClient();
         const eligibleVoice = { channel: { id: 'vc-1' }, channelId: 'vc-1', selfMute: false, serverMute: false, selfDeaf: false, serverDeaf: false };
         const member = makeMockMember({ voice: { ...eligibleVoice, member: makeMockMember({ voice: eligibleVoice }) } });
-        const voiceChannel = {
-            id: 'vc-1',
-            type: 'voice',
-            members: new Map([['user-1', member]]),
+        const voiceState = {
+            channelId: 'vc-1',
+            member,
+            serverMute: false,
+            serverDeaf: false,
         };
         const guild = makeMockGuild({
-            channels: { cache: new Map([['vc-1', voiceChannel]]) },
+            voiceStates: { cache: new Map([['user-1', voiceState]]) },
         });
         client.guilds.cache.set('guild-1', guild);
 
@@ -444,13 +445,14 @@ describe('initSessions()', () => {
     test('skips bot members', async () => {
         const client = makeMockClient();
         const botMember = makeMockMember({ id: 'bot-1', user: { bot: true, id: 'bot-1' } });
-        const voiceChannel = {
-            id: 'vc-1',
-            type: 'voice',
-            members: new Map([['bot-1', botMember]]),
+        const voiceState = {
+            channelId: 'vc-1',
+            member: botMember,
+            serverMute: false,
+            serverDeaf: false,
         };
         const guild = makeMockGuild({
-            channels: { cache: new Map([['vc-1', voiceChannel]]) },
+            voiceStates: { cache: new Map([['bot-1', voiceState]]) },
         });
         client.guilds.cache.set('guild-1', guild);
 
@@ -465,13 +467,14 @@ describe('initSessions()', () => {
         const mutedMember = makeMockMember({
             voice: { channel: { id: 'vc-1' }, channelId: 'vc-1', selfMute: true, serverMute: false, selfDeaf: false, serverDeaf: false },
         });
-        const voiceChannel = {
-            id: 'vc-1',
-            type: 'voice',
-            members: new Map([['user-1', mutedMember]]),
+        const voiceState = {
+            channelId: 'vc-1',
+            member: mutedMember,
+            serverMute: false,
+            serverDeaf: false,
         };
         const guild = makeMockGuild({
-            channels: { cache: new Map([['vc-1', voiceChannel]]) },
+            voiceStates: { cache: new Map([['user-1', voiceState]]) },
         });
         client.guilds.cache.set('guild-1', guild);
 

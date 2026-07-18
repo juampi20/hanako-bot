@@ -143,17 +143,20 @@ module.exports = async (client, oldState, newState) => {
 /**
  * Scan all guilds for members already in voice channels and add them to sessions.
  * Called once on bot ready to catch users who joined before the bot started.
+ *
+ * Uses guild.voiceStates.cache directly instead of channel.members because
+ * channel.members depends on guild.members.cache which may be empty at ready time.
  */
 async function initSessions(client) {
     for (const [, guild] of client.guilds.cache) {
-        for (const [, channel] of guild.channels.cache) {
-            if (channel.type !== 'voice') {continue;}
-            if (!channel.members) {continue;}
-            for (const [, member] of channel.members) {
-                const key = `${guild.id}:${member.id}`;
-                if (isEligible(client, member.voice)) {
-                    addSession(client, key);
-                }
+        if (!guild.voiceStates || !guild.voiceStates.cache) {continue;}
+        for (const [, vs] of guild.voiceStates.cache) {
+            if (!vs.channelId) {continue;}
+            const member = vs.member;
+            if (!member || member.user?.bot) {continue;}
+            const key = `${guild.id}:${member.id}`;
+            if (isEligible(client, vs)) {
+                addSession(client, key);
             }
         }
     }
