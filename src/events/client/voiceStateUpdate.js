@@ -3,11 +3,15 @@ const { assignLevelReward, notifyLevelUp } = require('../../utils/leveling');
 const sessions = new Map(); // key: `${guildId}:${userId}`, value: true
 let timerHandle = null;
 
-function isEligible(state) {
-    if (state.member.user.bot) return false;
+function isEligible(client, state) {
+    if (!state.member) {
+        client.logger?.log?.("Voice XP: session skipped — state.member is null", "debug");
+        return false;
+    }
+    if (state.member.user?.bot) return false;
     if (!state.channelId) return false;
-    if (state.member.voice?.selfMute || state.serverMute) return false;
-    if (state.member.voice?.selfDeaf || state.serverDeaf) return false;
+    if (state.serverMute || state.serverDeaf) return false;
+    if (state.member.voice?.selfMute || state.member.voice?.selfDeaf) return false;
     if (state.channelId === state.guild?.afkChannelId) return false;
     return true;
 }
@@ -44,13 +48,13 @@ async function tick(client) {
             if (!guild) { sessions.delete(key); continue; }
 
             const member = await guild.members.fetch(userId).catch(() => null);
-            if (!member || !member.voice.channel || member.user.bot) {
+            if (!member || member.user.bot) {
                 sessions.delete(key);
                 continue;
             }
 
             const vs = member.voice;
-            if (vs.selfMute || vs.serverMute || vs.selfDeaf || vs.serverDeaf || vs.channelId === guild.afkChannelId) {
+            if (!vs || !vs.channelId || vs.selfMute || vs.serverMute || vs.selfDeaf || vs.serverDeaf || vs.channelId === guild.afkChannelId) {
                 sessions.delete(key);
                 continue;
             }
@@ -74,7 +78,7 @@ module.exports = async (client, oldState, newState) => {
 
         // Join: was null, now has channel
         if (!oldState.channelId && newState.channelId) {
-            if (isEligible(newState)) addSession(client, key);
+            if (isEligible(client, newState)) addSession(client, key);
             return;
         }
 
@@ -87,14 +91,14 @@ module.exports = async (client, oldState, newState) => {
         // Move: both non-null, different channels
         if (oldState.channelId !== newState.channelId) {
             removeSession(key);
-            if (isEligible(newState)) addSession(client, key);
+            if (isEligible(client, newState)) addSession(client, key);
             return;
         }
 
         // Same channel: mute/deafen toggle
         if (oldState.channelId === newState.channelId) {
-            const wasEligible = isEligible(oldState);
-            const nowEligible = isEligible(newState);
+            const wasEligible = isEligible(client, oldState);
+            const nowEligible = isEligible(client, newState);
 
             if (wasEligible && !nowEligible) removeSession(key);
             else if (!wasEligible && nowEligible) addSession(client, key);
@@ -103,3 +107,8 @@ module.exports = async (client, oldState, newState) => {
         client.logger?.log?.(`Voice XP handler error: ${err}`, 'error');
     }
 };
+
+// Export for testing
+sessions;  // Keep export even if unused
+module.exports.sessions = sessions;
+module.exports.tick = tick;

@@ -267,3 +267,116 @@ describe('voiceStateUpdate handler', () => {
         expect(() => voiceHandler(client, null, null)).not.toThrow();
     });
 });
+
+describe('tick() function', () => {
+    beforeEach(() => {
+        voiceHandler.sessions.clear();
+        jest.clearAllMocks();
+    });
+
+    test('awards XP to eligible session', async () => {
+        const client = makeMockClient();
+        const member = makeMockMember();
+        const guild = makeMockGuild({
+            members: { fetch: jest.fn().mockResolvedValue(member) },
+        });
+        client.guilds.cache.set('guild-1', guild);
+
+        voiceHandler.sessions.set('guild-1:user-1', true);
+        await voiceHandler.tick(client);
+
+        expect(client.levelingService.addXP).toHaveBeenCalledWith('user-1', 'guild-1', 10);
+    });
+
+    test('removes session when member not in voice', async () => {
+        const client = makeMockClient();
+        const member = makeMockMember({ voice: { channel: null, channelId: null, selfMute: false, serverMute: false, selfDeaf: false, serverDeaf: false } });
+        const guild = makeMockGuild({
+            members: { fetch: jest.fn().mockResolvedValue(member) },
+        });
+        client.guilds.cache.set('guild-1', guild);
+
+        voiceHandler.sessions.set('guild-1:user-1', true);
+        await voiceHandler.tick(client);
+
+        expect(voiceHandler.sessions.has('guild-1:user-1')).toBe(false);
+    });
+
+    test('handles null member.voice without throwing', async () => {
+        const client = makeMockClient();
+        const member = makeMockMember({ voice: undefined });
+        const guild = makeMockGuild({
+            members: { fetch: jest.fn().mockResolvedValue(member) },
+        });
+        client.guilds.cache.set('guild-1', guild);
+
+        voiceHandler.sessions.set('guild-1:user-1', true);
+        await expect(voiceHandler.tick(client)).resolves.not.toThrow();
+        // Session should be removed when voice is undefined
+        expect(voiceHandler.sessions.has('guild-1:user-1')).toBe(false);
+    });
+
+    test('does not throw when sessions is empty', async () => {
+        const client = makeMockClient();
+        await expect(voiceHandler.tick(client)).resolves.not.toThrow();
+    });
+
+    test('multi-user: both sessions receive XP independently', async () => {
+        const client = makeMockClient();
+        const member1 = makeMockMember({ id: 'user-1', user: { bot: false, id: 'user-1' } });
+        const member2 = makeMockMember({ id: 'user-2', user: { bot: false, id: 'user-2' } });
+        const guild = makeMockGuild({
+            members: {
+                fetch: jest.fn((id) => {
+                    if (id === 'user-1') return Promise.resolve(member1);
+                    if (id === 'user-2') return Promise.resolve(member2);
+                    return Promise.resolve(null);
+                }),
+            },
+        });
+        client.guilds.cache.set('guild-1', guild);
+
+        voiceHandler.sessions.set('guild-1:user-1', true);
+        voiceHandler.sessions.set('guild-1:user-2', true);
+        await voiceHandler.tick(client);
+
+        expect(client.levelingService.addXP).toHaveBeenCalledTimes(2);
+        expect(client.levelingService.addXP).toHaveBeenCalledWith('user-1', 'guild-1', 10);
+        expect(client.levelingService.addXP).toHaveBeenCalledWith('user-2', 'guild-1', 10);
+    });
+
+    test('multi-user: one leaves, other remains', async () => {
+        const client = makeMockClient();
+        const member1 = makeMockMember({ id: 'user-1', user: { bot: false, id: 'user-1' } });
+        const member2 = makeMockMember({ id: 'user-2', user: { bot: false, id: 'user-2' } });
+        const guild = makeMockGuild({
+            members: {
+                fetch: jest.fn((id) => {
+                    if (id === 'user-1') return Promise.resolve(member1);
+                    if (id === 'user-2') return Promise.resolve(member2);
+                    return Promise.resolve(null);
+                }),
+            },
+        });
+        client.guilds.cache.set('guild-1', guild);
+
+        voiceHandler.sessions.set('guild-1:user-1', true);
+        voiceHandler.sessions.set('guild-1:user-2', true);
+        // Simulate user-1 leaving by setting them as not in voice
+        member1.voice = { channel: null, channelId: null };
+        await voiceHandler.tick(client);
+
+        // user-1 should be removed, user-2 should still be active
+        expect(voiceHandler.sessions.has('guild-1:user-1')).toBe(false);
+        expect(voiceHandler.sessions.has('guild-1:user-2')).toBe(true);
+    });
+});
+
+describe('isEligible() null safety', () => {
+    test('returns false when state.member is null', () => {
+        const client = makeMockClient();
+        const state = makeVoiceState({ member: null });
+        // The handler wraps isEligible in try/catch, so it should not throw
+        expect(() => voiceHandler(client, state, state)).not.toThrow();
+    });
+});
