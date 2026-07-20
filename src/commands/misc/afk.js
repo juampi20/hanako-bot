@@ -37,6 +37,15 @@ exports.execute = async (client, interaction) => {
 			.setDescription(`Te marcaste como ausente.\n**Motivo:** ${reason}`)
 			.setFooter({ text: 'Cuando vuelvas, envía un mensaje o únete a un canal de voz para desmarcarte.' });
 
+		// Notify AFK channel if enabled
+		if (client.config.afkNotify && client.config.afkChannelId) {
+			const channel = interaction.guild?.channels.cache.get(client.config.afkChannelId);
+			if (channel) {
+				channel.send(`${member.displayName} se marcó como AFK · ${reason}`)
+					.catch(() => null);
+			}
+		}
+
 		await interaction.editReply({ embeds: [embed] });
 	}
 	catch (err) {

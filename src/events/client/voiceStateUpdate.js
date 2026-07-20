@@ -136,6 +136,11 @@ module.exports = async (client, oldState, newState) => {
 			const isInAfkChannel = targetChannelId === guild.afkChannelId;
 			const wasInAfkChannel = oldChannelId === guild.afkChannelId;
 
+			// Resolve notification target
+			const afkNotifyTarget = client.config.afkNotify && client.config.afkChannelId
+				? guild.channels.cache.get(client.config.afkChannelId)
+				: null;
+
 			// Join or move INTO AFK channel: set AFK (if not already)
 			if (isInAfkChannel && !wasInAfkChannel) {
 				const member = newState.member || (await newState.guild?.members.fetch(userId).catch(() => null));
@@ -146,10 +151,8 @@ module.exports = async (client, oldState, newState) => {
 				if (!existing && currentChannelId === guild.afkChannelId) {
 					const nickname = member.nickname || member.user.username;
 					client.afkService.set(userId, guildId, 'Está ausente', Math.floor(Date.now() / 1000), nickname);
-					// Notify in guild system channel or DM
-					const target = guild.systemChannel || await member.createDM().catch(() => null);
-					if (target) {
-						target.send(`<@${userId}> está ahora AFK (canal de voz AFK).`).catch(() => null);
+					if (afkNotifyTarget) {
+						afkNotifyTarget.send(`${member.displayName} está ahora AFK (canal de voz AFK).`).catch(() => null);
 					}
 				}
 			}
@@ -164,9 +167,8 @@ module.exports = async (client, oldState, newState) => {
 						newState.member.setNickname(existing.was_nickname, 'Restoring pre-AFK nickname')
 							.catch(err => client.logger?.debug?.(`AFK: nickname restore failed for ${userId}: ${err.message}`));
 					}
-					const target = guild.systemChannel || await newState.member?.createDM().catch(() => null);
-					if (target) {
-						target.send(`<@${userId}> ya no está AFK (se unió a un canal de voz).`).catch(() => null);
+					if (afkNotifyTarget) {
+						afkNotifyTarget.send(`${newState.member?.displayName || userId} ya no está AFK (salió del canal AFK).`).catch(() => null);
 					}
 				}
 			}

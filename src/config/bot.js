@@ -26,6 +26,12 @@ const config = {
 	levelUpNotify: toBool(process.env.LEVEL_UP_NOTIFY) || false,
 	levelUpChannel: process.env.LEVEL_UP_CHANNEL_ID || null,
 	levelUpNotifyInterval: parseInt(process.env.LEVEL_UP_NOTIFY_INTERVAL, 10) || 5,
+
+	// AFK system
+	afkNotify: toBool(process.env.AFK_NOTIFY) || false,
+	afkAutoReply: toBool(process.env.AFK_AUTOREPLY) || false,
+	afkChannelId: process.env.AFK_CHANNEL_ID || null,
+
 	colors: COLORS,
 };
 

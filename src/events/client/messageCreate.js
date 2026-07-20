@@ -2,7 +2,6 @@ const xpCooldowns = new Map();
 const XP_COOLDOWN_MS = 60000;
 
 const { assignLevelReward, notifyLevelUp } = require('../../utils/leveling');
-const { baseEmbed, COLORS } = require('../../utils/embed');
 
 /**
  * Return a random integer between min and max (inclusive).
@@ -28,8 +27,16 @@ module.exports = async (client, message) => {
 							.catch(err => client.logger?.debug?.(`AFK: nickname restore failed for ${message.author.id}: ${err.message}`));
 					}
 				}
-				message.channel.send(`${message.author}, ¡bienvenidx de vuelta! Ya no estás AFK.`)
-					.catch(() => null);
+				// Notify if enabled
+				if (client.config.afkNotify) {
+					const target = client.config.afkChannelId
+						? message.guild.channels.cache.get(client.config.afkChannelId)
+						: message.channel;
+					if (target) {
+						target.send(`${message.author}, ¡bienvenidx de vuelta! Ya no estás AFK.`)
+							.catch(() => null);
+					}
+				}
 			}
 		}
 		catch (err) {
@@ -71,8 +78,13 @@ module.exports = async (client, message) => {
 	}
 
 	// ── AFK: mention auto-reply ──────────────────────────
-	if (message.guild && !message.mentions.everyone) {
+	if (message.guild && !message.mentions.everyone && client.config.afkAutoReply) {
 		try {
+			const target = client.config.afkChannelId
+				? message.guild.channels.cache.get(client.config.afkChannelId)
+				: message.channel;
+			if (!target) return;
+
 			const mentionedAfkUsers = new Set();
 			for (const user of message.mentions.users.values()) {
 				if (user.bot) continue;
@@ -83,11 +95,8 @@ module.exports = async (client, message) => {
 				const record = client.afkService?.isAfk(userId, message.guild.id);
 				if (!record) continue;
 				const elapsed = `<t:${record.started_at}:R>`;
-				message.channel.send({
-					embeds: [baseEmbed(client, { color: COLORS.WARN })
-						.setTitle('💤 AFK')
-						.setDescription(`**<@${userId}>** está ausente.\n**Motivo:** ${record.reason}\n**Desde:** ${elapsed}`)],
-				}).catch(() => null);
+				target.send(`@${message.guild.members.cache.get(userId)?.displayName || userId} está ausente · Motivo: ${record.reason} · Desde: ${elapsed}`)
+					.catch(() => null);
 			}
 		}
 		catch (err) {
