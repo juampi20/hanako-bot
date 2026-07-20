@@ -28,6 +28,7 @@ coverage/
 .atl/
 .codegraph/
 .cache/
+sdd/
 
 # ── IDE & editor ──────────────────────────────────────────
 .vscode/

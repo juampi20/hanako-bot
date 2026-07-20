@@ -28,7 +28,7 @@ module.exports = async (client, message) => {
             xpCooldowns.set(key, now);
             setTimeout(() => xpCooldowns.delete(key), XP_COOLDOWN_MS);
 
-            const xpAmount = randomInt(client.config.xpMin, client.config.xpMax);
+            const xpAmount = randomInt(client.config.chatXpMin, client.config.chatXpMax);
             client.logger?.debug?.(`Message XP: processing XP for ${message.author.id} in ${message.guild.id}, amount=${xpAmount}`);
             const result = client.levelingService.addXP(message.author.id, message.guild.id, xpAmount);
 
