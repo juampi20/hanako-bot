@@ -53,6 +53,9 @@ async function assignLevelReward(client, guild, member, level) {
  * Send level-up notification.
  */
 async function notifyLevelUp(client, guild, member, level) {
+    // Early return if level-up notifications are disabled
+    if (!client.config.levelUpNotify) return;
+    
     try {
         const interval = client.config.levelUpNotifyInterval || 5;
         const levelReward = client.rewardService?.findByGuildAndLevel(guild.id, level);

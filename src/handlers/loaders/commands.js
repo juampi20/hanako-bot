@@ -42,10 +42,10 @@ function loadCommands(client) {
  * Must be called after client.login() (needs client.user.id).
  */
 async function registerSlashCommands(client) {
-    const guildId = client.config.devGuildId;
+    const guildId = client.config.guildId;
     if (!guildId) {
         client.logger.log(
-            "DEV_GUILD_ID not set — skipping slash command registration",
+            "GUILD_ID not set — skipping slash command registration",
             "warn"
         );
         return;

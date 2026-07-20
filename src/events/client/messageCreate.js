@@ -12,6 +12,12 @@ function randomInt(min, max) {
 
 module.exports = async (client, message) => {
     if (message.author.bot) { return; }
+    
+    // Guild lock check - only process messages from the configured guild
+    if (client.config.guildId && message.guild?.id !== client.config.guildId) {
+        client.logger?.debug?.(`MessageCreate: ignoring message from non-guild ${message.guild?.id}`);
+        return;
+    }
 
     // Award random XP per message in a guild, with 1-minute cooldown
     if (message.guild) {

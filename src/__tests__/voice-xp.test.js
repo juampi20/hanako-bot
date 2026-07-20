@@ -7,8 +7,12 @@ function makeMockClient(overrides = {}) {
     return {
         config: {
             levelUpChannel: null,
-            voiceXpInterval: 60,
-            voiceXpAmount: 4,
+            voiceXpMin: 3,
+            voiceXpMax: 5,
+            levelUpNotify: true,  // Enable notifications by default for tests
+            levelUpNotifyInterval: 5,
+            guildId: 'guild-1',
+            moderatorRoleId: null,
             ...overrides,
         },
         rewardService: null,
@@ -161,6 +165,7 @@ describe('notifyLevelUp', () => {
         const send = jest.fn().mockResolvedValue();
         const client = makeMockClient({
             levelUpChannel: 'channel-1',
+            levelUpNotify: true,  // Enable notifications for this test
             channels: {
                 fetch: jest.fn().mockResolvedValue({ send }),
             },
@@ -175,7 +180,7 @@ describe('notifyLevelUp', () => {
     test('sends to systemChannel when no levelUpChannel', async () => {
         const send = jest.fn().mockResolvedValue();
         const guild = makeMockGuild({ systemChannel: { send } });
-        const client = makeMockClient({ levelUpChannel: null, rewardService: null });
+        const client = makeMockClient({ levelUpChannel: null, levelUpNotify: true, rewardService: null });
         await notifyLevelUp(client, guild, makeMockMember(), 5);
         expect(send).toHaveBeenCalled();
     });
@@ -186,6 +191,7 @@ describe('notifyLevelUp', () => {
         const client = makeMockClient({
             levelUpChannel: 'channel-1',
             levelUpNotifyInterval: 5,
+            levelUpNotify: true,  // Enable notifications for this test
             channels: { fetch: jest.fn().mockResolvedValue({ send }) },
             rewardService: {
                 findByGuildAndLevel: jest.fn().mockReturnValue({ role_id: 'role-1', level: 3 }),
@@ -193,6 +199,7 @@ describe('notifyLevelUp', () => {
         });
         const guild = makeMockGuild({ roles: { cache: new Map([['role-1', role]]) } });
         await notifyLevelUp(client, guild, makeMockMember(), 3);
+        expect(send).toHaveBeenCalled();
         expect(send.mock.calls[0][0]).toContain('VIP');
     });
 
@@ -201,6 +208,7 @@ describe('notifyLevelUp', () => {
         const client = makeMockClient({
             levelUpChannel: 'channel-1',
             levelUpNotifyInterval: 5,
+            levelUpNotify: true,  // Enable notifications for this test
             channels: { fetch: jest.fn().mockResolvedValue({ send }) },
             rewardService: null,
         });
@@ -214,6 +222,7 @@ describe('notifyLevelUp', () => {
         const client = makeMockClient({
             levelUpChannel: 'channel-1',
             levelUpNotifyInterval: 5,
+            levelUpNotify: true,  // Enable notifications for this test
             channels: { fetch: jest.fn().mockResolvedValue({ send }) },
             rewardService: null,
         });
@@ -227,6 +236,7 @@ describe('notifyLevelUp', () => {
         const client = makeMockClient({
             levelUpChannel: 'channel-1',
             levelUpNotifyInterval: 5,
+            levelUpNotify: true,  // Enable notifications for this test
             channels: { fetch: jest.fn().mockResolvedValue({ send }) },
             rewardService: {
                 findByGuildAndLevel: jest.fn().mockReturnValue({ role_id: 'role-1', level: 3 }),
@@ -328,7 +338,14 @@ describe('tick() function', () => {
         voiceHandler.sessions.set('guild-1:user-1', true);
         await voiceHandler.tick(client);
 
-        expect(client.levelingService.addXP).toHaveBeenCalledWith('user-1', 'guild-1', 4);
+        // With voiceXpMin=3 and voiceXpMax=5, the XP amount should be random between them
+        // We need to check that the call happened and capture the amount
+        expect(client.levelingService.addXP).toHaveBeenCalled();
+        const calls = client.levelingService.addXP.mock.calls;
+        expect(calls).toHaveLength(1);
+        const [, , amount] = calls[0];
+        expect(amount).toBeGreaterThanOrEqual(3);
+        expect(amount).toBeLessThanOrEqual(5);
     });
 
     test('removes session when member not in voice', async () => {
@@ -384,8 +401,17 @@ describe('tick() function', () => {
         await voiceHandler.tick(client);
 
         expect(client.levelingService.addXP).toHaveBeenCalledTimes(2);
-        expect(client.levelingService.addXP).toHaveBeenCalledWith('user-1', 'guild-1', 4);
-        expect(client.levelingService.addXP).toHaveBeenCalledWith('user-2', 'guild-1', 4);
+        // Voice XP is random between voiceXpMin(3) and voiceXpMax(5)
+        const call1 = client.levelingService.addXP.mock.calls[0];
+        const call2 = client.levelingService.addXP.mock.calls[1];
+        expect(call1[0]).toBe('user-1');
+        expect(call1[1]).toBe('guild-1');
+        expect(call1[2]).toBeGreaterThanOrEqual(3);
+        expect(call1[2]).toBeLessThanOrEqual(5);
+        expect(call2[0]).toBe('user-2');
+        expect(call2[1]).toBe('guild-1');
+        expect(call2[2]).toBeGreaterThanOrEqual(3);
+        expect(call2[2]).toBeLessThanOrEqual(5);
     });
 
     test('multi-user: one leaves, other remains', async () => {

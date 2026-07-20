@@ -226,6 +226,9 @@ describe('notifyLevelUp throttle', () => {
             config: {
                 levelUpChannel: 'channel-1',
                 levelUpNotifyInterval: 5,
+                levelUpNotify: true,
+                moderatorRoleId: null,
+                guildId: 'guild-1',
             },
             channels: {
                 fetch: jest.fn().mockResolvedValue({ send }),
@@ -251,6 +254,9 @@ describe('notifyLevelUp throttle', () => {
             config: {
                 levelUpChannel: 'channel-1',
                 levelUpNotifyInterval: 5,
+                levelUpNotify: false,
+                moderatorRoleId: null,
+                guildId: 'guild-1',
             },
             channels: {
                 fetch: jest.fn().mockResolvedValue({ send }),
@@ -276,6 +282,7 @@ describe('notifyLevelUp throttle', () => {
             config: {
                 levelUpChannel: 'channel-1',
                 levelUpNotifyInterval: 5,
+                levelUpNotify: true,
             },
             channels: {
                 fetch: jest.fn().mockResolvedValue({ send }),

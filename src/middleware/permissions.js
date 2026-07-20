@@ -15,13 +15,18 @@ const permissions = (client, context, command, next) => {
         return deny(context, 'no tenés permiso para usar este comando.');
     }
 
-    // moderatorOnly — moderator list + owner may run this command
+    // moderatorOnly — role-based check + owner may run this command
     if (command.help.moderatorOnly) {
-        const isModerator = client.config.moderatorIds.includes(userId);
         const isOwner = userId === client.config.ownerID;
-        if (!isModerator && !isOwner) {
-            client.logger?.debug?.(`Permissions: moderator-only denied for ${userId} on command ${command.help.name}`);
-            return deny(context, 'no tenés permiso para usar este comando.');
+        if (!isOwner) {
+            // If moderatorRoleId is configured, check role membership
+            if (client.config.moderatorRoleId && context.member?.roles?.cache?.has(client.config.moderatorRoleId)) {
+                // User has the moderator role, allow through
+            } else {
+                // No moderator role configured, or user doesn't have it
+                client.logger?.debug?.(`Permissions: moderator-only denied for ${userId} on command ${command.help.name}`);
+                return deny(context, 'no tenés permiso para usar este comando.');
+            }
         }
     }
 

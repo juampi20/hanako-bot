@@ -52,7 +52,7 @@ function removeSession(client, key) {
 }
 
 function startTimer(client) {
-    const intervalMs = (client.config.voiceXpInterval || 60) * 1000;
+    const intervalMs = 60 * 1000;
     client.logger?.debug?.(`Voice XP: starting voice XP timer, interval=${intervalMs / 1000}s`);
     timerHandle = setInterval(() => tick(client), intervalMs);
 }
@@ -65,11 +65,22 @@ function stopTimer(client) {
     }
 }
 
+/**
+ * Return a random integer between min and max (inclusive).
+ */
+function randomInt(min, max) {
+    return Math.floor(Math.random() * (max - min + 1)) + min;
+}
+
 async function tick(client) {
-    const amount = client.config.voiceXpAmount || 4;
+    const amount = randomInt(client.config.voiceXpMin, client.config.voiceXpMax);
+    const allowedGuildId = client.config.guildId;
     for (const [key] of sessions) {
         try {
             const [guildId, userId] = key.split(':');
+            // Skip sessions for non-allowed guild if guildId is configured
+            if (allowedGuildId && guildId !== allowedGuildId) { continue; }
+        
             const guild = client.guilds.cache.get(guildId);
             if (!guild) { sessions.delete(key); continue; }
 
@@ -148,7 +159,10 @@ module.exports = async (client, oldState, newState) => {
  * channel.members depends on guild.members.cache which may be empty at ready time.
  */
 async function initSessions(client) {
+    const allowedGuildId = client.config.guildId;
     for (const [, guild] of client.guilds.cache) {
+        // Filter by allowed guild if guildId is configured
+        if (allowedGuildId && guild.id !== allowedGuildId) {continue;}
         if (!guild.voiceStates || !guild.voiceStates.cache) {continue;}
         for (const [, vs] of guild.voiceStates.cache) {
             if (!vs.channelId) {continue;}

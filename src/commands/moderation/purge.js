@@ -2,9 +2,14 @@ const { SlashCommandBuilder, PermissionFlagsBits, InteractionContextType, Action
 
 exports.run = async (client, message, args) => {
     // Permission check: require ManageMessages (same as slash version)
-    const isMod = client.config.moderatorIds.includes(message.author.id);
     const isOwner = message.author.id === client.config.ownerID;
     const hasPerms = message.member?.permissions.has(PermissionFlagsBits.ManageMessages);
+    let isMod = false;
+    
+    if (client.config.moderatorRoleId) {
+        // Check if user has the moderator role
+        isMod = message.member?.roles?.cache?.has(client.config.moderatorRoleId);
+    }
 
     if (!hasPerms && !isMod && !isOwner) {
         return message.reply('no tenés permiso para usar este comando.');
