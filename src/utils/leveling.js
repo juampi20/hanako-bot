@@ -1,3 +1,5 @@
+const { PermissionFlagsBits } = require('discord.js');
+
 /**
  * Assign a level reward role to a member.
  * @returns {Promise<string|null>} role name or null
@@ -33,7 +35,7 @@ async function assignLevelReward(client, guild, member, level) {
 			.filter(id => member.roles.cache.has(id));
 
 		const botMember = guild.members.me;
-		if (botMember.roles.highest.comparePositionTo(role) >= 0 && botMember.permissions.has('MANAGE_ROLES')) {
+		if (botMember.roles.highest.comparePositionTo(role) >= 0 && botMember.permissions.has(PermissionFlagsBits.ManageRoles)) {
 			client.logger?.debug?.(`AssignLevelReward: assigning role ${role.id} to ${member.id}`);
 			await member.roles.remove(prevRoleIds);
 			await member.roles.add(role.id);

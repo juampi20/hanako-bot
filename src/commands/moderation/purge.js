@@ -47,7 +47,7 @@ exports.data = new SlashCommandBuilder()
 exports.execute = async (client, interaction) => {
 	const user = interaction.options.getUser('user');
 	const amount = interaction.options.getInteger('amount');
-	const targetDesc = user ? ` de **${user.tag}**` : '';
+	const targetDesc = user ? ` de **${user.username}**` : '';
 	const countLabel = `${amount} mensaje${amount !== 1 ? 's' : ''}`;
 
 	const confirm = new ButtonBuilder()

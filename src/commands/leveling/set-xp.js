@@ -21,7 +21,7 @@ exports.execute = async (client, interaction) => {
 		.setThumbnail(target.displayAvatarURL())
 		.setTitle('🎯 XP establecido')
 		.addFields(
-			{ name: 'Usuario', value: `${target.tag}`, inline: true },
+			{ name: 'Usuario', value: `${target.username}`, inline: true },
 			{ name: 'XP establecido', value: `${result.points}`, inline: true },
 			{ name: 'Nivel actual', value: `${result.level}`, inline: true },
 		);

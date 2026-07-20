@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, InteractionContextType } = require('discord.js');
+const { SlashCommandBuilder, InteractionContextType, ChannelType } = require('discord.js');
 const { baseEmbed, COLORS } = require('../../utils/embed');
 
 exports.run = async (client, message, _args) => {
@@ -58,15 +58,15 @@ async function buildServerEmbed(client, guild) {
 	const createdDate = guild.createdAt;
 
 	const textChannels = guild.channels.cache.filter(channel => channel.isTextBased() && channel.type !== 5);
-	const voiceChannels = guild.channels.cache.filter(channel => channel.type === 2);
-	const categoryChannels = guild.channels.cache.filter(channel => channel.type === 4);
+	const voiceChannels = guild.channels.cache.filter(channel => channel.type === ChannelType.GuildVoice);
+	const categoryChannels = guild.channels.cache.filter(channel => channel.type === ChannelType.GuildCategory);
 
 	const embed = baseEmbed(client, { color: COLORS.INFO })
 		.setTitle(guild.name)
 		.setDescription(`Información general del servidor ${guild.name}.`)
 		.setThumbnail(guild.iconURL() || 'https://cdn.discordapp.com/embed/avatars/0.png')
 		.addFields(
-			{ name: '👑 Owner', value: `${owner.user.username}#${owner.user.discriminator} (${owner.id})`, inline: true },
+			{ name: '👑 Owner', value: `${owner.user.username} (${owner.id})`, inline: true },
 			{ name: '👥 Members', value: `${memberCount}`, inline: true },
 			{ name: '⭐ Boosts', value: `${boostTier} Tier (${boostCount})`, inline: true },
 			{ name: '📝 Text Channels', value: `${textChannels.size}`, inline: true },

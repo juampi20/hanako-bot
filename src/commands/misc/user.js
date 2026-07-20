@@ -142,9 +142,9 @@ async function buildUserEmbed(client, guild, user, isSelf, member = null) {
 	}
 
 	const embed = baseEmbed(client, { color: COLORS.INFO })
-		.setTitle(isSelf ? 'Tu Cuenta' : `${user.username}#${user.discriminator}'s Perfil`)
-		.setDescription(isSelf ? 'Aquí está la información de tu cuenta.' : `Información sobre ${user.username}#${user.discriminator}.`)
-		.setThumbnail(user.avatarURL() || `https://cdn.discordapp.com/embed/avatars/${parseInt(user.discriminator) % 5}.png`)
+		.setTitle(isSelf ? 'Tu Cuenta' : `Perfil de ${user.username}`)
+		.setDescription(isSelf ? 'Aquí está la información de tu cuenta.' : `Información sobre ${user.username}.`)
+		.setThumbnail(user.avatarURL() || 'https://cdn.discordapp.com/embed/avatars/0.png')
 		.addFields(
 			{ name: '📅 Cuenta Creada', value: `<t:${Math.floor(accountCreated / 1000)}:D> (<t:${Math.floor(accountCreated / 1000)}:R>)`, inline: true },
 			{ name: '📅 Última Conexión en el Servidor' + memberFlag, value: joinDate ? `<t:${Math.floor(joinDate / 1000)}:D> (<t:${Math.floor(joinDate / 1000)}:R>)` : 'No está en este servidor', inline: true },

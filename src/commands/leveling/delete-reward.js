@@ -7,8 +7,7 @@ exports.data = new SlashCommandBuilder()
 	.setDescription('Elimina una recompensa de rol')
 	.addIntegerOption(opt => opt.setName('reward_id').setDescription('ID de la recompensa a eliminar').setRequired(true))
 	.setContexts(InteractionContextType.Guild)
-	.setDefaultMemberPermissions(PermissionFlagsBits.ManageRoles)
-	.setDMPermission(false);
+	.setDefaultMemberPermissions(PermissionFlagsBits.ManageRoles);
 
 exports.execute = async (client, interaction) => {
 	const rewardId = interaction.options.getInteger('reward_id');

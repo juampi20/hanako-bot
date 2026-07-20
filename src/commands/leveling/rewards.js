@@ -5,8 +5,7 @@ const { Reward } = require('../../database/models');
 exports.data = new SlashCommandBuilder()
 	.setName('rewards')
 	.setDescription('Lista las recompensas de rol de nivel configuradas')
-	.setContexts(InteractionContextType.Guild)
-	.setDMPermission(false);
+	.setContexts(InteractionContextType.Guild);
 
 exports.execute = async (client, interaction) => {
 	const guildId = interaction.guild.id;

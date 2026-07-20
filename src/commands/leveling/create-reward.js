@@ -8,8 +8,7 @@ exports.data = new SlashCommandBuilder()
 	.addIntegerOption(opt => opt.setName('level').setDescription('Nivel para asignar el rol').setRequired(true).setMinValue(1))
 	.addRoleOption(opt => opt.setName('role').setDescription('Rol a asignar').setRequired(true))
 	.setContexts(InteractionContextType.Guild)
-	.setDefaultMemberPermissions(PermissionFlagsBits.ManageRoles)
-	.setDMPermission(false);
+	.setDefaultMemberPermissions(PermissionFlagsBits.ManageRoles);
 
 exports.execute = async (client, interaction) => {
 	const targetRole = interaction.options.getRole('role');
@@ -28,7 +27,7 @@ exports.execute = async (client, interaction) => {
 		return interaction.reply({ content: 'No puedo asignar este rol porque mi rol está por debajo del rol objetivo.', ephemeral: true });
 	}
 
-	if (!botMember.permissions.has('MANAGE_ROLES')) {
+	if (!botMember.permissions.has(PermissionFlagsBits.ManageRoles)) {
 		return interaction.reply({ content: 'No tengo permisos para administrar roles en este servidor.', ephemeral: true });
 	}
 
