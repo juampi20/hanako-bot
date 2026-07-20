@@ -30,12 +30,12 @@ class Afk {
 	/**
 	 * Set or update an AFK record.
 	 */
-	static set(userId, guildId, reason, startedAt, wasNickname) {
+	static set(userId, guildId, reason, startedAt) {
 		const db = getDb();
-		db.prepare(
-			`INSERT OR REPLACE INTO afk (user_id, guild_id, reason, started_at, was_nickname)
-              VALUES (?, ?, ?, ?, ?)`,
-		).run(userId, guildId, reason, startedAt, wasNickname);
+		db.prepare(`
+        	INSERT OR REPLACE INTO afk (user_id, guild_id, reason, started_at)
+        	VALUES (?, ?, ?, ?)
+    	`).run(userId, guildId, reason, startedAt);
 	}
 
 	/**
@@ -67,6 +67,20 @@ class Afk {
 		return db
 			.prepare('SELECT user_id, guild_id, reason, started_at, was_nickname FROM afk WHERE guild_id = ?')
 			.all(guildId);
+	}
+
+	/**
+	 * Remove all AFK records for a guild and return the rows that were deleted.
+	 * Used for bulk reset and nickname restoration.
+	 */
+	static removeAll(guildId) {
+		const db = getDb();
+		// Select all rows before deletion for nickname restoration
+		const rows = db
+			.prepare('SELECT user_id, guild_id, reason, started_at, was_nickname FROM afk WHERE guild_id = ?')
+			.all(guildId);
+		db.prepare('DELETE FROM afk WHERE guild_id = ?').run(guildId);
+		return rows;
 	}
 }
 
