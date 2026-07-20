@@ -106,7 +106,7 @@ class Score {
             user: row.user,
             guild: row.guild,
             points: row.points,
-            level: row.level,
+            level: getLevelFromXP(row.points),  // recalculate from points
         }));
     }
 
