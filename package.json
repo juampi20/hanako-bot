@@ -8,7 +8,8 @@
     "dev": "nodemon ./src/index.js",
     "test": "jest",
     "lint": "eslint src/",
-    "lint:fix": "eslint src/ --fix"
+    "lint:fix": "eslint src/ --fix",
+    "prepare": "husky"
   },
   "repository": {
     "type": "git",
@@ -29,6 +30,7 @@
     "@eslint/js": "^10.0.1",
     "eslint": "^10.7.0",
     "globals": "^17.7.0",
+    "husky": "^9.1.7",
     "jest": "^30.4.2"
   }
 }
