@@ -1,5 +1,9 @@
 const chalk = require('chalk');
 
+function toBool(value) {
+	return value?.toLowerCase() === 'true';
+}
+
 function pad(n) { return String(n).padStart(2, '0'); }
 
 exports.log = (content, type = 'log') => {
@@ -16,7 +20,7 @@ exports.log = (content, type = 'log') => {
 		return console.log(`${timestamp} ${chalk.bgRed(type.toUpperCase())} ${content} `);
 	}
 	case 'debug': {
-		if (!process.env.DEBUG) {return;}
+		if (!toBool(process.env.DEBUG)) { return; }
 		return console.log(`${timestamp} ${chalk.green(type.toUpperCase())} ${content} `);
 	}
 	case 'cmd': {
