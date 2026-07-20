@@ -2,6 +2,7 @@ const xpCooldowns = new Map();
 const XP_COOLDOWN_MS = 60000;
 
 const { assignLevelReward, notifyLevelUp } = require('../../utils/leveling');
+const { baseEmbed, COLORS } = require('../../utils/embed');
 
 /**
  * Return a random integer between min and max (inclusive).
@@ -12,6 +13,29 @@ function randomInt(min, max) {
 
 module.exports = async (client, message) => {
 	if (message.author.bot) { return; }
+
+	// ── AFK: sender auto-remove ──────────────────────────
+	if (message.guild) {
+		try {
+			const afkRecord = client.afkService?.isAfk(message.author.id, message.guild.id);
+			if (afkRecord) {
+				client.afkService.remove(message.author.id, message.guild.id);
+				// Restore nickname
+				if (afkRecord.was_nickname) {
+					const member = message.member || await message.guild.members.fetch(message.author.id).catch(() => null);
+					if (member) {
+						member.setNickname(afkRecord.was_nickname, 'Restoring pre-AFK nickname')
+							.catch(err => client.logger?.debug?.(`AFK: nickname restore failed for ${message.author.id}: ${err.message}`));
+					}
+				}
+				message.channel.send(`${message.author}, ¡bienvenidx de vuelta! Ya no estás AFK.`)
+					.catch(() => null);
+			}
+		}
+		catch (err) {
+			client.logger?.debug?.(`AFK: sender auto-remove failed for ${message.author.id}: ${err.message}`);
+		}
+	}
 
 	// Guild lock check - only process messages from the configured guild
 	if (client.config.guildId && message.guild?.id !== client.config.guildId) {
@@ -43,6 +67,31 @@ module.exports = async (client, message) => {
 					client.logger?.debug?.(`Message XP: level-up for ${message.author.id} to level ${result.level}`);
 				}
 			}
+		}
+	}
+
+	// ── AFK: mention auto-reply ──────────────────────────
+	if (message.guild && !message.mentions.everyone) {
+		try {
+			const mentionedAfkUsers = new Set();
+			for (const user of message.mentions.users.values()) {
+				if (user.bot) continue;
+				const record = client.afkService?.isAfk(user.id, message.guild.id);
+				if (record) mentionedAfkUsers.add(user.id);
+			}
+			for (const userId of mentionedAfkUsers) {
+				const record = client.afkService?.isAfk(userId, message.guild.id);
+				if (!record) continue;
+				const elapsed = `<t:${record.started_at}:R>`;
+				message.channel.send({
+					embeds: [baseEmbed(client, { color: COLORS.WARN })
+						.setTitle('💤 AFK')
+						.setDescription(`**<@${userId}>** está ausente.\n**Motivo:** ${record.reason}\n**Desde:** ${elapsed}`)],
+				}).catch(() => null);
+			}
+		}
+		catch (err) {
+			client.logger?.debug?.(`AFK: mention auto-reply failed: ${err.message}`);
 		}
 	}
 

@@ -127,6 +127,51 @@ module.exports = async (client, oldState, newState) => {
 		const userId = newState.id || oldState.id;
 		const key = `${guildId}:${userId}`;
 
+		// ── AFK: auto-set / auto-remove on voice channel joins/moves ──────────────
+		const guild = newState.guild || oldState.guild;
+		const targetChannelId = newState.channelId;
+		const oldChannelId = oldState.channelId;
+
+		if (guild?.afkChannelId && !newState.member?.user?.bot) {
+			const isInAfkChannel = targetChannelId === guild.afkChannelId;
+			const wasInAfkChannel = oldChannelId === guild.afkChannelId;
+
+			// Join or move INTO AFK channel: set AFK (if not already)
+			if (isInAfkChannel && !wasInAfkChannel) {
+				const member = newState.member || (await newState.guild?.members.fetch(userId).catch(() => null));
+				if (!member || member.user?.bot) { return; }
+				const existing = client.afkService?.isAfk(userId, guildId);
+				// Re-check channel after await (TOCTOU guard)
+				const currentChannelId = member.voice?.channelId;
+				if (!existing && currentChannelId === guild.afkChannelId) {
+					const nickname = member.nickname || member.user.username;
+					client.afkService.set(userId, guildId, 'Está ausente', Math.floor(Date.now() / 1000), nickname);
+					// Notify in guild system channel or DM
+					const target = guild.systemChannel || await member.createDM().catch(() => null);
+					if (target) {
+						target.send(`<@${userId}> está ahora AFK (canal de voz AFK).`).catch(() => null);
+					}
+				}
+			}
+
+			// Leave or move OUT OF AFK channel: remove AFK (if present)
+			if (!isInAfkChannel && wasInAfkChannel) {
+				const existing = client.afkService?.isAfk(userId, guildId);
+				if (existing) {
+					client.afkService.remove(userId, guildId);
+					// Restore nickname
+					if (existing.was_nickname && newState.member) {
+						newState.member.setNickname(existing.was_nickname, 'Restoring pre-AFK nickname')
+							.catch(err => client.logger?.debug?.(`AFK: nickname restore failed for ${userId}: ${err.message}`));
+					}
+					const target = guild.systemChannel || await newState.member?.createDM().catch(() => null);
+					if (target) {
+						target.send(`<@${userId}> ya no está AFK (se unió a un canal de voz).`).catch(() => null);
+					}
+				}
+			}
+		}
+
 		// Join: was null, now has channel
 		if (!oldState.channelId && newState.channelId) {
 			if (isEligible(client, newState)) {addSession(client, key);}

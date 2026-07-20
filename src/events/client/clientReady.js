@@ -1,5 +1,5 @@
 const { initialize } = require('../../database/connect');
-const { loadModels, Score, Reward } = require('../../database/models');
+const { loadModels, Score, Reward, Afk } = require('../../database/models');
 const { registerSlashCommands } = require('../../handlers/loaders/commands');
 const { initSessions } = require('./voiceStateUpdate');
 
@@ -10,6 +10,7 @@ module.exports = async (client) => {
 		loadModels(db);
 		client.levelingService = Score;
 		client.rewardService = Reward;
+		client.afkService = Afk;
 		client.logger?.debug?.('ClientReady: database initialization successful');
 	}
 	catch (err) {
