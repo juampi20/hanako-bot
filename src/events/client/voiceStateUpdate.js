@@ -75,16 +75,16 @@ function randomInt(min, max) {
 
 async function tick(client) {
 	const amount = randomInt(client.config.voiceXpMin, client.config.voiceXpMax);
-	const allowedGuildId = client.config.guildId;
+	const guildId = client.config.guildId;
 	for (const [key] of sessions) {
 		try {
-			const [guildId, userId] = key.split(':');
+			const [guildIdSession, userId] = key.split(':');
 			// Skip sessions for non-allowed guild if guildId is configured
-			if (allowedGuildId && guildId !== allowedGuildId) {
+			if (guildId && guildIdSession !== guildId) {
 				continue;
 			}
 
-			const guild = client.guilds.cache.get(guildId);
+			const guild = client.guilds.cache.get(guildIdSession);
 			if (!guild) {
 				sessions.delete(key);
 				continue;
@@ -102,9 +102,9 @@ async function tick(client) {
 				continue;
 			}
 
-			const result = client.levelingService?.addXP(userId, guildId, amount);
+			const result = client.levelingService?.addXP(userId, guildIdSession, amount);
 			if (result) {
-				client.logger?.debug?.(`Voice XP: granted ${amount} XP to ${userId} in ${guildId}, level: ${result.level}`);
+				client.logger?.debug?.(`Voice XP: granted ${amount} XP to ${userId} in ${guildIdSession}, level: ${result.level}`);
 				if (result.level > result.oldLevel) {
 					await assignLevelReward(client, guild, member, result.level);
 					await notifyLevelUp(client, guild, member, result.level);
@@ -112,7 +112,7 @@ async function tick(client) {
 				}
 			}
 			else {
-				client.logger?.debug?.(`Voice XP: XP service unavailable for ${userId} in ${guildId}`);
+				client.logger?.debug?.(`Voice XP: XP service unavailable for ${userId} in ${guildIdSession}`);
 			}
 		}
 		catch (err) {
@@ -149,8 +149,7 @@ module.exports = async (client, oldState, newState) => {
 				// Re-check channel after await (TOCTOU guard)
 				const currentChannelId = member.voice?.channelId;
 				if (!existing && currentChannelId === guild.afkChannelId) {
-					const nickname = member.nickname || member.user.username;
-					client.afkService.set(userId, guildId, 'Está ausente', Math.floor(Date.now() / 1000), nickname);
+					client.afkService.set(userId, guildId, 'Está ausente', Math.floor(Date.now() / 1000));
 					if (afkNotifyTarget) {
 						afkNotifyTarget.send(`${member.displayName} está ahora AFK (canal de voz AFK).`).catch(() => null);
 					}
@@ -162,11 +161,6 @@ module.exports = async (client, oldState, newState) => {
 				const existing = client.afkService?.isAfk(userId, guildId);
 				if (existing) {
 					client.afkService.remove(userId, guildId);
-					// Restore nickname
-					if (existing.was_nickname && newState.member) {
-						newState.member.setNickname(existing.was_nickname, 'Restoring pre-AFK nickname')
-							.catch(err => client.logger?.debug?.(`AFK: nickname restore failed for ${userId}: ${err.message}`));
-					}
 					if (afkNotifyTarget) {
 						afkNotifyTarget.send(`${newState.member?.displayName || userId} ya no está AFK (salió del canal AFK).`).catch(() => null);
 					}
@@ -215,10 +209,10 @@ module.exports = async (client, oldState, newState) => {
  * channel.members depends on guild.members.cache which may be empty at ready time.
  */
 async function initSessions(client) {
-	const allowedGuildId = client.config.guildId;
+	const guildId = client.config.guildId;
 	for (const [, guild] of client.guilds.cache) {
 		// Filter by allowed guild if guildId is configured
-		if (allowedGuildId && guild.id !== allowedGuildId) {continue;}
+		if (guildId && guild.id !== guildId) {continue;}
 		if (!guild.voiceStates || !guild.voiceStates.cache) {continue;}
 		for (const [, vs] of guild.voiceStates.cache) {
 			if (!vs.channelId) {continue;}
@@ -227,6 +221,23 @@ async function initSessions(client) {
 			const key = `${guild.id}:${member.id}`;
 			if (isEligible(client, vs)) {
 				addSession(client, key);
+			}
+		}
+
+		// AFK: mark members already in the AFK voice channel
+		if (guild.afkChannelId && client.afkService) {
+			for (const [, vs] of guild.voiceStates.cache) {
+				if (vs.channelId !== guild.afkChannelId) {continue;}
+				if (!vs.member || vs.member.user?.bot) {continue;}
+				const existing = client.afkService.isAfk(vs.member.id, guild.id);
+				if (!existing) {
+					client.afkService.set(
+						vs.member.id,
+						guild.id,
+						'Está ausente',
+						Math.floor(Date.now() / 1000),
+					);
+				}
 			}
 		}
 	}
