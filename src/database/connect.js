@@ -4,7 +4,7 @@ let pool = null;
 
 async function initialize() {
 	const connectionString = process.env.DATABASE_URL ||
-        `postgres://${process.env.PGUSER || 'postgres'}:${process.env.PGPASSWORD || 'postgres'}@${process.env.PGHOST || 'localhost'}:${process.env.PGPORT || 5432}/${process.env.PGDATABASE || 'hanako'}`;
+        `postgres://${process.env.DATABASE_USER}:${process.env.DATABASE_PASSWORD}@${process.env.DATABASE_HOST}:${process.env.DATABASE_PORT}/${process.env.DATABASE_NAME}`;
 
 	pool = new Pool({ connectionString, max: 5, min: 1 });
 	pool.on('error', err => {
