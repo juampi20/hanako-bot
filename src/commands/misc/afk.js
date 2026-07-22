@@ -50,7 +50,7 @@ exports.execute = async (client, interaction) => {
 			const startedAt = Math.floor(Date.now() / 1000);
 
 			client.logger?.debug?.(`AFK: Guardando estado AFK. user=${interaction.user.id}, guild=${interaction.guildId}, reason="${reason}"`);
-			client.afkService.set(
+			await client.afkService.set(
 				interaction.user.id,
 				interaction.guildId,
 				reason,
@@ -80,7 +80,7 @@ exports.execute = async (client, interaction) => {
 			client.logger?.debug?.('AFK: Deferring reply para list...');
 			await interaction.deferReply();
 
-			const users = client.afkService.getAfkUsers(interaction.guildId);
+			const users = await client.afkService.getAfkUsers(interaction.guildId);
 			client.logger?.debug?.(`AFK: Obtenidos ${users.length} usuarios AFK.`);
 
 			if (users.length === 0) {
@@ -89,17 +89,13 @@ exports.execute = async (client, interaction) => {
 				});
 			}
 
-			const embed = baseEmbed(client, { color: COLORS.INFO })
-				.setTitle('💤 Usuarios AFK');
+			const lines = users.slice(0, 25).map(r =>
+				`<@${r.user_id}> — ${r.reason} · <t:${r.started_at}:R>`,
+			);
 
-			for (const user of users.slice(0, 25)) {
-				const displayName = interaction.guild?.members.cache.get(user.user_id)
-					?.displayName || user.user_id;
-				embed.addFields({
-					name: displayName,
-					value: `**Motivo:** ${user.reason}\n**Desde:** <t:${user.started_at}:R>`,
-				});
-			}
+			const embed = baseEmbed(client, { color: COLORS.INFO })
+				.setTitle('💤 Usuarios AFK')
+				.setDescription(lines.join('\n'));
 
 			if (users.length > 25) {
 				embed.setFooter({ text: `Mostrando los primeros 25 de ${users.length} usuarios AFK` });
@@ -121,7 +117,7 @@ exports.execute = async (client, interaction) => {
 			}
 
 			if (targetUser) {
-				const record = client.afkService.isAfk(targetUser.id, interaction.guildId);
+				const record = await client.afkService.isAfk(targetUser.id, interaction.guildId);
 
 				if (!record) {
 					return interaction.editReply({
@@ -129,7 +125,7 @@ exports.execute = async (client, interaction) => {
 					});
 				}
 
-				client.afkService.remove(targetUser.id, interaction.guildId);
+				await client.afkService.remove(targetUser.id, interaction.guildId);
 
 				const embed = baseEmbed(client, { color: COLORS.SUCCESS })
 					.setTitle('✅ AFK')
@@ -146,7 +142,7 @@ exports.execute = async (client, interaction) => {
 				}
 			}
 			else {
-				const users = client.afkService.getAfkUsers(interaction.guildId);
+				const users = await client.afkService.getAfkUsers(interaction.guildId);
 
 				if (users.length === 0) {
 					return interaction.editReply({
@@ -154,7 +150,7 @@ exports.execute = async (client, interaction) => {
 					});
 				}
 
-				client.afkService.removeAll(interaction.guildId);
+				await client.afkService.removeAll(interaction.guildId);
 
 				const embed = baseEmbed(client, { color: COLORS.SUCCESS })
 					.setTitle('✅ AFK')

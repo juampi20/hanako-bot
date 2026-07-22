@@ -1,30 +1,30 @@
 const path = require('path');
 const fs = require('fs');
-const os = require('os');
 
-const TEST_DB = path.join(os.tmpdir(), `hanako-test-${Date.now()}.sqlite`);
+jest.mock('../database/connect', () => ({
+	initialize: jest.fn().mockResolvedValue({ query: jest.fn() }),
+	getPool: jest.fn().mockReturnValue({ query: jest.fn() }),
+	close: jest.fn().mockResolvedValue(),
+}));
 
-// Set up test database like leveling.test.js
-try {
-	const { initialize, getDb } = require('../database/connect');
-	const { loadModels } = require('../database/models');
-	beforeAll(() => {
-		const db = initialize(TEST_DB);
-		loadModels(db);
-	});
+jest.mock('../database/models', () => ({
+	loadModels: jest.fn().mockResolvedValue(),
+	Score: {},
+	Reward: {},
+	Afk: {},
+}));
 
-	afterAll(() => {
-		getDb().close();
-		try { fs.unlinkSync(TEST_DB); }
-		catch {
-			/* ok */
-		}
-	});
-}
-catch {
-	// If database setup fails, we still want to run the tests that don't need it
-	console.log('Database setup not available for this test');
-}
+const { initialize, close } = require('../database/connect');
+const { loadModels } = require('../database/models');
+
+beforeAll(async () => {
+	const pool = await initialize();
+	await loadModels(pool);
+});
+
+afterAll(async () => {
+	await close();
+});
 
 // Test 1: Registration JSON output
 // Verify that command data.toJSON() produces the expected shape for at least 3 different commands

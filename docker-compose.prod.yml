@@ -1,0 +1,21 @@
+# ──────────────────────────────────────────────────────────
+# Producción: usá esto en el cloud provider (Fly.io,
+# Railway, etc.) O usalo localmente apuntando a una DB
+# externa con DATABASE_URL en .env.production.
+#
+# Uso:
+#   docker compose -f docker-compose.prod.yml up -d
+#
+# O mergealo con el compose base:
+#   docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
+# ──────────────────────────────────────────────────────────
+
+services:
+  bot:
+    env_file:
+      - .env.production
+    # Sin network externa — se asume que la DB está en la
+    # misma red o es accesible vía host público.
+    networks: []
+    environment:
+      - NODE_ENV=production

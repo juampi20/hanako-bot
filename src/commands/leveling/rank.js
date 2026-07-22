@@ -2,7 +2,7 @@ const { SlashCommandBuilder, InteractionContextType } = require('discord.js');
 const { baseEmbed, COLORS } = require('../../utils/embed');
 const { progressBar } = require('../../utils/progress');
 
-function buildRankEmbed(client, target, score) {
+async function buildRankEmbed(client, target, score) {
 	const levelingService = client.levelingService;
 	const currentLevel = score.level;
 	const currentXP = score.points;
@@ -18,7 +18,7 @@ function buildRankEmbed(client, target, score) {
 
 	// Find rank position using guildId as fallback
 	const allowedGuildId = client.config.guildId || target.guild?.id || client.guilds.cache.first()?.id;
-	const leaderboard = levelingService.getLeaderboard(allowedGuildId, 100);
+	const leaderboard = await levelingService.getLeaderboard(allowedGuildId, 100);
 	const rank = leaderboard.findIndex(entry => entry.user === target.id) + 1;
 
 	const embed = baseEmbed(client, { color: COLORS.LEVELING })
@@ -50,8 +50,8 @@ exports.run = async (client, message, _args) => {
 		return;
 	}
 
-	const score = client.levelingService.getScore(target.id, message.guild.id);
-	const embed = buildRankEmbed(client, target, { ...score, guild: message.guild.id });
+	const score = await client.levelingService.getScore(target.id, message.guild.id);
+	const embed = await buildRankEmbed(client, target, { ...score, guild: message.guild.id });
 	await message.channel.send({ embeds: [embed] });
 };
 
@@ -68,8 +68,8 @@ exports.execute = async (client, interaction) => {
 		return;
 	}
 
-	const score = client.levelingService.getScore(target.id, interaction.guild.id);
-	const embed = buildRankEmbed(client, target, { ...score, guild: interaction.guild.id });
+	const score = await client.levelingService.getScore(target.id, interaction.guild.id);
+	const embed = await buildRankEmbed(client, target, { ...score, guild: interaction.guild.id });
 	await interaction.reply({ embeds: [embed] });
 };
 

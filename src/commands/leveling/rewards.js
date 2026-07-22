@@ -10,7 +10,7 @@ exports.data = new SlashCommandBuilder()
 exports.execute = async (client, interaction) => {
 	const guildId = interaction.guild.id;
 
-	const rewards = Reward.findAllByGuild(guildId);
+	const rewards = await Reward.findAllByGuild(guildId);
 
 	if (!rewards || rewards.length === 0) {
 		return interaction.reply({ content: 'No hay recompensas configuradas para este servidor.', ephemeral: true });

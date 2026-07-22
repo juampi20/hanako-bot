@@ -22,11 +22,7 @@ function makeMockClient(overrides = {}) {
 		},
 		logger: { log: jest.fn() },
 		levelingService: {
-			addXP: jest.fn((_uid, _gid, amount) => ({
-				points: amount,
-				level: 1,
-				oldLevel: 1,
-			})),
+			addXP: jest.fn().mockResolvedValue({ points: 3, level: 1, oldLevel: 1 }),
 		},
 		guilds: {
 			cache: new Map(),
@@ -92,7 +88,7 @@ describe('assignLevelReward', () => {
 
 	test('returns null if no reward for level', async () => {
 		const client = makeMockClient({
-			rewardService: { findByGuildAndLevel: jest.fn().mockReturnValue(null) },
+			rewardService: { findByGuildAndLevel: jest.fn().mockResolvedValue(null) },
 		});
 		const result = await assignLevelReward(client, makeMockGuild(), makeMockMember(), 5);
 		expect(result).toBeNull();
@@ -105,8 +101,8 @@ describe('assignLevelReward', () => {
 		});
 		const client = makeMockClient({
 			rewardService: {
-				findByGuildAndLevel: jest.fn().mockReturnValue({ role_id: 'role-1', level: 5 }),
-				findAllByGuild: jest.fn().mockReturnValue([]),
+				findByGuildAndLevel: jest.fn().mockResolvedValue({ role_id: 'role-1', level: 5 }),
+				findAllByGuild: jest.fn().mockResolvedValue([]),
 			},
 		});
 		const result = await assignLevelReward(client, makeMockGuild(), member, 5);
@@ -127,8 +123,8 @@ describe('assignLevelReward', () => {
 		});
 		const client = makeMockClient({
 			rewardService: {
-				findByGuildAndLevel: jest.fn().mockReturnValue({ role_id: 'role-1', level: 5 }),
-				findAllByGuild: jest.fn().mockReturnValue([{ role_id: 'role-1', level: 5 }]),
+				findByGuildAndLevel: jest.fn().mockResolvedValue({ role_id: 'role-1', level: 5 }),
+				findAllByGuild: jest.fn().mockResolvedValue([{ role_id: 'role-1', level: 5 }]),
 			},
 		});
 		const result = await assignLevelReward(client, guild, member, 5);
@@ -151,8 +147,8 @@ describe('assignLevelReward', () => {
 		});
 		const client = makeMockClient({
 			rewardService: {
-				findByGuildAndLevel: jest.fn().mockReturnValue({ role_id: 'role-1', level: 5 }),
-				findAllByGuild: jest.fn().mockReturnValue([]),
+				findByGuildAndLevel: jest.fn().mockResolvedValue({ role_id: 'role-1', level: 5 }),
+				findAllByGuild: jest.fn().mockResolvedValue([]),
 			},
 		});
 		// Should not throw, just return null
@@ -197,7 +193,7 @@ describe('notifyLevelUp', () => {
 			levelUpNotify: true,
 			channels: { fetch: jest.fn().mockResolvedValue({ send }) },
 			rewardService: {
-				findByGuildAndLevel: jest.fn().mockReturnValue({ role_id: 'role-1', level: 3 }),
+				findByGuildAndLevel: jest.fn().mockResolvedValue({ role_id: 'role-1', level: 3 }),
 			},
 		});
 		const guild = makeMockGuild({ roles: { cache: new Map([['role-1', role]]) } });
@@ -245,7 +241,7 @@ describe('notifyLevelUp', () => {
 			levelUpNotify: true,
 			channels: { fetch: jest.fn().mockResolvedValue({ send }) },
 			rewardService: {
-				findByGuildAndLevel: jest.fn().mockReturnValue({ role_id: 'role-1', level: 3 }),
+				findByGuildAndLevel: jest.fn().mockResolvedValue({ role_id: 'role-1', level: 3 }),
 			},
 		});
 		const guild = makeMockGuild({ roles: { cache: new Map([['role-1', role]]) } });
@@ -257,73 +253,73 @@ describe('notifyLevelUp', () => {
 
 describe('voiceStateUpdate handler', () => {
 	// Basic lifecycle
-	test('join creates session', () => {
+	test('join creates session', async () => {
 		const oldState = makeVoiceState({ channelId: null });
 		const newState = makeVoiceState({ channelId: 'vc-1' });
-		expect(() => voiceHandler(makeMockClient(), oldState, newState)).not.toThrow();
+		await expect(voiceHandler(makeMockClient(), oldState, newState)).resolves.not.toThrow();
 	});
 
-	test('leave removes session', () => {
+	test('leave removes session', async () => {
 		const oldState = makeVoiceState({ channelId: 'vc-1' });
 		const newState = makeVoiceState({ channelId: null });
-		expect(() => voiceHandler(makeMockClient(), oldState, newState)).not.toThrow();
+		await expect(voiceHandler(makeMockClient(), oldState, newState)).resolves.not.toThrow();
 	});
 
-	test('move re-evaluates session', () => {
+	test('move re-evaluates session', async () => {
 		const oldState = makeVoiceState({ channelId: 'vc-1' });
 		const newState = makeVoiceState({ channelId: 'vc-2' });
-		expect(() => voiceHandler(makeMockClient(), oldState, newState)).not.toThrow();
+		await expect(voiceHandler(makeMockClient(), oldState, newState)).resolves.not.toThrow();
 	});
 
 	// Bot exclusion
-	test('bot is not tracked', () => {
+	test('bot is not tracked', async () => {
 		const oldState = makeVoiceState({ channelId: null, member: { user: { bot: true } } });
 		const newState = makeVoiceState({ channelId: 'vc-1', member: { user: { bot: true } } });
-		expect(() => voiceHandler(makeMockClient(), oldState, newState)).not.toThrow();
+		await expect(voiceHandler(makeMockClient(), oldState, newState)).resolves.not.toThrow();
 	});
 
 	// AFK channel (spec scenario 7)
-	test('AFK channel does not create session', () => {
+	test('AFK channel does not create session', async () => {
 		const oldState = makeVoiceState({ channelId: null });
 		const newState = makeVoiceState({ channelId: 'afk-channel', guild: { id: 'guild-1', afkChannelId: 'afk-channel' } });
-		expect(() => voiceHandler(makeMockClient(), oldState, newState)).not.toThrow();
+		await expect(voiceHandler(makeMockClient(), oldState, newState)).resolves.not.toThrow();
 	});
 
-	test('move to AFK channel removes session', () => {
+	test('move to AFK channel removes session', async () => {
 		const oldState = makeVoiceState({ channelId: 'vc-1' });
 		const newState = makeVoiceState({ channelId: 'afk-channel', guild: { id: 'guild-1', afkChannelId: 'afk-channel' } });
-		expect(() => voiceHandler(makeMockClient(), oldState, newState)).not.toThrow();
+		await expect(voiceHandler(makeMockClient(), oldState, newState)).resolves.not.toThrow();
 	});
 
 	// Mute/deafen toggle (spec scenarios 4, 5, 6)
-	test('mute self removes session', () => {
+	test('mute self removes session', async () => {
 		const oldState = makeVoiceState({ channelId: 'vc-1', selfMute: false });
 		const newState = makeVoiceState({ channelId: 'vc-1', selfMute: true });
-		expect(() => voiceHandler(makeMockClient(), oldState, newState)).not.toThrow();
+		await expect(voiceHandler(makeMockClient(), oldState, newState)).resolves.not.toThrow();
 	});
 
-	test('unmute self re-adds session', () => {
+	test('unmute self re-adds session', async () => {
 		const oldState = makeVoiceState({ channelId: 'vc-1', selfMute: true });
 		const newState = makeVoiceState({ channelId: 'vc-1', selfMute: false });
-		expect(() => voiceHandler(makeMockClient(), oldState, newState)).not.toThrow();
+		await expect(voiceHandler(makeMockClient(), oldState, newState)).resolves.not.toThrow();
 	});
 
-	test('deafen self removes session', () => {
+	test('deafen self removes session', async () => {
 		const oldState = makeVoiceState({ channelId: 'vc-1', selfDeaf: false });
 		const newState = makeVoiceState({ channelId: 'vc-1', selfDeaf: true });
-		expect(() => voiceHandler(makeMockClient(), oldState, newState)).not.toThrow();
+		await expect(voiceHandler(makeMockClient(), oldState, newState)).resolves.not.toThrow();
 	});
 
-	test('undeafen self re-adds session', () => {
+	test('undeafen self re-adds session', async () => {
 		const oldState = makeVoiceState({ channelId: 'vc-1', selfDeaf: true });
 		const newState = makeVoiceState({ channelId: 'vc-1', selfDeaf: false });
-		expect(() => voiceHandler(makeMockClient(), oldState, newState)).not.toThrow();
+		await expect(voiceHandler(makeMockClient(), oldState, newState)).resolves.not.toThrow();
 	});
 
 	// Error handling
-	test('handler catches all errors silently', () => {
+	test('handler catches all errors silently', async () => {
 		const client = makeMockClient();
-		expect(() => voiceHandler(client, null, null)).not.toThrow();
+		await expect(voiceHandler(client, null, null)).resolves.not.toThrow();
 	});
 });
 
@@ -535,10 +531,10 @@ describe('initSessions()', () => {
 });
 
 describe('isEligible() null safety', () => {
-	test('returns false when state.member is null', () => {
+	test('returns false when state.member is null', async () => {
 		const client = makeMockClient();
 		const state = makeVoiceState({ member: null });
 		// The handler wraps isEligible in try/catch, so it should not throw
-		expect(() => voiceHandler(client, state, state)).not.toThrow();
+		await expect(voiceHandler(client, state, state)).resolves.not.toThrow();
 	});
 });

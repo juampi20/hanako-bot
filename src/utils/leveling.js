@@ -11,7 +11,7 @@ async function assignLevelReward(client, guild, member, level) {
 	}
 	try {
 		client.logger?.debug?.(`AssignLevelReward: looking up reward for level ${level} in ${guild.id}`);
-		const reward = client.rewardService.findByGuildAndLevel(guild.id, level);
+		const reward = await client.rewardService.findByGuildAndLevel(guild.id, level);
 		if (!reward) {
 			client.logger?.debug?.(`AssignLevelReward: no reward configured for level ${level} in ${guild.id}`);
 			return null;
@@ -28,7 +28,7 @@ async function assignLevelReward(client, guild, member, level) {
 		}
 
 		// Remove previous reward roles (mutually exclusive per guild)
-		const allRewards = client.rewardService.findAllByGuild(guild.id);
+		const allRewards = await client.rewardService.findAllByGuild(guild.id);
 		const prevRoleIds = allRewards
 			.filter(r => r.role_id !== reward.role_id)
 			.map(r => r.role_id)
@@ -62,7 +62,7 @@ async function notifyLevelUp(client, guild, member, level) {
 
 	try {
 		const interval = client.config.levelUpNotifyInterval || 5;
-		const levelReward = client.rewardService?.findByGuildAndLevel(guild.id, level);
+		const levelReward = await client.rewardService?.findByGuildAndLevel(guild.id, level);
 		if (level % interval !== 0 && !levelReward) {return;}
 		const channelId = client.config.levelUpChannel;
 		const targetChannel = channelId

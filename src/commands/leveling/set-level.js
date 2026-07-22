@@ -12,7 +12,7 @@ exports.execute = async (client, interaction) => {
 	const target = interaction.options.getUser('user');
 	const level = interaction.options.getInteger('level');
 
-	const result = client.levelingService.setLevel(target.id, interaction.guild.id, level);
+	const result = await client.levelingService.setLevel(target.id, interaction.guild.id, level);
 	if (!result) {
 		return interaction.reply({ content: 'Error al establecer nivel.', ephemeral: true });
 	}

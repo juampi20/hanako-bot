@@ -14,10 +14,10 @@ module.exports = async (client, message) => {
 	// ── AFK: sender auto-remove ──────────────────────────
 	if (message.guild) {
 		try {
-			const afkRecord = client.afkService?.isAfk(message.author.id, message.guild.id);
+			const afkRecord = await client.afkService?.isAfk(message.author.id, message.guild.id);
 			if (afkRecord) {
 				// Elimina el registro AFK del usuario
-				client.afkService.remove(message.author.id, message.guild.id);
+				await client.afkService.remove(message.author.id, message.guild.id);
 
 				// Notifica en el canal si la configuración lo requiere (sin modificar apodos)
 				if (client.config.afkNotify) {
@@ -53,7 +53,7 @@ module.exports = async (client, message) => {
 
 			const xpAmount = randomInt(client.config.chatXpMin, client.config.chatXpMax);
 			client.logger?.debug?.(`Message XP: processing XP for ${message.author.id} in ${message.guild.id}, amount=${xpAmount}`);
-			const result = client.levelingService.addXP(message.author.id, message.guild.id, xpAmount);
+			const result = await client.levelingService.addXP(message.author.id, message.guild.id, xpAmount);
 
 			if (result) {
 				client.logger?.debug?.(`Message XP: XP recorded - user=${message.author.id} old=${result.oldLevel} new=${result.level}`);
@@ -77,7 +77,7 @@ module.exports = async (client, message) => {
 			for (const user of message.mentions.users.values()) {
 				if (user.bot || user.id === message.author.id) continue;
 
-				const record = client.afkService?.isAfk(user.id, message.guild.id);
+				const record = await client.afkService?.isAfk(user.id, message.guild.id);
 				if (record) {
 					mentionedAfkUsers.add(user.id);
 				}
@@ -85,7 +85,7 @@ module.exports = async (client, message) => {
 
 			// Si se mencionó a al menos un usuario AFK
 			for (const userId of mentionedAfkUsers) {
-				const record = client.afkService?.isAfk(userId, message.guild.id);
+				const record = await client.afkService?.isAfk(userId, message.guild.id);
 				if (!record) continue;
 
 				const targetMember = message.guild.members.cache.get(userId);

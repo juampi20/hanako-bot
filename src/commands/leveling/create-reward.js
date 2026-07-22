@@ -31,7 +31,7 @@ exports.execute = async (client, interaction) => {
 		return interaction.reply({ content: 'No tengo permisos para administrar roles en este servidor.', ephemeral: true });
 	}
 
-	const result = Reward.create(guildId, level, targetRole.id);
+	const result = await Reward.create(guildId, level, targetRole.id);
 	if (!result) {
 		return interaction.reply({ content: `Ya existe un rol asignado para el nivel ${level} en este servidor.`, ephemeral: true });
 	}

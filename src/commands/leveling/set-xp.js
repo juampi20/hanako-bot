@@ -12,7 +12,7 @@ exports.execute = async (client, interaction) => {
 	const target = interaction.options.getUser('user');
 	const amount = interaction.options.getInteger('amount');
 
-	const result = client.levelingService.setXP(target.id, interaction.guild.id, amount);
+	const result = await client.levelingService.setXP(target.id, interaction.guild.id, amount);
 	if (!result) {
 		return interaction.reply({ content: 'Error al establecer XP.', ephemeral: true });
 	}

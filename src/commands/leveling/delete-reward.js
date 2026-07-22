@@ -14,18 +14,18 @@ exports.execute = async (client, interaction) => {
 	const guildId = interaction.guild.id;
 
 	// Verify reward belongs to this guild and exists
-	if (!Reward.verifyGuildOwnership(rewardId, guildId)) {
+	if (!await Reward.verifyGuildOwnership(rewardId, guildId)) {
 		return interaction.reply({ content: 'Esta recompensa no pertenece a este servidor.', ephemeral: true });
 	}
 
 	// Find reward by ID first to show in response
-	const reward = Reward.findById(rewardId);
+	const reward = await Reward.findById(rewardId);
 	if (!reward) {
 		return interaction.reply({ content: 'Recompensa no encontrada.', ephemeral: true });
 	}
 
-	const result = Reward.deleteById(rewardId);
-	if (result.changes === 0) {
+	const result = await Reward.deleteById(rewardId);
+	if (!result.rowCount) {
 		return interaction.reply({ content: 'No se pudo eliminar la recompensa.', ephemeral: true });
 	}
 

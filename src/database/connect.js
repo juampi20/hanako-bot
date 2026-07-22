@@ -1,44 +1,44 @@
-const { DatabaseSync } = require('node:sqlite');
-const path = require('path');
-const fs = require('fs');
+const { Pool } = require('pg');
 
-const instances = {};
-let defaultPath = null;
+let pool = null;
 
-function initialize(dbPath) {
-	const resolved = path.resolve(dbPath);
-	if (instances[resolved]) { return instances[resolved]; }
-	if (!defaultPath) { defaultPath = resolved; }
+async function initialize() {
+	const connectionString = process.env.DATABASE_URL ||
+        `postgres://${process.env.PGUSER || 'postgres'}:${process.env.PGPASSWORD || 'postgres'}@${process.env.PGHOST || 'localhost'}:${process.env.PGPORT || 5432}/${process.env.PGDATABASE || 'hanako'}`;
 
-	const dir = path.dirname(resolved);
-	if (!fs.existsSync(dir)) {
-		fs.mkdirSync(dir, { recursive: true });
+	pool = new Pool({ connectionString, max: 5, min: 1 });
+	pool.on('error', err => {
+		console.error('Database pool error:', err);
+	});
+
+	const MAX_RETRIES = 4;
+	const RETRY_DELAYS = [1000, 2000, 4000, 8000];
+
+	for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
+		try {
+			await pool.query('SELECT 1');
+			return pool;
+		}
+		catch (err) {
+			console.error(`Database connection attempt ${attempt}/${MAX_RETRIES} failed:`, err.message);
+			if (attempt === MAX_RETRIES) {
+				throw new Error(`Database connection failed after ${MAX_RETRIES} attempts. Last error: ${err.message}`, { cause: err });
+			}
+			await new Promise(resolve => setTimeout(resolve, RETRY_DELAYS[attempt - 1]));
+		}
 	}
-
-	const db = new DatabaseSync(resolved);
-	db.exec('PRAGMA journal_mode = WAL');
-	db.exec('PRAGMA synchronous = NORMAL');
-	instances[resolved] = db;
-	return db;
 }
 
-function close(dbPath) {
-	const resolved = path.resolve(dbPath);
-	if (instances[resolved]) {
-		instances[resolved].close();
-		delete instances[resolved];
+function getPool() {
+	if (!pool) throw new Error('Database not initialized');
+	return pool;
+}
+
+async function close() {
+	if (pool) {
+		await pool.end();
+		pool = null;
 	}
 }
 
-function getDb(dbPath) {
-	const resolved = dbPath ? path.resolve(dbPath) : defaultPath;
-	if (!resolved) {
-		throw new Error('getDb() called before initialize() — no database path set');
-	}
-	if (!instances[resolved]) {
-		throw new Error(`Database not initialized for path: ${resolved}`);
-	}
-	return instances[resolved];
-}
-
-module.exports = { initialize, close, getDb };
+module.exports = { initialize, getPool, close };

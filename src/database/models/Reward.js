@@ -1,108 +1,52 @@
-function getDb() {
-	return require('../connect').getDb();
+function getPool() {
+	return require('../connect').getPool();
 }
 
 class Reward {
-	static createTable(db) {
-		db.exec(
-			'CREATE TABLE IF NOT EXISTS level_rewards (' +
-        'id INTEGER PRIMARY KEY AUTOINCREMENT, ' +
-        'guild_id TEXT NOT NULL, ' +
-        'level INTEGER NOT NULL, ' +
-        'role_id TEXT NOT NULL, ' +
-        'created_at TEXT DEFAULT (datetime(\'now\')), ' +
-        'UNIQUE(guild_id, level)' +
-        ')',
-		);
+	static async createTable(pool) {
+		const db = pool || getPool();
+		await db.query('CREATE TABLE IF NOT EXISTS level_rewards (id SERIAL PRIMARY KEY, guild_id TEXT NOT NULL, level INTEGER NOT NULL, role_id TEXT NOT NULL, created_at TIMESTAMP DEFAULT NOW(), UNIQUE(guild_id, level))');
 	}
 
-	static create(guildId, level, roleId) {
-		const db = getDb();
+	static async create(guildId, level, roleId) {
+		const db = getPool();
 		try {
-			const result = db
-				.prepare(
-					'INSERT INTO level_rewards (guild_id, level, role_id) VALUES (?, ?, ?)',
-				)
-				.run(guildId, level, roleId);
-			return {
-				id: result.lastInsertRowid,
-				guild_id: guildId,
-				level: level,
-				role_id: roleId,
-				created_at: new Date().toISOString().slice(0, 19).replace('T', ' '),
-			};
+			const res = await db.query('INSERT INTO level_rewards (guild_id, level, role_id) VALUES ($1, $2, $3) RETURNING *', [guildId, level, roleId]);
+			return res.rows[0];
 		}
 		catch (err) {
-			if (err.errcode === 2067 || err.message.includes('UNIQUE constraint failed')) {
-				return null;
-			}
+			if (err.code === '23505') { return null; }
 			throw err;
 		}
 	}
 
-	static findByGuildAndLevel(guildId, level) {
-		const db = getDb();
-		const row = db
-			.prepare('SELECT * FROM level_rewards WHERE guild_id = ? AND level = ?')
-			.get(guildId, level);
-		if (row) {
-			return {
-				id: row.id,
-				guild_id: row.guild_id,
-				level: row.level,
-				role_id: row.role_id,
-				created_at: row.created_at,
-			};
-		}
-		return undefined;
+	static async findByGuildAndLevel(guildId, level) {
+		const db = getPool();
+		const res = await db.query('SELECT * FROM level_rewards WHERE guild_id = $1 AND level = $2', [guildId, level]);
+		return res.rows[0] || undefined;
 	}
 
-	static findById(id) {
-		const db = getDb();
-		const row = db
-			.prepare('SELECT * FROM level_rewards WHERE id = ?')
-			.get(id);
-		if (row) {
-			return {
-				id: row.id,
-				guild_id: row.guild_id,
-				level: row.level,
-				role_id: row.role_id,
-				created_at: row.created_at,
-			};
-		}
-		return undefined;
+	static async findById(id) {
+		const db = getPool();
+		const res = await db.query('SELECT * FROM level_rewards WHERE id = $1', [id]);
+		return res.rows[0] || undefined;
 	}
 
-	static findAllByGuild(guildId) {
-		const db = getDb();
-		const rows = db
-			.prepare(
-				'SELECT * FROM level_rewards WHERE guild_id = ? ORDER BY level',
-			)
-			.all(guildId);
-		return rows.map(function(row) {
-			return {
-				id: row.id,
-				guild_id: row.guild_id,
-				level: row.level,
-				role_id: row.role_id,
-				created_at: row.created_at,
-			};
-		});
+	static async findAllByGuild(guildId) {
+		const db = getPool();
+		const res = await db.query('SELECT * FROM level_rewards WHERE guild_id = $1 ORDER BY level ASC', [guildId]);
+		return res.rows;
 	}
 
-	static deleteById(id) {
-		const db = getDb();
-		const result = db
-			.prepare('DELETE FROM level_rewards WHERE id = ?')
-			.run(id);
-		return { changes: result.changes };
+	static async deleteById(id) {
+		const db = getPool();
+		const res = await db.query('DELETE FROM level_rewards WHERE id = $1 RETURNING id', [id]);
+		return { rowCount: res.rowCount > 0 };
 	}
 
-	static verifyGuildOwnership(id, guildId) {
-		const reward = Reward.findById(id);
-		return reward && reward.guild_id === guildId;
+	static async verifyGuildOwnership(id, guildId) {
+		const res = await this.findById(id);
+		return res && res.guild_id === guildId;
 	}
 }
 

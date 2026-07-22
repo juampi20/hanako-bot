@@ -6,8 +6,8 @@ const { initSessions } = require('./voiceStateUpdate');
 module.exports = async (client) => {
 	try {
 		client.logger?.debug?.('ClientReady: initializing database');
-		const db = initialize('./data/scores.sqlite');
-		loadModels(db);
+		const pool = await initialize();
+		await loadModels(pool);
 		client.levelingService = Score;
 		client.rewardService = Reward;
 		client.afkService = Afk;

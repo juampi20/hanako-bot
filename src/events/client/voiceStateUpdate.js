@@ -102,7 +102,7 @@ async function tick(client) {
 				continue;
 			}
 
-			const result = client.levelingService?.addXP(userId, guildIdSession, amount);
+			const result = await client.levelingService?.addXP(userId, guildIdSession, amount);
 			if (result) {
 				client.logger?.debug?.(`Voice XP: granted ${amount} XP to ${userId} in ${guildIdSession}, level: ${result.level}`);
 				if (result.level > result.oldLevel) {
@@ -145,11 +145,11 @@ module.exports = async (client, oldState, newState) => {
 			if (isInAfkChannel && !wasInAfkChannel) {
 				const member = newState.member || (await newState.guild?.members.fetch(userId).catch(() => null));
 				if (!member || member.user?.bot) { return; }
-				const existing = client.afkService?.isAfk(userId, guildId);
+				const existing = await client.afkService?.isAfk(userId, guildId);
 				// Re-check channel after await (TOCTOU guard)
 				const currentChannelId = member.voice?.channelId;
 				if (!existing && currentChannelId === guild.afkChannelId) {
-					client.afkService.set(userId, guildId, 'Está ausente', Math.floor(Date.now() / 1000));
+					await client.afkService.set(userId, guildId, 'Está ausente', Math.floor(Date.now() / 1000));
 					if (afkNotifyTarget) {
 						afkNotifyTarget.send(`${member.displayName} está ahora AFK (canal de voz AFK).`).catch(() => null);
 					}
@@ -158,9 +158,9 @@ module.exports = async (client, oldState, newState) => {
 
 			// Leave or move OUT OF AFK channel: remove AFK (if present)
 			if (!isInAfkChannel && wasInAfkChannel) {
-				const existing = client.afkService?.isAfk(userId, guildId);
+				const existing = await client.afkService?.isAfk(userId, guildId);
 				if (existing) {
-					client.afkService.remove(userId, guildId);
+					await client.afkService.remove(userId, guildId);
 					if (afkNotifyTarget) {
 						afkNotifyTarget.send(`${newState.member?.displayName || userId} ya no está AFK (salió del canal AFK).`).catch(() => null);
 					}
@@ -229,9 +229,9 @@ async function initSessions(client) {
 			for (const [, vs] of guild.voiceStates.cache) {
 				if (vs.channelId !== guild.afkChannelId) {continue;}
 				if (!vs.member || vs.member.user?.bot) {continue;}
-				const existing = client.afkService.isAfk(vs.member.id, guild.id);
+				const existing = await client.afkService.isAfk(vs.member.id, guild.id);
 				if (!existing) {
-					client.afkService.set(
+					await client.afkService.set(
 						vs.member.id,
 						guild.id,
 						'Está ausente',

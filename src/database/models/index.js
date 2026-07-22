@@ -6,13 +6,13 @@ const Afk = require('./Afk');
  * Load all models: create tables, indexes, etc.
  * Called once at database initialization.
  */
-function loadModels(db) {
-	Score.createTable(db);
-	Reward.createTable(db);
-	Afk.createTable(db);
+async function loadModels(pool) {
+	await Score.createTable(pool);
+	await Reward.createTable(pool);
+	await Afk.createTable(pool);
 	// Future models will register here:
-	// Economy.createTable(db);
-	// Settings.createTable(db);
+	// Economy.createTable(pool);
+	// Settings.createTable(pool);
 }
 
 module.exports = { loadModels, Score, Reward, Afk };

@@ -3,13 +3,12 @@ const { baseEmbed, COLORS } = require('../../utils/embed');
 
 const MEDALS = ['🥇', '🥈', '🥉'];
 
-function buildLeaderboard(client, guildId) {
-	const top10 = client.levelingService.getLeaderboard(guildId, 10);
+async function buildLeaderboard(client, guildId) {
+	const top10 = await client.levelingService.getLeaderboard(guildId, 10);
 	const descriptionLines = top10.map((data, i) => {
-		const user = client.users.cache.get(data.user);
 		const prefix = i < 3 ? MEDALS[i] : `${i + 1}.`;
-		const name = user ? user.username : 'Usuario desconocido';
-		return `${prefix} **${name}** — ${data.points} pts (nivel ${data.level})`;
+		// Mention sin ping: dentro de un embed no genera notificación
+		return `${prefix} <@${data.user}> — ${data.points} pts (nivel ${data.level})`;
 	});
 
 	const embed = baseEmbed(client, { color: COLORS.LEVELING })
@@ -20,7 +19,7 @@ function buildLeaderboard(client, guildId) {
 }
 
 exports.run = async (client, message, _args) => {
-	const embed = buildLeaderboard(client, message.guild.id);
+	const embed = await buildLeaderboard(client, message.guild.id);
 	await message.channel.send({ embeds: [embed] });
 };
 
@@ -30,7 +29,7 @@ exports.data = new SlashCommandBuilder()
 	.setContexts(InteractionContextType.Guild);
 
 exports.execute = async (client, interaction) => {
-	const embed = buildLeaderboard(client, interaction.guild.id);
+	const embed = await buildLeaderboard(client, interaction.guild.id);
 	await interaction.reply({ embeds: [embed] });
 };
 

@@ -4,3 +4,4 @@ node_modules
 *.md
 src/__tests__
 .eslint*
+.env*
