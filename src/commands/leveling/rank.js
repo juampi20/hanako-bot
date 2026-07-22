@@ -17,8 +17,8 @@ async function buildRankEmbed(client, target, score) {
 	const pct = xpNeeded > 0 ? Math.round((xpIntoLevel / xpNeeded) * 100) : 100;
 
 	// Find rank position using guildId as fallback
-	const allowedGuildId = client.config.guildId || target.guild?.id || client.guilds.cache.first()?.id;
-	const leaderboard = await levelingService.getLeaderboard(allowedGuildId, 100);
+	const guildId = client.config.guildId || target.guild?.id || client.guilds.cache.first()?.id;
+	const leaderboard = await levelingService.getLeaderboard(guildId, 100);
 	const rank = leaderboard.findIndex(entry => entry.user === target.id) + 1;
 
 	const embed = baseEmbed(client, { color: COLORS.LEVELING })
