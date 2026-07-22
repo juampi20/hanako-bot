@@ -1,7 +1,12 @@
 .PHONY: start dev lint lint-fix test \
         build run stop clean \
         build-prod run-prod stop-prod \
+        logs logs-prod restart restart-prod \
+        ps ps-prod shell setup clean-docker \
         migrate migrate-dry backup
+
+COMPOSE_DEV ?= docker compose
+COMPOSE_PROD ?= docker compose -f docker-compose.prod.yml
 
 # ── Development ────────────────────────────────────────
 start:
@@ -21,35 +26,67 @@ test:
 
 # ── Docker (dev — usa docker-compose.yml + .env) ──────
 build:
-	docker compose build
+	$(COMPOSE_DEV) build
 
 run:
-	docker compose up -d
+	$(COMPOSE_DEV) up -d
 
 stop:
-	docker compose down
+	$(COMPOSE_DEV) down
 
-# ── Docker (producción — usa docker-compose.prod.yml) ──
+logs:
+	$(COMPOSE_DEV) logs -f bot
+
+restart:
+	$(COMPOSE_DEV) restart bot
+
+ps:
+	$(COMPOSE_DEV) ps
+
+shell:
+	$(COMPOSE_DEV) exec bot sh
+
+# ── Docker (producción — usa docker-compose.prod.yml) ────
 build-prod:
-	docker compose -f docker-compose.prod.yml build
+	$(COMPOSE_PROD) build
 
 run-prod:
-	docker compose -f docker-compose.prod.yml up -d
+	$(COMPOSE_PROD) up -d
 
 stop-prod:
-	docker compose -f docker-compose.prod.yml down
+	$(COMPOSE_PROD) down
+
+logs-prod:
+	$(COMPOSE_PROD) logs -f bot
+
+restart-prod:
+	$(COMPOSE_PROD) restart bot
+
+ps-prod:
+	$(COMPOSE_PROD) ps
 
 # ── Utilities ─────────────────────────────────────────
 clean:
 	rm -rf node_modules data
 
-# PostgreSQL migration
-migrate:
-	node scripts/migrate-to-pg.cjs
+setup:
+	@if [ ! -f .env ]; then \
+		cp .env.example .env; \
+		echo "Created .env from .env.example. PLEASE UPDATE SECRETS!"; \
+	else \
+		echo ".env already exists, skipping."; \
+	fi
+	@if [ ! -f .env.production ]; then \
+		cp .env.prod.example .env.production; \
+		echo "Created .env.production from .env.prod.example. PLEASE UPDATE SECRETS!"; \
+	else \
+		echo ".env.production already exists, skipping."; \
+	fi
 
-migrate-dry:
-	node scripts/migrate-to-pg.cjs --dry-run
+clean-docker:
+	docker compose down --remove-orphans
+	docker system prune -f
 
-# Database backup
+# Database backup (PostgreSQL)
 backup:
 	node scripts/backup-db.cjs

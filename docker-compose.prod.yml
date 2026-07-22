@@ -12,10 +12,27 @@
 
 services:
   bot:
+    build: .
+    image: ghcr.io/chester/hanako-bot:latest
+    container_name: hanako-bot
+    restart: unless-stopped
     env_file:
       - .env.production
-    # Sin network externa — se asume que la DB está en la
-    # misma red o es accesible vía host público.
-    networks: []
     environment:
       - NODE_ENV=production
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    healthcheck:
+      test: ["CMD", "node", "-e", "process.exit(0)"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    networks:
+      - prod-net
+
+networks:
+  prod-net:
+    driver: bridge
