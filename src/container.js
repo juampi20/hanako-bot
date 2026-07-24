@@ -3,14 +3,23 @@
 const pool = require('../database/connect').getPool();
 const LevelRepository = require('../repositories/LevelRepository');
 const LevelService = require('../services/LevelService');
+const AfkRepository = require('../repositories/AfkRepository');
+const AfkService = require('../services/AfkService');
 
 async function initialize() {
 	console.log('Initializing DI container for Level domain');
 
-	const repo = new LevelRepository(pool);
-	LevelService.useRepository(repo);
+	const levelRepo = new LevelRepository(pool);
+	LevelService.useRepository(levelRepo);
 
 	console.log('LevelRepository injected into LevelService');
+
+	console.log('Initializing DI container for Afk domain');
+
+	const afkRepo = new AfkRepository(pool);
+	AfkService.useRepository(afkRepo);
+
+	console.log('AfkRepository injected into AfkService');
 }
 
 module.exports = initialize;

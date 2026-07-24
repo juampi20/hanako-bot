@@ -1,9 +1,11 @@
 const { initialize } = require('../../database/connect');
-const { loadModels, LevelService, Reward, Afk } = require('../../database/models');
+const { loadModels, LevelService, Reward } = require('../../database/models');
 const { registerSlashCommands } = require('../../handlers/loaders/commands');
 const { initSessions } = require('./voiceStateUpdate');
 const createLevelTable = require('../../database/migrations/createLevelTable');
+const createAfkTable = require('../../database/migrations/createAfkTable');
 const initializeContainer = require('../../container');
+const AfkService = require('../../services/AfkService');
 
 module.exports = async (client) => {
 	try {
@@ -11,10 +13,11 @@ module.exports = async (client) => {
 		const pool = await initialize();
 		await loadModels(pool);
 		await createLevelTable();
+		await createAfkTable();
 		await initializeContainer();
 		client.levelingService = LevelService;
 		client.rewardService = Reward;
-		client.afkService = Afk;
+		client.afkService = AfkService;
 
 		client.logger?.debug?.('ClientReady: database initialization successful');
 	}
@@ -42,7 +45,7 @@ module.exports = async (client) => {
 	}
 	catch (err) {
 		client.logger.warn('Voice initSessions failed: ' + (err?.message || err));
-		client.logger?.debug?.(`ClientReady: voice XP initSessions failed: ${err}`);
+		client.logger?.debug?.(`ClientReady: voice initSessions failed: ${err}`);
 	}
 
 	client.logger.log(`${client.user.username} esta listo.`, 'ready');
