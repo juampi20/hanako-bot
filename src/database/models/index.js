@@ -6,10 +6,10 @@ const Reward = require('./Reward');
  * Called once at database initialization.
  */
 async function loadModels(_pool) {
-	// Create tables using injected repository if available, otherwise fallback to getPool()
-	// Level table creation moved to standalone migration script (createLevelTable.js)
-	// AFK table creation moved to standalone migration script (createAfkTable.js)
-	await Reward.createTable();
+	// All table creation moved to standalone migration scripts:
+	// - createLevelTable.js (scores)
+	// - createLevelRewardsTable.js (level_rewards)
+	// - createAfkTable.js (afk)
 	// Future models will register here:
 	// Economy.createTable();
 	// Settings.createTable();

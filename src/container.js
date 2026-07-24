@@ -3,6 +3,8 @@
 const pool = require('../database/connect').getPool();
 const LevelRepository = require('../repositories/LevelRepository');
 const LevelService = require('../services/LevelService');
+const RewardRepository = require('../repositories/RewardRepository');
+const RewardService = require('../services/RewardService');
 const AfkRepository = require('../repositories/AfkRepository');
 const AfkService = require('../services/AfkService');
 
@@ -13,6 +15,13 @@ async function initialize() {
 	LevelService.useRepository(levelRepo);
 
 	console.log('LevelRepository injected into LevelService');
+
+	console.log('Initializing DI container for Reward domain');
+
+	const rewardRepo = new RewardRepository(pool);
+	RewardService.useRepository(rewardRepo);
+
+	console.log('RewardRepository injected into RewardService');
 
 	console.log('Initializing DI container for Afk domain');
 

@@ -1,6 +1,6 @@
 const { SlashCommandBuilder, InteractionContextType, PermissionFlagsBits } = require('discord.js');
 const { baseEmbed, COLORS } = require('../../utils/embed');
-const { Reward } = require('../../database/models');
+const { RewardController } = require('../../controllers/RewardController');
 
 exports.data = new SlashCommandBuilder()
 	.setName('create-reward')
@@ -31,7 +31,17 @@ exports.execute = async (client, interaction) => {
 		return interaction.reply({ content: 'No tengo permisos para administrar roles en este servidor.', ephemeral: true });
 	}
 
-	const result = await Reward.create(guildId, level, targetRole.id);
+	let result;
+	try {
+		result = await RewardController.createReward(guildId, level, targetRole.id, botMember);
+	}
+	catch (error) {
+		if (error.message === 'BOT_HIERARCHY') {
+			return interaction.reply({ content: 'No puedo asignar este rol porque mi rol está por debajo del rol objetivo.', ephemeral: true });
+		}
+		return interaction.reply({ content: 'Error al crear la asignación: ' + error.message, ephemeral: true });
+	}
+
 	if (!result) {
 		return interaction.reply({ content: `Ya existe un rol asignado para el nivel ${level} en este servidor.`, ephemeral: true });
 	}
