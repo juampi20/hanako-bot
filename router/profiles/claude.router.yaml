@@ -1,0 +1,36 @@
+name: claude
+phases:
+  orchestrator:
+    model: anthropic/claude-opus
+    fallbacks:
+      - anthropic/claude-sonnet
+  explore:
+    model: anthropic/claude-sonnet
+    fallbacks:
+      - anthropic/claude-haiku
+  spec:
+    model: anthropic/claude-opus
+    fallbacks:
+      - anthropic/claude-sonnet
+  design:
+    model: anthropic/claude-opus
+    fallbacks:
+      - anthropic/claude-sonnet
+  tasks:
+    model: anthropic/claude-sonnet
+    fallbacks:
+      - anthropic/claude-haiku
+  apply:
+    model: anthropic/claude-sonnet
+    fallbacks:
+      - anthropic/claude-haiku
+  verify:
+    model: anthropic/claude-opus
+    fallbacks:
+      - anthropic/claude-sonnet
+  archive:
+    model: anthropic/claude-haiku
+    fallbacks:
+      - anthropic/claude-sonnet
+complexity: medium
+builtin: true

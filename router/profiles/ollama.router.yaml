@@ -1,0 +1,36 @@
+name: ollama
+phases:
+  orchestrator:
+    model: ollama/qwen3.5
+    fallbacks:
+      - ollama/qwen3
+  explore:
+    model: ollama/qwen3.5
+    fallbacks:
+      - ollama/deepseek-r1
+  spec:
+    model: ollama/qwen3.5
+    fallbacks:
+      - ollama/qwen3
+  design:
+    model: ollama/qwen3.5
+    fallbacks:
+      - ollama/qwq
+  tasks:
+    model: ollama/qwen3
+    fallbacks:
+      - ollama/qwen3.5
+  apply:
+    model: ollama/qwen3-coder
+    fallbacks:
+      - ollama/devstral
+  verify:
+    model: ollama/qwq
+    fallbacks:
+      - ollama/deepseek-r1
+  archive:
+    model: ollama/qwen3
+    fallbacks:
+      - ollama/qwen3.5
+complexity: medium
+builtin: true

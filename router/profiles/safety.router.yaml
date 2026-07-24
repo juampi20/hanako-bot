@@ -1,0 +1,7 @@
+name: safety
+phases:
+  orchestrator:
+    model: anthropic/claude-opus
+    fallbacks:
+
+builtin: true

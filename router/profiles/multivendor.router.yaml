@@ -1,0 +1,36 @@
+name: multivendor
+phases:
+  orchestrator:
+    model: anthropic/claude-opus
+    fallbacks:
+      - openai/gpt-5
+  explore:
+    model: google/gemini-pro
+    fallbacks:
+      - anthropic/claude-sonnet
+  spec:
+    model: anthropic/claude-opus
+    fallbacks:
+      - openai/gpt-5
+  design:
+    model: anthropic/claude-opus
+    fallbacks:
+      - openai/gpt-5
+  tasks:
+    model: anthropic/claude-sonnet
+    fallbacks:
+      - openai/gpt
+  apply:
+    model: anthropic/claude-sonnet
+    fallbacks:
+      - openai/gpt-5
+  verify:
+    model: openai/gpt-5
+    fallbacks:
+      - anthropic/claude-opus
+  archive:
+    model: google/gemini-flash
+    fallbacks:
+      - anthropic/claude-haiku
+complexity: high
+builtin: true

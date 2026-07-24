@@ -1,0 +1,58 @@
+name: premium
+phases:
+  orchestrator:
+    model: anthropic/claude-sonnet-4-6
+    fallbacks:
+      - openai/gpt-5.3-instant
+      - mistral/mistral-large-3
+      - opencode-go/glm-5
+  explore:
+    model: opencode-go/glm-5
+    fallbacks:
+      - mistral/mistral-large-3
+      - mistral/mixtral-8x22b
+      - opencode-go/minimax-m2.5
+  propose:
+    model: openai/gpt-5.4-thinking
+    fallbacks:
+      - openai/gpt-5.3-instant
+      - mistral/mistral-large-3
+      - opencode-go/glm-5
+  spec:
+    model: openai/gpt-5.3-instant
+    fallbacks:
+      - mistral/devstral-medium
+      - opencode-go/glm-5
+      - mistral/mistral-medium-3.1
+  design:
+    model: google/gemini-3.1-pro
+    fallbacks:
+      - opencode-go/kimi-k2.5
+      - mistral/pixtral-large-latest
+      - openai/gpt-5.4-thinking
+  tasks:
+    model: google/gemini-3-flash
+    fallbacks:
+      - opencode-go/minimax-m2.5
+      - opencode-go/mimo-v2-pro
+      - mistral/mistral-nemo
+  apply:
+    model: mistral/codestral-latest
+    fallbacks:
+      - mistral/devstral-2-latest
+      - openai/gpt-5.3-instant
+      - opencode-go/kimi-k2.5
+  verify:
+    model: openai/gpt-5.4-thinking
+    fallbacks:
+      - openai/gpt-5.3-instant
+      - mistral/codestral-latest
+      - mistral/mistral-large-3
+  archive:
+    model: opencode-go/mimo-v2-omni
+    fallbacks:
+      - opencode-go/big-pickle
+      - opencode/opencode-zen
+      - mistral/mistral-nemo
+complexity: high
+builtin: true

@@ -1,17 +1,11 @@
-/**
- * Lazily resolve getPool to avoid circular dependency:
- * connect.js → models/index.js → Score.js → connect.js
- */
-function getPool() {
-	return require('../connect').getPool();
-}
+'use strict';
 
 /**
  * Formula: XP needed for level N
  *   xp = 330(N-1)^2 + 300(N-1)
  *
  * Inverted to get level from XP:
- *   k = floor((-300 + sqrt(90000 + 1320*xp)) / 660)
+ *   k = floor((-300 + sqrt(90000 + 3300*xp)) / 660)
  *   level = max(k + 1, 1)
  */
 function getLevelFromXP(xp) {
@@ -25,23 +19,38 @@ function getXPForLevel(level) {
 	return 330 * n * n + 300 * n;
 }
 
+let scoreRepository;
+
 class Score {
+	/**
+     * Initialize the repository.
+     * @param {import('./IScoreRepository')} repository - The ScoreRepository instance implementing IScoreRepository.
+     */
+	static useRepository(repository) {
+		scoreRepository = repository;
+	}
+
 	/**
      * Create the scores table and indexes.
      * Called once at startup.
      */
 	static async createTable(pool) {
-		const db = pool || getPool();
-		await db.query(`
-            CREATE TABLE IF NOT EXISTS scores (
-                id TEXT PRIMARY KEY,
-                "user" TEXT NOT NULL,
-                guild TEXT NOT NULL,
-                points INTEGER NOT NULL DEFAULT 0,
-                level INTEGER NOT NULL DEFAULT 1
-            )
-        `);
-		await db.query('CREATE UNIQUE INDEX IF NOT EXISTS idx_scores_id ON scores (id)');
+		if (!scoreRepository) {
+			// Fallback to direct pool usage if no repository is set (backward compatibility)
+			pool = pool || require('../connect').getPool();
+			await pool.query(`
+                CREATE TABLE IF NOT EXISTS scores (
+                    id TEXT PRIMARY KEY,
+                    "user" TEXT NOT NULL,
+                    guild TEXT NOT NULL,
+                    points INTEGER NOT NULL DEFAULT 0,
+                    level INTEGER NOT NULL DEFAULT 1
+                )
+            `);
+			await pool.query('CREATE UNIQUE INDEX IF NOT EXISTS idx_scores_id ON scores (id)');
+			return;
+		}
+		await scoreRepository.createTable();
 	}
 
 	/**
@@ -49,20 +58,39 @@ class Score {
      * Returns a plain object or null.
      */
 	static async findByUser(userId, guildId) {
-		const db = getPool();
-		const res = await db.query(
-			'SELECT * FROM scores WHERE "user" = $1 AND guild = $2',
-			[userId, guildId],
-		);
-		const row = res.rows[0];
+		if (!scoreRepository) {
+			const db = require('../connect').getPool();
+			const res = await db.query(
+				'SELECT * FROM scores WHERE "user" = $1 AND guild = $2',
+				[userId, guildId],
+			);
+			const row = res.rows[0];
 
+			if (row) {
+				return {
+					id: row.id,
+					user: row.user,
+					guild: row.guild,
+					points: row.points,
+					// recalculate from points
+					level: getLevelFromXP(row.points),
+				};
+			}
+			return {
+				id: `${guildId}-${userId}`,
+				user: userId,
+				guild: guildId,
+				points: 0,
+				level: 1,
+			};
+		}
+		const row = await scoreRepository.findByUser(userId, guildId);
 		if (row) {
 			return {
 				id: row.id,
 				user: row.user,
 				guild: row.guild,
 				points: row.points,
-				// recalculate from points
 				level: getLevelFromXP(row.points),
 			};
 		}
@@ -76,43 +104,55 @@ class Score {
 	}
 
 	/**
-	 * Upsert a score row.
-	 */
+     * Upsert a score row.
+     */
 	static async upsert(data) {
-		const db = getPool();
-		const res = await db.query(
-		    `INSERT INTO scores (id, "user", guild, points, level)
-	             VALUES ($1, $2, $3, $4, $5)
-	             ON CONFLICT (id) DO UPDATE SET points = scores.points + EXCLUDED.points, level = EXCLUDED.level
-	             RETURNING *`,
-		    [data.id, data.user, data.guild, data.points, data.level],
-		);
-		return res.rows[0];
+		if (!scoreRepository) {
+			const db = require('../connect').getPool();
+			const res = await db.query(
+				`INSERT INTO scores (id, "user", guild, points, level)
+                 VALUES ($1, $2, $3, $4, $5)
+                 ON CONFLICT (id) DO UPDATE SET points = scores.points + EXCLUDED.points, level = EXCLUDED.level
+                 RETURNING *`,
+				[data.id, data.user, data.guild, data.points, data.level],
+			);
+			return res.rows[0];
+		}
+		return await scoreRepository.upsert(data);
 	}
 
 	/**
-	 * Get the top N scores for a guild.
-	 */
+     * Get the top N scores for a guild.
+     */
 	static async getLeaderboard(guildId, limit = 10) {
-		const db = getPool();
-		const res = await db.query(
-			'SELECT * FROM scores WHERE guild = $1 ORDER BY points DESC, level DESC LIMIT $2',
-			[guildId, limit],
-		);
-		return res.rows.map((row) => ({
+		if (!scoreRepository) {
+			const db = require('../connect').getPool();
+			const res = await db.query(
+				'SELECT * FROM scores WHERE guild = $1 ORDER BY points DESC, level DESC LIMIT $2',
+				[guildId, limit],
+			);
+			return res.rows.map((row) => ({
+				id: row.id,
+				user: row.user,
+				guild: row.guild,
+				points: row.points,
+				level: getLevelFromXP(row.points),
+			}));
+		}
+		const rows = await scoreRepository.getLeaderboard(guildId, limit);
+		return rows.map((row) => ({
 			id: row.id,
 			user: row.user,
 			guild: row.guild,
 			points: row.points,
-			// recalculate from points
 			level: getLevelFromXP(row.points),
 		}));
 	}
 
 	/**
-	 * Add XP to a user's score and recalculate level.
-	 * Returns the updated score object with oldLevel, or null if amount is invalid.
-	 */
+     * Add XP to a user's score and recalculate level.
+     * Returns the updated score object with oldLevel, or null if amount is invalid.
+     */
 	static async addXP(userId, guildId, amount) {
 		if (!amount || amount <= 0) return null;
 
@@ -194,4 +234,9 @@ class Score {
 	}
 }
 
-module.exports = Score;
+// Exportar funciones y clase
+module.exports = {
+	Score,
+	getLevelFromXP,
+	getXPForLevel,
+};

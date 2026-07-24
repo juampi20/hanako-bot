@@ -1,0 +1,36 @@
+name: heavyweight
+phases:
+  orchestrator:
+    model: anthropic/claude-opus
+    fallbacks:
+      - anthropic/claude-sonnet
+  explore:
+    model: google/gemini-pro
+    fallbacks:
+      - google/gemini-flash
+  spec:
+    model: anthropic/claude-opus
+    fallbacks:
+      - anthropic/claude-sonnet
+  design:
+    model: anthropic/claude-opus
+    fallbacks:
+      - anthropic/claude-sonnet
+  tasks:
+    model: anthropic/claude-sonnet
+    fallbacks:
+      - anthropic/claude-haiku
+  apply:
+    model: anthropic/claude-sonnet
+    fallbacks:
+      - anthropic/claude-haiku
+  verify:
+    model: openai/gpt-5
+    fallbacks:
+      - openai/o3
+  archive:
+    model: google/gemini-flash
+    fallbacks:
+      - google/gemini-flash
+complexity: extreme
+builtin: true

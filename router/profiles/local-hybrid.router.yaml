@@ -1,0 +1,61 @@
+name: local-hybrid
+phases:
+  orchestrator:
+    model: anthropic/claude-sonnet-4-6
+    fallbacks:
+      - mistral/mistral-large-3
+      - opencode/qwen3.6-plus-free
+      - opencode-go/glm-5
+  explore:
+    model: opencode/nemotron-3-super-free
+    fallbacks:
+      - opencode-go/glm-5
+      - mistral/mixtral-8x22b
+      - opencode/qwen3.6-plus-free
+  propose:
+    model: opencode/qwen3.6-plus-free
+    fallbacks:
+      - opencode-go/kimi-k2.5
+      - opencode-go/glm-5
+      - opencode/nemotron-3-super-free
+  spec:
+    model: opencode/qwen3.6-plus-free
+    fallbacks:
+      - mistral/devstral-medium
+      - opencode-go/glm-5
+      - mistral/mistral-medium-3.1
+  design:
+    model: anthropic/claude-opus
+    fallbacks:
+      - opencode-go/kimi-k2.5
+      - mistral/pixtral-large-latest
+      - opencode/qwen3.6-plus-free
+  tasks:
+    model: opencode/qwen3.6-plus-free
+    fallbacks:
+      - opencode-go/minimax-m2.5
+      - opencode/nemotron-3-super-free
+      - opencode-go/mimo-v2-pro
+      - mistral/mistral-nemo
+  apply:
+    model: anthropic/claude-sonnet-4-6
+    fallbacks:
+      - mistral/codestral-latest
+      - mistral/devstral-2-latest
+      - opencode-go/kimi-k2.5
+      - opencode/qwen3.6-plus-free
+  verify:
+    model: openai/gpt-5.4
+    fallbacks:
+      - mistral/codestral-latest
+      - mistral/mistral-large-3
+      - opencode/qwen3.6-plus-free
+      - opencode/nemotron-3-super-free
+  archive:
+    model: opencode-go/mimo-v2-omni
+    fallbacks:
+      - opencode/big-pickle
+      - opencode/qwen3.6-plus-free
+      - mistral/mistral-nemo
+complexity: medium
+builtin: true

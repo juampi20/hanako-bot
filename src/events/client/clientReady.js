@@ -1,5 +1,6 @@
 const { initialize } = require('../../database/connect');
 const { loadModels, Score, Reward, Afk } = require('../../database/models');
+const { ScoreRepository } = require('../../database/models/ScoreRepository');
 const { registerSlashCommands } = require('../../handlers/loaders/commands');
 const { initSessions } = require('./voiceStateUpdate');
 
@@ -11,6 +12,16 @@ module.exports = async (client) => {
 		client.levelingService = Score;
 		client.rewardService = Reward;
 		client.afkService = Afk;
+
+		// Inject ScoreRepository
+		if (pool) {
+			const repo = new ScoreRepository(pool);
+			Score.useRepository(repo);
+			if (client.logger?.info) {
+				client.logger.info('Score repository injected successfully');
+			}
+		}
+
 		client.logger?.debug?.('ClientReady: database initialization successful');
 	}
 	catch (err) {
