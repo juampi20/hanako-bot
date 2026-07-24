@@ -1,19 +1,15 @@
 'use strict';
 
-const IScoreRepository = require('../IScoreRepository');
+const ILevelRepository = require('../repositories/ILevelRepository');
 
 /**
- * Mock implementation of ScoreRepository for testing.
+ * Mock implementation of LevelRepository for testing.
  */
-class ScoreRepository extends IScoreRepository {
+class LevelRepository extends ILevelRepository {
 	constructor() {
 		super();
 		// In-memory score store keyed by `${guildId}-${userId}`
 		this.scores = new Map();
-	}
-
-	async createTable() {
-		// Mock: no-op
 	}
 
 	async findByUser(userId, guildId) {
@@ -42,4 +38,4 @@ class ScoreRepository extends IScoreRepository {
 	}
 }
 
-module.exports = ScoreRepository;
+module.exports = LevelRepository;

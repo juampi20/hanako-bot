@@ -1,26 +1,20 @@
 const { initialize } = require('../../database/connect');
-const { loadModels, Score, Reward, Afk } = require('../../database/models');
-const { ScoreRepository } = require('../../database/models/ScoreRepository');
+const { loadModels, LevelService, Reward, Afk } = require('../../database/models');
 const { registerSlashCommands } = require('../../handlers/loaders/commands');
 const { initSessions } = require('./voiceStateUpdate');
+const createLevelTable = require('../../database/migrations/createLevelTable');
+const initializeContainer = require('../../container');
 
 module.exports = async (client) => {
 	try {
 		client.logger?.debug?.('ClientReady: initializing database');
 		const pool = await initialize();
 		await loadModels(pool);
-		client.levelingService = Score;
+		await createLevelTable();
+		await initializeContainer();
+		client.levelingService = LevelService;
 		client.rewardService = Reward;
 		client.afkService = Afk;
-
-		// Inject ScoreRepository
-		if (pool) {
-			const repo = new ScoreRepository(pool);
-			Score.useRepository(repo);
-			if (client.logger?.info) {
-				client.logger.info('Score repository injected successfully');
-			}
-		}
 
 		client.logger?.debug?.('ClientReady: database initialization successful');
 	}
@@ -47,7 +41,7 @@ module.exports = async (client) => {
 		client.logger.log('Voice XP sessions initialized from existing channels.', 'log');
 	}
 	catch (err) {
-		client.logger.warn('Voice XP initSessions failed: ' + (err?.message || err));
+		client.logger.warn('Voice initSessions failed: ' + (err?.message || err));
 		client.logger?.debug?.(`ClientReady: voice XP initSessions failed: ${err}`);
 	}
 

@@ -10,7 +10,7 @@ const models = require('../src/database/models');
 
 // Map model keys to actual table names (explicit due to naming exceptions)
 const TABLE_MAPPING = {
-    Score: 'scores',
+    LevelService: 'scores',
     Reward: 'level_rewards',
     Afk: 'afk',
 };

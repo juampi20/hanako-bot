@@ -85,11 +85,16 @@ jest.mock('../database/connect', () => {
 });
 
 const { initialize, getPool, close } = require('../database/connect');
-const { loadModels, Score, Reward } = require('../database/models');
+const { loadModels, LevelService, Reward } = require('../database/models');
+const LevelRepository = require('../repositories/LevelRepository');
 
 beforeAll(async () => {
 	const pool = await initialize();
 	await loadModels(pool);
+
+	// Inject LevelRepository with mocked pool into LevelService
+	const repo = new LevelRepository(pool);
+	LevelService.useRepository(repo);
 });
 
 afterAll(async () => {
@@ -110,10 +115,10 @@ describe('database singleton', () => {
 	});
 });
 
-describe('Score model', () => {
+describe('LevelService (formerly Score model)', () => {
 	describe('findByUser', () => {
 		test('returns default for new user', async () => {
-			const score = await Score.findByUser('newuser', 'guild1');
+			const score = await LevelService.findByUser('newuser', 'guild1');
 			expect(score).toEqual({
 				id: 'guild1-newuser',
 				user: 'newuser',
@@ -124,63 +129,63 @@ describe('Score model', () => {
 		});
 
 		test('returns persisted score after addXP', async () => {
-			await Score.addXP('persistuser', 'guild1', 50);
-			const score = await Score.findByUser('persistuser', 'guild1');
+			await LevelService.addXP('persistuser', 'guild1', 50);
+			const score = await LevelService.findByUser('persistuser', 'guild1');
 			expect(score.points).toBe(50);
 		});
 	});
 
 	describe('addXP', () => {
 		test('adds XP and recalculates level', async () => {
-			const result = await Score.addXP('xptest', 'guild1', 100);
+			const result = await LevelService.addXP('xptest', 'guild1', 100);
 			expect(result.points).toBe(100);
 			expect(result.level).toBe(1);
 		});
 
 		test('returns oldLevel for level-up detection', async () => {
-			const result = await Score.addXP('leveluptest', 'guild1', 200);
+			const result = await LevelService.addXP('leveluptest', 'guild1', 200);
 			expect(result.level).toBe(1);
 			expect(result.oldLevel).toBe(1);
 			expect(result.level).toBeGreaterThanOrEqual(result.oldLevel);
 		});
 
 		test('returns null for zero XP', async () => {
-			expect(await Score.addXP('zerotest', 'guild1', 0)).toBeNull();
+			expect(await LevelService.addXP('zerotest', 'guild1', 0)).toBeNull();
 		});
 
 		test('returns null for negative XP', async () => {
-			expect(await Score.addXP('negtest', 'guild1', -10)).toBeNull();
+			expect(await LevelService.addXP('negtest', 'guild1', -10)).toBeNull();
 		});
 	});
 
 	describe('getLeaderboard', () => {
 		test('returns top scores ordered by points DESC', async () => {
-			await Score.addXP('lbtop', 'guild2', 200);
-			await Score.addXP('lbbottom', 'guild2', 50);
+			await LevelService.addXP('lbtop', 'guild2', 200);
+			await LevelService.addXP('lbbottom', 'guild2', 50);
 
-			const lb = await Score.getLeaderboard('guild2');
+			const lb = await LevelService.getLeaderboard('guild2');
 			expect(lb.length).toBeGreaterThanOrEqual(2);
 			expect(lb[0].user).toBe('lbtop');
 			expect(lb[0].points).toBeGreaterThanOrEqual(lb[1].points);
 		});
 
 		test('returns empty array for guild with no scores', async () => {
-			const lb = await Score.getLeaderboard('emptyguild');
+			const lb = await LevelService.getLeaderboard('emptyguild');
 			expect(lb).toEqual([]);
 		});
 	});
 
 	describe('setXP', () => {
 		test('sets XP and recalculates level', async () => {
-			await Score.addXP('setxptest', 'guild4', 500);
-			const result = await Score.setXP('setxptest', 'guild4', 200);
+			await LevelService.addXP('setxptest', 'guild4', 500);
+			const result = await LevelService.setXP('setxptest', 'guild4', 200);
 			expect(result).not.toBeNull();
 			expect(result.points).toBe(200);
 			expect(result.level).toBe(1);
 		});
 
 		test('can go down in level', async () => {
-			const result = await Score.setXP('downtest', 'guild4', 50);
+			const result = await LevelService.setXP('downtest', 'guild4', 50);
 			expect(result).not.toBeNull();
 			expect(result.points).toBe(50);
 			expect(result.level).toBe(1);
@@ -189,14 +194,14 @@ describe('Score model', () => {
 
 	describe('setLevel', () => {
 		test('sets level and computes minimum XP', async () => {
-			const result = await Score.setLevel('lvltest', 'guild4', 5);
+			const result = await LevelService.setLevel('lvltest', 'guild4', 5);
 			expect(result).not.toBeNull();
 			expect(result.level).toBe(5);
 			expect(result.points).toBe(6480);
 		});
 
 		test('returns null for level below 1', async () => {
-			const result = await Score.setLevel('badlvl', 'guild4', 0);
+			const result = await LevelService.setLevel('badlvl', 'guild4', 0);
 			expect(result).toBeNull();
 		});
 	});

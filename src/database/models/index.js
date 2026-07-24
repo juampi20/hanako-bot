@@ -1,4 +1,4 @@
-const { Score } = require('./Score');
+const LevelService = require('../../services/LevelService');
 const Reward = require('./Reward');
 const Afk = require('./Afk');
 
@@ -8,7 +8,8 @@ const Afk = require('./Afk');
  */
 async function loadModels(_pool) {
 	// Create tables using injected repository if available, otherwise fallback to getPool()
-	await Score.createTable();
+	// Level table creation moved to standalone migration script (createLevelTable.js)
+	// Only services are exported - Reward and Afk kept for backward compatibility
 	await Reward.createTable();
 	await Afk.createTable();
 	// Future models will register here:
@@ -16,4 +17,4 @@ async function loadModels(_pool) {
 	// Settings.createTable();
 }
 
-module.exports = { loadModels, Score, Reward, Afk };
+module.exports = { loadModels, LevelService, Reward, Afk };

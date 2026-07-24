@@ -1,16 +1,16 @@
 'use strict';
 
-const { Score } = require('./Score');
+const LevelService = require('./LevelService');
 
-// Mock de ScoreRepository
+// Mock de LevelRepository
 const mockRepository = {
 	findByUser: jest.fn(),
 	upsert: jest.fn(),
 };
 
-describe('Score', () => {
+describe('LevelService', () => {
 	beforeAll(() => {
-		Score.useRepository(mockRepository);
+		LevelService.useRepository(mockRepository);
 	});
 
 	beforeEach(() => {
@@ -20,37 +20,37 @@ describe('Score', () => {
 
 	describe('getLevelFromXP', () => {
 		it('should return level 1 for XP <= 0', () => {
-			expect(Score.getLevelFromXP(0)).toBe(1);
-			expect(Score.getLevelFromXP(-10)).toBe(1);
+			expect(LevelService.getLevelFromXP(0)).toBe(1);
+			expect(LevelService.getLevelFromXP(-10)).toBe(1);
 		});
 
 		it('should return correct level for given XP', () => {
-			expect(Score.getLevelFromXP(100)).toBe(1);
+			expect(LevelService.getLevelFromXP(100)).toBe(1);
 			// Level 2 requires 630 XP (330*1^2 + 300*1)
-			expect(Score.getLevelFromXP(330)).toBe(1);
-			expect(Score.getLevelFromXP(630)).toBe(2);
+			expect(LevelService.getLevelFromXP(330)).toBe(1);
+			expect(LevelService.getLevelFromXP(630)).toBe(2);
 			// Level 3 requires 1920 XP (330*2^2 + 300*2)
-			expect(Score.getLevelFromXP(990)).toBe(2);
-			expect(Score.getLevelFromXP(1920)).toBe(3);
+			expect(LevelService.getLevelFromXP(990)).toBe(2);
+			expect(LevelService.getLevelFromXP(1920)).toBe(3);
 		});
 	});
 
 	describe('getXPForLevel', () => {
 		it('should return 0 for level 1', () => {
-			expect(Score.getXPForLevel(1)).toBe(0);
+			expect(LevelService.getXPForLevel(1)).toBe(0);
 		});
 
 		it('should return correct XP for given level', () => {
 			// Formula: xp = 330(N-1)^2 + 300(N-1)
-			expect(Score.getXPForLevel(2)).toBe(630);
-			expect(Score.getXPForLevel(3)).toBe(1920);
-			expect(Score.getXPForLevel(4)).toBe(3870);
+			expect(LevelService.getXPForLevel(2)).toBe(630);
+			expect(LevelService.getXPForLevel(3)).toBe(1920);
+			expect(LevelService.getXPForLevel(4)).toBe(3870);
 		});
 	});
 
 	describe('addXP', () => {
 		it('should return null if amount is invalid', async () => {
-			const result = await Score.addXP('user1', 'guild1', 0);
+			const result = await LevelService.addXP('user1', 'guild1', 0);
 			expect(result).toBeNull();
 		});
 
@@ -72,7 +72,7 @@ describe('Score', () => {
 				level: 1,
 			});
 
-			const result = await Score.addXP('user1', 'guild1', 100);
+			const result = await LevelService.addXP('user1', 'guild1', 100);
 			expect(result).toEqual({
 				id: 'guild1-user1',
 				user: 'user1',
@@ -94,7 +94,7 @@ describe('Score', () => {
 
 	describe('setXP', () => {
 		it('should return null if XP is negative', async () => {
-			const result = await Score.setXP('user1', 'guild1', -10);
+			const result = await LevelService.setXP('user1', 'guild1', -10);
 			expect(result).toBeNull();
 		});
 
@@ -116,7 +116,7 @@ describe('Score', () => {
 				level: 1,
 			});
 
-			const result = await Score.setXP('user1', 'guild1', 500);
+			const result = await LevelService.setXP('user1', 'guild1', 500);
 			expect(result).toEqual({
 				points: 500,
 				level: 1,
@@ -134,7 +134,7 @@ describe('Score', () => {
 
 	describe('setLevel', () => {
 		it('should return null if level is invalid', async () => {
-			const result = await Score.setLevel('user1', 'guild1', 0);
+			const result = await LevelService.setLevel('user1', 'guild1', 0);
 			expect(result).toBeNull();
 		});
 
@@ -156,7 +156,7 @@ describe('Score', () => {
 				level: 3,
 			});
 
-			const result = await Score.setLevel('user1', 'guild1', 3);
+			const result = await LevelService.setLevel('user1', 'guild1', 3);
 			expect(result).toEqual({
 				points: 1920,
 				level: 3,
