@@ -1,10 +1,11 @@
 const { SlashCommandBuilder, InteractionContextType } = require('discord.js');
 const { baseEmbed, COLORS } = require('../../utils/embed');
+const LevelController = require('../../controllers/LevelController');
 
 const MEDALS = ['🥇', '🥈', '🥉'];
 
 async function buildLeaderboard(client, guildId) {
-	const top10 = await client.levelingService.getLeaderboard(guildId, 10);
+	const top10 = await LevelController.getLeaderboard(guildId, 10);
 	const descriptionLines = top10.map((data, i) => {
 		const prefix = i < 3 ? MEDALS[i] : `${i + 1}.`;
 		// Mention sin ping: dentro de un embed no genera notificación

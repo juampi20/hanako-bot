@@ -23,6 +23,10 @@ async function initialize() {
 
 	console.log('RewardRepository injected into RewardService');
 
+	// Inject RewardService into LevelService for level reward assignment
+	LevelService.useRewardService(RewardService);
+	console.log('RewardService injected into LevelService');
+
 	console.log('Initializing DI container for Afk domain');
 
 	const afkRepo = new AfkRepository(pool);

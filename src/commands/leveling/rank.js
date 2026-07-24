@@ -1,25 +1,16 @@
 const { SlashCommandBuilder, InteractionContextType } = require('discord.js');
 const { baseEmbed, COLORS } = require('../../utils/embed');
 const { progressBar } = require('../../utils/progress');
+const LevelController = require('../../controllers/LevelController');
 
-async function buildRankEmbed(client, target, score) {
-	const levelingService = client.levelingService;
+async function buildRankEmbed(client, target, guildId) {
+	const rankData = await LevelController.getRank(target.id, guildId);
+	const { score, xpForNext, xpIntoLevel, xpNeeded, rank } = rankData;
 	const currentLevel = score.level;
 	const currentXP = score.points;
-	const xpForCurrent = levelingService.getXPForLevel(currentLevel);
-	const xpForNext = levelingService.getXPForLevel(currentLevel + 1);
 
-	// XP floor for the current level (0 for level 1, getXPForLevel for 2+)
-	const xpFloor = currentLevel <= 1 ? 0 : xpForCurrent;
-	const xpIntoLevel = Math.max(0, currentXP - xpFloor);
-	const xpNeeded = xpForNext - xpFloor;
 	const bar = progressBar(xpIntoLevel, xpNeeded);
 	const pct = xpNeeded > 0 ? Math.round((xpIntoLevel / xpNeeded) * 100) : 100;
-
-	// Find rank position using guildId as fallback
-	const guildId = client.config.guildId || target.guild?.id || client.guilds.cache.first()?.id;
-	const leaderboard = await levelingService.getLeaderboard(guildId, 100);
-	const rank = leaderboard.findIndex(entry => entry.user === target.id) + 1;
 
 	const embed = baseEmbed(client, { color: COLORS.LEVELING })
 		.setAuthor({ name: target.username, iconURL: target.avatarURL() })
@@ -50,8 +41,8 @@ exports.run = async (client, message, _args) => {
 		return;
 	}
 
-	const score = await client.levelingService.getScore(target.id, message.guild.id);
-	const embed = await buildRankEmbed(client, target, { ...score, guild: message.guild.id });
+	const guildId = client.config.guildId || message.guild.id;
+	const embed = await buildRankEmbed(client, target, guildId);
 	await message.channel.send({ embeds: [embed] });
 };
 
@@ -62,14 +53,14 @@ exports.execute = async (client, interaction) => {
 	if (!client.config.guildId && interaction.guild.id !== client.guilds.cache.first()?.id) {
 		// Return friendly error with ephemeral reply
 		await interaction.reply({
-			content: '⚠️ Este comando solo funciona en el servidor configurado como servidor de desarrollo. Configura `GUILD_ID` en tu archivo .env.',
+			content: '⚠️ Este comando solo funciona en el servidor configurado como servidor de desarrollo. Configura `GUUILD_ID` en tu archivo .env.',
 			ephemeral: true,
 		});
 		return;
 	}
 
-	const score = await client.levelingService.getScore(target.id, interaction.guild.id);
-	const embed = await buildRankEmbed(client, target, { ...score, guild: interaction.guild.id });
+	const guildId = client.config.guildId || interaction.guild.id;
+	const embed = await buildRankEmbed(client, target, guildId);
 	await interaction.reply({ embeds: [embed] });
 };
 

@@ -85,6 +85,7 @@ jest.mock('../database/connect', () => {
 });
 
 const { initialize, getPool, close } = require('../database/connect');
+const LvlService = require('../services/LevelService');
 const { loadModels, LevelService, Reward } = require('../database/models');
 const LevelRepository = require('../repositories/LevelRepository');
 
@@ -300,23 +301,18 @@ describe('Reward model', () => {
 
 const notifyLevelUp = require('../utils/leveling').notifyLevelUp;
 
+beforeEach(() => {
+	LvlService.useRewardService({
+		findByGuildAndLevel: jest.fn(),
+		findAllByGuild: jest.fn(),
+	});
+});
+
 describe('notifyLevelUp throttle', () => {
 	test('milestone hit (level 10, interval 5) → sends notification', async () => {
 		const send = jest.fn().mockResolvedValue();
-		const client = {
-			config: {
-				levelUpChannel: 'channel-1',
-				levelUpNotifyInterval: 5,
-				levelUpNotify: true,
-				moderatorRoleId: null,
-				guildId: 'guild-1',
-			},
-			channels: {
-				fetch: jest.fn().mockResolvedValue({ send }),
-			},
-			rewardService: null,
-		};
-		const guild = { id: 'guild-1', systemChannel: null };
+		const client = { config: { levelUpChannel: 'channel-1', levelUpNotifyInterval: 5, levelUpNotify: true, moderatorRoleId: null, guildId: 'guild-1' } };
+		const guild = { id: 'guild-1', systemChannel: null, channels: { fetch: jest.fn().mockResolvedValue({ send }) } };
 		const member = { id: 'user-1', user: { bot: false, id: 'user-1' } };
 		await notifyLevelUp(client, guild, member, 10);
 		expect(send).toHaveBeenCalled();
@@ -325,20 +321,8 @@ describe('notifyLevelUp throttle', () => {
 
 	test('milestone miss (level 7, interval 5) → suppresses notification', async () => {
 		const send = jest.fn().mockResolvedValue();
-		const client = {
-			config: {
-				levelUpChannel: 'channel-1',
-				levelUpNotifyInterval: 5,
-				levelUpNotify: false,
-				moderatorRoleId: null,
-				guildId: 'guild-1',
-			},
-			channels: {
-				fetch: jest.fn().mockResolvedValue({ send }),
-			},
-			rewardService: null,
-		};
-		const guild = { id: 'guild-1', systemChannel: null };
+		const client = { config: { levelUpChannel: 'channel-1', levelUpNotifyInterval: 5, levelUpNotify: false, moderatorRoleId: null, guildId: 'guild-1' } };
+		const guild = { id: 'guild-1', systemChannel: null, channels: { fetch: jest.fn().mockResolvedValue({ send }) } };
 		const member = { id: 'user-1', user: { bot: false, id: 'user-1' } };
 		await notifyLevelUp(client, guild, member, 7);
 		expect(send).not.toHaveBeenCalled();
@@ -347,21 +331,14 @@ describe('notifyLevelUp throttle', () => {
 	test('level with role reward → sends despite non-milestone', async () => {
 		const send = jest.fn().mockResolvedValue();
 		const role = { id: 'role-1', name: 'VIP' };
-		const client = {
-			config: { levelUpChannel: 'channel-1', levelUpNotifyInterval: 5, levelUpNotify: true },
-			channels: { fetch: jest.fn().mockResolvedValue({ send }) },
-			rewardService: {
-				findByGuildAndLevel: jest.fn().mockResolvedValue({ role_id: 'role-1', level: 3 }),
-			},
-		};
+		const client = { config: { levelUpChannel: 'channel-1', levelUpNotifyInterval: 5, levelUpNotify: true } };
 		const guild = {
 			id: 'guild-1', systemChannel: null,
 			roles: { cache: new Map([['role-1', role]]) },
+			channels: { fetch: jest.fn().mockResolvedValue({ send }) },
 		};
-		const member = {
-			id: 'user-1', user: { bot: false, id: 'user-1' },
-			roles: { cache: new Map() },
-		};
+		const member = { id: 'user-1', user: { bot: false, id: 'user-1' }, roles: { cache: new Map() } };
+		LvlService.rewardService.findByGuildAndLevel.mockResolvedValue({ role_id: 'role-1', level: 3 });
 		await notifyLevelUp(client, guild, member, 3);
 		expect(send).toHaveBeenCalled();
 		expect(send.mock.calls[0][0]).toContain('VIP');

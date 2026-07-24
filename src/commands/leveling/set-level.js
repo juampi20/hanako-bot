@@ -1,5 +1,6 @@
 const { SlashCommandBuilder, InteractionContextType } = require('discord.js');
 const { baseEmbed, COLORS } = require('../../utils/embed');
+const LevelController = require('../../controllers/LevelController');
 
 exports.data = new SlashCommandBuilder()
 	.setName('set-level')
@@ -12,7 +13,7 @@ exports.execute = async (client, interaction) => {
 	const target = interaction.options.getUser('user');
 	const level = interaction.options.getInteger('level');
 
-	const result = await client.levelingService.setLevel(target.id, interaction.guild.id, level);
+	const result = await LevelController.setLevel(target.id, interaction.guild.id, level);
 	if (!result) {
 		return interaction.reply({ content: 'Error al establecer nivel.', ephemeral: true });
 	}
