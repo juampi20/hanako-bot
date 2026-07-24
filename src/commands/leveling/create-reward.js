@@ -1,6 +1,6 @@
 const { SlashCommandBuilder, InteractionContextType, PermissionFlagsBits } = require('discord.js');
 const { baseEmbed, COLORS } = require('../../utils/embed');
-const { RewardController } = require('../../controllers/RewardController');
+const RewardController = require('../../controllers/RewardController');
 
 exports.data = new SlashCommandBuilder()
 	.setName('create-reward')
