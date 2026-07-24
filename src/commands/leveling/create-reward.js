@@ -1,6 +1,5 @@
 const { SlashCommandBuilder, InteractionContextType, PermissionFlagsBits } = require('discord.js');
 const { baseEmbed, COLORS } = require('../../utils/embed');
-const { Reward } = require('../../database/models');
 
 exports.data = new SlashCommandBuilder()
 	.setName('create-reward')
@@ -31,7 +30,7 @@ exports.execute = async (client, interaction) => {
 		return interaction.reply({ content: 'No tengo permisos para administrar roles en este servidor.', ephemeral: true });
 	}
 
-	const result = await Reward.create(guildId, level, targetRole.id);
+	const result = await client.rewardService.create(guildId, level, targetRole.id);
 	if (!result) {
 		return interaction.reply({ content: `Ya existe un rol asignado para el nivel ${level} en este servidor.`, ephemeral: true });
 	}
