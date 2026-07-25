@@ -165,7 +165,7 @@ class LevelService {
 	 * @returns {Promise<string|null>} role name or null.
 	 */
 	static async assignLevelReward(guild, member, level, logger) {
-		const log = logger?.debug || console.log;
+		const log = typeof logger?.debug === 'function' ? (...args) => logger.debug(...args) : console.log;
 		log(`[assignLevelReward] called for ${member.id} guild=${guild.id} level=${level}`);
 
 		if (!LevelService.rewardService) {
