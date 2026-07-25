@@ -1,8 +1,9 @@
 const { initialize } = require('../../database/connect');
-const { loadModels, LevelService, Reward, Afk } = require('../../database/models');
+const { loadModels, LevelService, Afk } = require('../../database/models');
 const { registerSlashCommands } = require('../../handlers/loaders/commands');
 const { initSessions } = require('./voiceStateUpdate');
 const createLevelTable = require('../../database/migrations/createLevelTable');
+const createLevelRewardsTable = require('../../database/migrations/createLevelRewardsTable');
 const initializeContainer = require('../../container');
 
 module.exports = async (client) => {
@@ -11,9 +12,10 @@ module.exports = async (client) => {
 		const pool = await initialize();
 		await loadModels(pool);
 		await createLevelTable();
+		await createLevelRewardsTable();
 		await initializeContainer();
 		client.levelingService = LevelService;
-		client.rewardService = Reward;
+		client.rewardService = require('../../services/RewardService');
 		client.afkService = Afk;
 
 		client.logger?.debug?.('ClientReady: database initialization successful');

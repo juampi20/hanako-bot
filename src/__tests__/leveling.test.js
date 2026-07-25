@@ -85,8 +85,10 @@ jest.mock('../database/connect', () => {
 });
 
 const { initialize, getPool, close } = require('../database/connect');
-const { loadModels, LevelService, Reward } = require('../database/models');
+const { loadModels, LevelService } = require('../database/models');
 const LevelRepository = require('../repositories/LevelRepository');
+const RewardRepository = require('../repositories/RewardRepository');
+const RewardService = require('../services/RewardService');
 
 beforeAll(async () => {
 	const pool = await initialize();
@@ -95,6 +97,10 @@ beforeAll(async () => {
 	// Inject LevelRepository with mocked pool into LevelService
 	const repo = new LevelRepository(pool);
 	LevelService.useRepository(repo);
+
+	// Wire RewardService with RewardRepository
+	const rewardRepo = new RewardRepository(pool);
+	RewardService.useRepository(rewardRepo);
 });
 
 afterAll(async () => {
@@ -208,15 +214,9 @@ describe('LevelService (formerly Score model)', () => {
 });
 
 describe('Reward model', () => {
-	describe('createTable', () => {
-		test('creates level_rewards table', () => {
-			expect(true).toBe(true);
-		});
-	});
-
 	describe('create', () => {
 		test('creates reward successfully', async () => {
-			const result = await Reward.create('guild1', 5, 'role123');
+			const result = await RewardService.create('guild1', 5, 'role123');
 			expect(result).toBeDefined();
 			expect(result.id).toBeDefined();
 			expect(result.guild_id).toBe('guild1');
@@ -225,49 +225,49 @@ describe('Reward model', () => {
 		});
 
 		test('returns null for duplicate reward (unique constraint)', async () => {
-			await Reward.create('guild2', 10, 'role456');
-			const result = await Reward.create('guild2', 10, 'role456_dup');
+			await RewardService.create('guild2', 10, 'role456');
+			const result = await RewardService.create('guild2', 10, 'role456_dup');
 			expect(result).toBeNull();
 		});
 	});
 
 	describe('findByGuildAndLevel', () => {
 		test('finds existing reward', async () => {
-			await Reward.create('guild3', 7, 'role789');
-			const reward = await Reward.findByGuildAndLevel('guild3', 7);
+			await RewardService.create('guild3', 7, 'role789');
+			const reward = await RewardService.findByGuildAndLevel('guild3', 7);
 			expect(reward).toBeDefined();
 			expect(reward.level).toBe(7);
 			expect(reward.role_id).toBe('role789');
 		});
 
-		test('returns undefined for non-existent reward', async () => {
-			const reward = await Reward.findByGuildAndLevel('guild4', 99);
-			expect(reward).toBeUndefined();
+		test('returns null for non-existent reward', async () => {
+			const reward = await RewardService.findByGuildAndLevel('guild4', 99);
+			expect(reward).toBeNull();
 		});
 	});
 
 	describe('findById', () => {
 		test('finds reward by ID', async () => {
-			const result1 = await Reward.create('guild5', 12, 'role999');
+			const result1 = await RewardService.create('guild5', 12, 'role999');
 			const id = result1.id;
-			const reward = await Reward.findById(id);
+			const reward = await RewardService.findById(id);
 			expect(reward).toBeDefined();
 			expect(reward.id).toBe(id);
 		});
 
-		test('returns undefined for non-existent ID', async () => {
-			const reward = await Reward.findById(999999);
-			expect(reward).toBeUndefined();
+		test('returns null for non-existent ID', async () => {
+			const reward = await RewardService.findById(999999);
+			expect(reward).toBeNull();
 		});
 	});
 
 	describe('findAllByGuild', () => {
 		test('lists all rewards for a guild ordered by level', async () => {
-			await Reward.create('guild6', 3, 'role_a');
-			await Reward.create('guild6', 1, 'role_b');
-			await Reward.create('guild6', 5, 'role_c');
+			await RewardService.create('guild6', 3, 'role_a');
+			await RewardService.create('guild6', 1, 'role_b');
+			await RewardService.create('guild6', 5, 'role_c');
 
-			const rewards = await Reward.findAllByGuild('guild6');
+			const rewards = await RewardService.findAllByGuild('guild6');
 			expect(rewards.length).toBe(3);
 			expect(rewards[0].level).toBe(1);
 			expect(rewards[1].level).toBe(3);
@@ -275,24 +275,24 @@ describe('Reward model', () => {
 		});
 
 		test('returns empty array for guild with no rewards', async () => {
-			const rewards = await Reward.findAllByGuild('emptyguild');
+			const rewards = await RewardService.findAllByGuild('emptyguild');
 			expect(rewards).toEqual([]);
 		});
 	});
 
 	describe('deleteById', () => {
 		test('deletes existing reward', async () => {
-			const result1 = await Reward.create('guild7', 20, 'role_del');
+			const result1 = await RewardService.create('guild7', 20, 'role_del');
 			const id = result1.id;
-			const result = await Reward.deleteById(id);
+			const result = await RewardService.deleteById(id);
 			expect(result.rowCount).toBe(true);
 
-			const reward = await Reward.findById(id);
-			expect(reward).toBeUndefined();
+			const reward = await RewardService.findById(id);
+			expect(reward).toBeNull();
 		});
 
 		test('returns rowCount false for non-existent ID', async () => {
-			const result = await Reward.deleteById(888888);
+			const result = await RewardService.deleteById(888888);
 			expect(result.rowCount).toBe(false);
 		});
 	});
