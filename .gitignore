@@ -44,6 +44,10 @@ openspec/
 .DS_Store
 Thumbs.db
 
+# ── AI agent config (local, not app code) ─────────────────
+opencode.json
+router/
+
 # ── Build artifacts ───────────────────────────────────────
 dist/
 build/

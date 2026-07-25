@@ -1,5 +1,7 @@
 const { SlashCommandBuilder, InteractionContextType } = require('discord.js');
 const { baseEmbed, COLORS } = require('../../utils/embed');
+const LevelController = require('../../controllers/LevelController');
+const LevelService = require('../../services/LevelService');
 
 exports.data = new SlashCommandBuilder()
 	.setName('set-xp')
@@ -12,9 +14,15 @@ exports.execute = async (client, interaction) => {
 	const target = interaction.options.getUser('user');
 	const amount = interaction.options.getInteger('amount');
 
-	const result = await client.levelingService.setXP(target.id, interaction.guild.id, amount);
+	const result = await LevelController.setXP(target.id, interaction.guild.id, amount);
 	if (!result) {
 		return interaction.reply({ content: 'Error al establecer XP.', ephemeral: true });
+	}
+
+	// Assign reward role for the resulting level
+	const member = interaction.guild.members.cache.get(target.id);
+	if (member) {
+		await LevelService.assignLevelReward(interaction.guild, member, result.level);
 	}
 
 	const embed = baseEmbed(client, { color: COLORS.SUCCESS })

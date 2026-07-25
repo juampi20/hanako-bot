@@ -1,4 +1,4 @@
-const { assignLevelReward, notifyLevelUp } = require('../../utils/leveling');
+const LevelService = require('../../services/LevelService');
 
 // key: `${guildId}:${userId}`, value: true
 const sessions = new Map();
@@ -106,8 +106,8 @@ async function tick(client) {
 			if (result) {
 				client.logger?.debug?.(`Voice XP: granted ${amount} XP to ${userId} in ${guildIdSession}, level: ${result.level}`);
 				if (result.level > result.oldLevel) {
-					await assignLevelReward(client, guild, member, result.level);
-					await notifyLevelUp(client, guild, member, result.level);
+					await LevelService.assignLevelReward(guild, member, result.level, client.logger);
+					await LevelService.notifyLevelUp(guild, member, result.level, client.config);
 					client.logger?.debug?.(`Voice XP: level-up for ${userId} from ${result.oldLevel} to ${result.level}`);
 				}
 			}
@@ -229,14 +229,19 @@ async function initSessions(client) {
 			for (const [, vs] of guild.voiceStates.cache) {
 				if (vs.channelId !== guild.afkChannelId) {continue;}
 				if (!vs.member || vs.member.user?.bot) {continue;}
-				const existing = await client.afkService.isAfk(vs.member.id, guild.id);
-				if (!existing) {
-					await client.afkService.set(
-						vs.member.id,
-						guild.id,
-						'Está ausente',
-						Math.floor(Date.now() / 1000),
-					);
+				try {
+					const existing = await client.afkService.isAfk(vs.member.id, guild.id);
+					if (!existing) {
+						await client.afkService.set(
+							vs.member.id,
+							guild.id,
+							'Está ausente',
+							Math.floor(Date.now() / 1000),
+						);
+					}
+				}
+				catch (err) {
+					client.logger?.debug?.(`AFK: init auto-mark failed for ${vs.member?.id}: ${err.message}`);
 				}
 			}
 		}

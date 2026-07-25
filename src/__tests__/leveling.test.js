@@ -21,9 +21,7 @@ jest.mock('../database/connect', () => {
 				const [guildId, level, roleId] = params;
 				const dup = level_rewards.find(r => r.guild_id === guildId && r.level === level);
 				if (dup) {
-					const err = new Error('duplicate key');
-					err.code = '23505';
-					throw err;
+					return { rows: [], rowCount: 0 };
 				}
 				rewardSeq++;
 				const reward = { id: rewardSeq, guild_id: guildId, level, role_id: roleId, created_at: new Date().toISOString() };
@@ -85,11 +83,23 @@ jest.mock('../database/connect', () => {
 });
 
 const { initialize, getPool, close } = require('../database/connect');
-const { loadModels, Score, Reward } = require('../database/models');
+const LvlService = require('../services/LevelService');
+const { loadModels, LevelService } = require('../database/models');
+const LevelRepository = require('../repositories/LevelRepository');
+const RewardRepository = require('../repositories/RewardRepository');
+const RewardService = require('../services/RewardService');
 
 beforeAll(async () => {
 	const pool = await initialize();
 	await loadModels(pool);
+
+	// Inject LevelRepository with mocked pool into LevelService
+	const repo = new LevelRepository(pool);
+	LevelService.useRepository(repo);
+
+	// Wire RewardService with RewardRepository
+	const rewardRepo = new RewardRepository(pool);
+	RewardService.useRepository(rewardRepo);
 });
 
 afterAll(async () => {
@@ -110,10 +120,10 @@ describe('database singleton', () => {
 	});
 });
 
-describe('Score model', () => {
+describe('LevelService (formerly Score model)', () => {
 	describe('findByUser', () => {
 		test('returns default for new user', async () => {
-			const score = await Score.findByUser('newuser', 'guild1');
+			const score = await LevelService.findByUser('newuser', 'guild1');
 			expect(score).toEqual({
 				id: 'guild1-newuser',
 				user: 'newuser',
@@ -124,63 +134,63 @@ describe('Score model', () => {
 		});
 
 		test('returns persisted score after addXP', async () => {
-			await Score.addXP('persistuser', 'guild1', 50);
-			const score = await Score.findByUser('persistuser', 'guild1');
+			await LevelService.addXP('persistuser', 'guild1', 50);
+			const score = await LevelService.findByUser('persistuser', 'guild1');
 			expect(score.points).toBe(50);
 		});
 	});
 
 	describe('addXP', () => {
 		test('adds XP and recalculates level', async () => {
-			const result = await Score.addXP('xptest', 'guild1', 100);
+			const result = await LevelService.addXP('xptest', 'guild1', 100);
 			expect(result.points).toBe(100);
 			expect(result.level).toBe(1);
 		});
 
 		test('returns oldLevel for level-up detection', async () => {
-			const result = await Score.addXP('leveluptest', 'guild1', 200);
+			const result = await LevelService.addXP('leveluptest', 'guild1', 200);
 			expect(result.level).toBe(1);
 			expect(result.oldLevel).toBe(1);
 			expect(result.level).toBeGreaterThanOrEqual(result.oldLevel);
 		});
 
 		test('returns null for zero XP', async () => {
-			expect(await Score.addXP('zerotest', 'guild1', 0)).toBeNull();
+			expect(await LevelService.addXP('zerotest', 'guild1', 0)).toBeNull();
 		});
 
 		test('returns null for negative XP', async () => {
-			expect(await Score.addXP('negtest', 'guild1', -10)).toBeNull();
+			expect(await LevelService.addXP('negtest', 'guild1', -10)).toBeNull();
 		});
 	});
 
 	describe('getLeaderboard', () => {
 		test('returns top scores ordered by points DESC', async () => {
-			await Score.addXP('lbtop', 'guild2', 200);
-			await Score.addXP('lbbottom', 'guild2', 50);
+			await LevelService.addXP('lbtop', 'guild2', 200);
+			await LevelService.addXP('lbbottom', 'guild2', 50);
 
-			const lb = await Score.getLeaderboard('guild2');
+			const lb = await LevelService.getLeaderboard('guild2');
 			expect(lb.length).toBeGreaterThanOrEqual(2);
 			expect(lb[0].user).toBe('lbtop');
 			expect(lb[0].points).toBeGreaterThanOrEqual(lb[1].points);
 		});
 
 		test('returns empty array for guild with no scores', async () => {
-			const lb = await Score.getLeaderboard('emptyguild');
+			const lb = await LevelService.getLeaderboard('emptyguild');
 			expect(lb).toEqual([]);
 		});
 	});
 
 	describe('setXP', () => {
 		test('sets XP and recalculates level', async () => {
-			await Score.addXP('setxptest', 'guild4', 500);
-			const result = await Score.setXP('setxptest', 'guild4', 200);
+			await LevelService.addXP('setxptest', 'guild4', 500);
+			const result = await LevelService.setXP('setxptest', 'guild4', 200);
 			expect(result).not.toBeNull();
 			expect(result.points).toBe(200);
 			expect(result.level).toBe(1);
 		});
 
 		test('can go down in level', async () => {
-			const result = await Score.setXP('downtest', 'guild4', 50);
+			const result = await LevelService.setXP('downtest', 'guild4', 50);
 			expect(result).not.toBeNull();
 			expect(result.points).toBe(50);
 			expect(result.level).toBe(1);
@@ -189,29 +199,23 @@ describe('Score model', () => {
 
 	describe('setLevel', () => {
 		test('sets level and computes minimum XP', async () => {
-			const result = await Score.setLevel('lvltest', 'guild4', 5);
+			const result = await LevelService.setLevel('lvltest', 'guild4', 5);
 			expect(result).not.toBeNull();
 			expect(result.level).toBe(5);
 			expect(result.points).toBe(6480);
 		});
 
 		test('returns null for level below 1', async () => {
-			const result = await Score.setLevel('badlvl', 'guild4', 0);
+			const result = await LevelService.setLevel('badlvl', 'guild4', 0);
 			expect(result).toBeNull();
 		});
 	});
 });
 
 describe('Reward model', () => {
-	describe('createTable', () => {
-		test('creates level_rewards table', () => {
-			expect(true).toBe(true);
-		});
-	});
-
 	describe('create', () => {
 		test('creates reward successfully', async () => {
-			const result = await Reward.create('guild1', 5, 'role123');
+			const result = await RewardService.create('guild1', 5, 'role123');
 			expect(result).toBeDefined();
 			expect(result.id).toBeDefined();
 			expect(result.guild_id).toBe('guild1');
@@ -220,49 +224,49 @@ describe('Reward model', () => {
 		});
 
 		test('returns null for duplicate reward (unique constraint)', async () => {
-			await Reward.create('guild2', 10, 'role456');
-			const result = await Reward.create('guild2', 10, 'role456_dup');
+			await RewardService.create('guild2', 10, 'role456');
+			const result = await RewardService.create('guild2', 10, 'role456_dup');
 			expect(result).toBeNull();
 		});
 	});
 
 	describe('findByGuildAndLevel', () => {
 		test('finds existing reward', async () => {
-			await Reward.create('guild3', 7, 'role789');
-			const reward = await Reward.findByGuildAndLevel('guild3', 7);
+			await RewardService.create('guild3', 7, 'role789');
+			const reward = await RewardService.findByGuildAndLevel('guild3', 7);
 			expect(reward).toBeDefined();
 			expect(reward.level).toBe(7);
 			expect(reward.role_id).toBe('role789');
 		});
 
-		test('returns undefined for non-existent reward', async () => {
-			const reward = await Reward.findByGuildAndLevel('guild4', 99);
-			expect(reward).toBeUndefined();
+		test('returns null for non-existent reward', async () => {
+			const reward = await RewardService.findByGuildAndLevel('guild4', 99);
+			expect(reward).toBeNull();
 		});
 	});
 
 	describe('findById', () => {
 		test('finds reward by ID', async () => {
-			const result1 = await Reward.create('guild5', 12, 'role999');
+			const result1 = await RewardService.create('guild5', 12, 'role999');
 			const id = result1.id;
-			const reward = await Reward.findById(id);
+			const reward = await RewardService.findById(id);
 			expect(reward).toBeDefined();
 			expect(reward.id).toBe(id);
 		});
 
-		test('returns undefined for non-existent ID', async () => {
-			const reward = await Reward.findById(999999);
-			expect(reward).toBeUndefined();
+		test('returns null for non-existent ID', async () => {
+			const reward = await RewardService.findById(999999);
+			expect(reward).toBeNull();
 		});
 	});
 
 	describe('findAllByGuild', () => {
 		test('lists all rewards for a guild ordered by level', async () => {
-			await Reward.create('guild6', 3, 'role_a');
-			await Reward.create('guild6', 1, 'role_b');
-			await Reward.create('guild6', 5, 'role_c');
+			await RewardService.create('guild6', 3, 'role_a');
+			await RewardService.create('guild6', 1, 'role_b');
+			await RewardService.create('guild6', 5, 'role_c');
 
-			const rewards = await Reward.findAllByGuild('guild6');
+			const rewards = await RewardService.findAllByGuild('guild6');
 			expect(rewards.length).toBe(3);
 			expect(rewards[0].level).toBe(1);
 			expect(rewards[1].level).toBe(3);
@@ -270,94 +274,68 @@ describe('Reward model', () => {
 		});
 
 		test('returns empty array for guild with no rewards', async () => {
-			const rewards = await Reward.findAllByGuild('emptyguild');
+			const rewards = await RewardService.findAllByGuild('emptyguild');
 			expect(rewards).toEqual([]);
 		});
 	});
 
 	describe('deleteById', () => {
 		test('deletes existing reward', async () => {
-			const result1 = await Reward.create('guild7', 20, 'role_del');
+			const result1 = await RewardService.create('guild7', 20, 'role_del');
 			const id = result1.id;
-			const result = await Reward.deleteById(id);
-			expect(result.rowCount).toBe(true);
+			const result = await RewardService.deleteById(id);
+			expect(result.rowCount).toBe(1);
 
-			const reward = await Reward.findById(id);
-			expect(reward).toBeUndefined();
+			const reward = await RewardService.findById(id);
+			expect(reward).toBeNull();
 		});
 
-		test('returns rowCount false for non-existent ID', async () => {
-			const result = await Reward.deleteById(888888);
-			expect(result.rowCount).toBe(false);
+		test('returns rowCount 0 for non-existent ID', async () => {
+			const result = await RewardService.deleteById(888888);
+			expect(result.rowCount).toBe(0);
 		});
 	});
 });
 
-const notifyLevelUp = require('../utils/leveling').notifyLevelUp;
+beforeEach(() => {
+	LvlService.useRewardService({
+		findByGuildAndLevel: jest.fn(),
+		findAllByGuild: jest.fn(),
+	});
+});
 
 describe('notifyLevelUp throttle', () => {
 	test('milestone hit (level 10, interval 5) → sends notification', async () => {
 		const send = jest.fn().mockResolvedValue();
-		const client = {
-			config: {
-				levelUpChannel: 'channel-1',
-				levelUpNotifyInterval: 5,
-				levelUpNotify: true,
-				moderatorRoleId: null,
-				guildId: 'guild-1',
-			},
-			channels: {
-				fetch: jest.fn().mockResolvedValue({ send }),
-			},
-			rewardService: null,
-		};
-		const guild = { id: 'guild-1', systemChannel: null };
+		const config = { levelUpChannel: 'channel-1', levelUpNotifyInterval: 5, levelUpNotify: true, moderatorRoleId: null, guildId: 'guild-1' };
+		const guild = { id: 'guild-1', systemChannel: null, channels: { fetch: jest.fn().mockResolvedValue({ send }) } };
 		const member = { id: 'user-1', user: { bot: false, id: 'user-1' } };
-		await notifyLevelUp(client, guild, member, 10);
+		await LevelService.notifyLevelUp(guild, member, 10, config);
 		expect(send).toHaveBeenCalled();
 		expect(send.mock.calls[0][0]).toContain('nivel **10**');
 	});
 
 	test('milestone miss (level 7, interval 5) → suppresses notification', async () => {
 		const send = jest.fn().mockResolvedValue();
-		const client = {
-			config: {
-				levelUpChannel: 'channel-1',
-				levelUpNotifyInterval: 5,
-				levelUpNotify: false,
-				moderatorRoleId: null,
-				guildId: 'guild-1',
-			},
-			channels: {
-				fetch: jest.fn().mockResolvedValue({ send }),
-			},
-			rewardService: null,
-		};
-		const guild = { id: 'guild-1', systemChannel: null };
+		const config = { levelUpChannel: 'channel-1', levelUpNotifyInterval: 5, levelUpNotify: false, moderatorRoleId: null, guildId: 'guild-1' };
+		const guild = { id: 'guild-1', systemChannel: null, channels: { fetch: jest.fn().mockResolvedValue({ send }) } };
 		const member = { id: 'user-1', user: { bot: false, id: 'user-1' } };
-		await notifyLevelUp(client, guild, member, 7);
+		await LevelService.notifyLevelUp(guild, member, 7, config);
 		expect(send).not.toHaveBeenCalled();
 	});
 
 	test('level with role reward → sends despite non-milestone', async () => {
 		const send = jest.fn().mockResolvedValue();
 		const role = { id: 'role-1', name: 'VIP' };
-		const client = {
-			config: { levelUpChannel: 'channel-1', levelUpNotifyInterval: 5, levelUpNotify: true },
-			channels: { fetch: jest.fn().mockResolvedValue({ send }) },
-			rewardService: {
-				findByGuildAndLevel: jest.fn().mockResolvedValue({ role_id: 'role-1', level: 3 }),
-			},
-		};
+		const config = { levelUpChannel: 'channel-1', levelUpNotifyInterval: 5, levelUpNotify: true };
 		const guild = {
 			id: 'guild-1', systemChannel: null,
 			roles: { cache: new Map([['role-1', role]]) },
+			channels: { fetch: jest.fn().mockResolvedValue({ send }) },
 		};
-		const member = {
-			id: 'user-1', user: { bot: false, id: 'user-1' },
-			roles: { cache: new Map() },
-		};
-		await notifyLevelUp(client, guild, member, 3);
+		const member = { id: 'user-1', user: { bot: false, id: 'user-1' }, roles: { cache: new Map() } };
+		LvlService.rewardService.findByGuildAndLevel.mockResolvedValue({ role_id: 'role-1', level: 3 });
+		await LevelService.notifyLevelUp(guild, member, 3, config);
 		expect(send).toHaveBeenCalled();
 		expect(send.mock.calls[0][0]).toContain('VIP');
 	});

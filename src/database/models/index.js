@@ -1,18 +1,17 @@
-const Score = require('./Score');
-const Reward = require('./Reward');
-const Afk = require('./Afk');
+const LevelService = require('../../services/LevelService');
 
 /**
  * Load all models: create tables, indexes, etc.
  * Called once at database initialization.
  */
-async function loadModels(pool) {
-	await Score.createTable(pool);
-	await Reward.createTable(pool);
-	await Afk.createTable(pool);
+async function loadModels(_pool) {
+	// All table creation moved to standalone migration scripts:
+	// - createLevelTable.js (scores)
+	// - createLevelRewardsTable.js (level_rewards)
+	// - createAfkTable.js (afk)
 	// Future models will register here:
-	// Economy.createTable(pool);
-	// Settings.createTable(pool);
+	// Economy.createTable();
+	// Settings.createTable();
 }
 
-module.exports = { loadModels, Score, Reward, Afk };
+module.exports = { loadModels, LevelService };
