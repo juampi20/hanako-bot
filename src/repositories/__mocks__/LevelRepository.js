@@ -1,6 +1,6 @@
 'use strict';
 
-const ILevelRepository = require('../repositories/ILevelRepository');
+const ILevelRepository = require('../ILevelRepository');
 
 /**
  * Mock implementation of LevelRepository for testing.
@@ -22,7 +22,7 @@ class LevelRepository extends ILevelRepository {
 		const existing = this.scores.get(key) || { id: key, user: data.user, guild: data.guild, points: 0, level: 1 };
 		const updated = {
 			...existing,
-			points: existing.points + data.points,
+			points: data.points,
 			level: data.level,
 		};
 		this.scores.set(key, updated);

@@ -102,7 +102,7 @@ class LevelService {
 			id: current.id,
 			user: current.user,
 			guild: current.guild,
-			points: amount,
+			points: newPoints,
 			level: newLevel,
 		});
 

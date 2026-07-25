@@ -1,6 +1,6 @@
 'use strict';
 
-const { getPool } = require('../database/connect');
+const { getPool } = require('../connect');
 
 async function createLevelTable() {
 	const pool = getPool();

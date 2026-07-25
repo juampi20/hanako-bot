@@ -284,15 +284,15 @@ describe('Reward model', () => {
 			const result1 = await RewardService.create('guild7', 20, 'role_del');
 			const id = result1.id;
 			const result = await RewardService.deleteById(id);
-			expect(result.rowCount).toBe(true);
+			expect(result.rowCount).toBe(1);
 
 			const reward = await RewardService.findById(id);
 			expect(reward).toBeNull();
 		});
 
-		test('returns rowCount false for non-existent ID', async () => {
+		test('returns rowCount 0 for non-existent ID', async () => {
 			const result = await RewardService.deleteById(888888);
-			expect(result.rowCount).toBe(false);
+			expect(result.rowCount).toBe(0);
 		});
 	});
 });

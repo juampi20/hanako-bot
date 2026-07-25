@@ -40,7 +40,7 @@ class RewardRepository extends IRewardRepository {
 	async deleteById(id) {
 		const query = 'DELETE FROM level_rewards WHERE id = $1 RETURNING id';
 		const res = await this.pool.query(query, [id]);
-		return { rowCount: res.rowCount > 0 };
+		return { rowCount: res.rowCount };
 	}
 
 	async verifyGuildOwnership(id, guildId) {

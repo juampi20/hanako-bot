@@ -53,17 +53,22 @@ module.exports = async (client, message) => {
 
 			const xpAmount = randomInt(client.config.chatXpMin, client.config.chatXpMax);
 			client.logger?.debug?.(`Message XP: processing XP for ${message.author.id} in ${message.guild.id}, amount=${xpAmount}`);
-			const result = await client.levelingService.addXP(message.author.id, message.guild.id, xpAmount);
+			try {
+				const result = await client.levelingService.addXP(message.author.id, message.guild.id, xpAmount);
 
-			if (result) {
-				client.logger?.debug?.(`Message XP: XP recorded - user=${message.author.id} old=${result.oldLevel} new=${result.level}`);
-				const member = message.member || await message.guild.members.fetch(message.author.id).catch(() => null);
-				if (member) { await LevelService.assignLevelReward(message.guild, member, result.level); }
+				if (result) {
+					client.logger?.debug?.(`Message XP: XP recorded - user=${message.author.id} old=${result.oldLevel} new=${result.level}`);
+					const member = message.member || await message.guild.members.fetch(message.author.id).catch(() => null);
+					if (member) { await LevelService.assignLevelReward(message.guild, member, result.level); }
 
-				if (result.level > result.oldLevel) {
-					await LevelService.notifyLevelUp(message.guild, message.member, result.level, client.config);
-					client.logger?.debug?.(`Message XP: level-up for ${message.author.id} to level ${result.level}`);
+					if (result.level > result.oldLevel) {
+						await LevelService.notifyLevelUp(message.guild, message.member, result.level, client.config);
+						client.logger?.debug?.(`Message XP: level-up for ${message.author.id} to level ${result.level}`);
+					}
 				}
+			}
+			catch (err) {
+				client.logger?.error?.(`Message XP: failed for ${message.author.id}: ${err.message}`);
 			}
 		}
 	}

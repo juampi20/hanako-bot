@@ -27,7 +27,7 @@ class LevelRepository extends ILevelRepository {
 		const res = await this.pool.query(
 			`INSERT INTO scores (id, "user", guild, points, level)
                   VALUES ($1, $2, $3, $4, $5)
-                  ON CONFLICT (id) DO UPDATE SET points = scores.points + EXCLUDED.points, level = EXCLUDED.level
+                  ON CONFLICT (id) DO UPDATE SET points = EXCLUDED.points, level = EXCLUDED.level
                   RETURNING *`,
 			[data.id, data.user, data.guild, data.points, data.level],
 		);

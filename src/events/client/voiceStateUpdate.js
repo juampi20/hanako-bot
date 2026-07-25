@@ -229,14 +229,19 @@ async function initSessions(client) {
 			for (const [, vs] of guild.voiceStates.cache) {
 				if (vs.channelId !== guild.afkChannelId) {continue;}
 				if (!vs.member || vs.member.user?.bot) {continue;}
-				const existing = await client.afkService.isAfk(vs.member.id, guild.id);
-				if (!existing) {
-					await client.afkService.set(
-						vs.member.id,
-						guild.id,
-						'Está ausente',
-						Math.floor(Date.now() / 1000),
-					);
+				try {
+					const existing = await client.afkService.isAfk(vs.member.id, guild.id);
+					if (!existing) {
+						await client.afkService.set(
+							vs.member.id,
+							guild.id,
+							'Está ausente',
+							Math.floor(Date.now() / 1000),
+						);
+					}
+				}
+				catch (err) {
+					client.logger?.debug?.(`AFK: init auto-mark failed for ${vs.member?.id}: ${err.message}`);
 				}
 			}
 		}

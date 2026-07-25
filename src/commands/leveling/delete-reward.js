@@ -13,13 +13,13 @@ exports.execute = async (client, interaction) => {
 	const rewardId = interaction.options.getInteger('reward_id');
 	const guildId = interaction.guild.id;
 
-	// Find reward by ID first to show in response (verify ownership and get the reward)
-	const reward = await RewardController.listRewards(guildId).then(rewards => rewards.find(r => r.id === rewardId));
+	// Find reward by ID first to show in response
+	const reward = await RewardController.getRewardById(rewardId);
 	if (!reward) {
 		return interaction.reply({ content: 'Recompensa no encontrada.', ephemeral: true });
 	}
 
-	// Verify guild ownership
+	// Verify guild ownership and delete
 	if (!await RewardController.deleteReward(rewardId, guildId)) {
 		return interaction.reply({ content: 'Esta recompensa no pertenece a este servidor.', ephemeral: true });
 	}

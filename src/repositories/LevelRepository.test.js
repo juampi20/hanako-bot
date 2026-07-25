@@ -59,15 +59,15 @@ describe('LevelRepository', () => {
 			expect(mockPool.query).toHaveBeenCalledWith(
 				`INSERT INTO scores (id, "user", guild, points, level)
                   VALUES ($1, $2, $3, $4, $5)
-                  ON CONFLICT (id) DO UPDATE SET points = scores.points + EXCLUDED.points, level = EXCLUDED.level
+                  ON CONFLICT (id) DO UPDATE SET points = EXCLUDED.points, level = EXCLUDED.level
                   RETURNING *`,
 				[data.id, data.user, data.guild, data.points, data.level],
 			);
 		});
 
-		it('should update an existing score by adding points and setting level', async () => {
+		it('should update an existing score by replacing points and setting level', async () => {
 			const data = { id: 'guild1-user1', user: 'user1', guild: 'guild1', points: 30, level: 2 };
-			const mockResult = { id: 'guild1-user1', user: 'user1', guild: 'guild1', points: 80, level: 2 };
+			const mockResult = { id: 'guild1-user1', user: 'user1', guild: 'guild1', points: 30, level: 2 };
 			mockPool.query.mockResolvedValueOnce({ rows: [mockResult] });
 
 			const result = await repository.upsert(data);
@@ -75,7 +75,7 @@ describe('LevelRepository', () => {
 			expect(mockPool.query).toHaveBeenCalledWith(
 				`INSERT INTO scores (id, "user", guild, points, level)
                   VALUES ($1, $2, $3, $4, $5)
-                  ON CONFLICT (id) DO UPDATE SET points = scores.points + EXCLUDED.points, level = EXCLUDED.level
+                  ON CONFLICT (id) DO UPDATE SET points = EXCLUDED.points, level = EXCLUDED.level
                   RETURNING *`,
 				[data.id, data.user, data.guild, data.points, data.level],
 			);
