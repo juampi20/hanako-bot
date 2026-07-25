@@ -58,10 +58,12 @@ module.exports = async (client, message) => {
 
 				if (result) {
 					client.logger?.debug?.(`Message XP: XP recorded - user=${message.author.id} old=${result.oldLevel} new=${result.level}`);
-					const member = message.member || await message.guild.members.fetch(message.author.id).catch(() => null);
-					if (member) { await LevelService.assignLevelReward(message.guild, member, result.level); }
 
 					if (result.level > result.oldLevel) {
+						const member = message.member || await message.guild.members.fetch(message.author.id).catch(() => null);
+						if (member) {
+							await LevelService.assignLevelReward(message.guild, member, result.level, client.logger);
+						}
 						await LevelService.notifyLevelUp(message.guild, message.member, result.level, client.config);
 						client.logger?.debug?.(`Message XP: level-up for ${message.author.id} to level ${result.level}`);
 					}

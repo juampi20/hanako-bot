@@ -106,7 +106,7 @@ async function tick(client) {
 			if (result) {
 				client.logger?.debug?.(`Voice XP: granted ${amount} XP to ${userId} in ${guildIdSession}, level: ${result.level}`);
 				if (result.level > result.oldLevel) {
-					await LevelService.assignLevelReward(guild, member, result.level);
+					await LevelService.assignLevelReward(guild, member, result.level, client.logger);
 					await LevelService.notifyLevelUp(guild, member, result.level, client.config);
 					client.logger?.debug?.(`Voice XP: level-up for ${userId} from ${result.oldLevel} to ${result.level}`);
 				}

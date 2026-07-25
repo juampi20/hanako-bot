@@ -164,41 +164,57 @@ class LevelService {
 	 * @param {number} level - Target level.
 	 * @returns {Promise<string|null>} role name or null.
 	 */
-	static async assignLevelReward(guild, member, level) {
+	static async assignLevelReward(guild, member, level, logger) {
+		const log = logger?.debug || console.log;
+		log(`[assignLevelReward] called for ${member.id} guild=${guild.id} level=${level}`);
+
 		if (!LevelService.rewardService) {
-			console.error('LevelService: reward service not configured for assignLevelReward');
+			log('[assignLevelReward] FAIL: rewardService not injected');
 			return null;
 		}
+
 		try {
 			const reward = await LevelService.rewardService.findByGuildAndLevel(guild.id, level);
 			if (!reward) {
+				log(`[assignLevelReward] FAIL: no reward found for level ${level}`);
 				return null;
 			}
+			log(`[assignLevelReward] found reward role_id=${reward.role_id}`);
 
 			const role = guild.roles.cache.get(reward.role_id);
 			if (!role) {
+				log(`[assignLevelReward] FAIL: role ${reward.role_id} not in guild.roles.cache (keys=${[...guild.roles.cache.keys()].join(',')})`);
 				return null;
 			}
+			log(`[assignLevelReward] found role "${role.name}"`);
 
 			if (member.roles.cache.has(role.id)) {
+				log(`[assignLevelReward] SKIP: member already has role ${role.name}`);
 				return null;
 			}
 
-			// Remove previous reward roles (mutually exclusive per guild)
 			const allRewards = await LevelService.rewardService.findAllByGuild(guild.id);
 			const prevRoleIds = allRewards
 				.filter(r => r.role_id !== reward.role_id)
 				.map(r => r.role_id)
 				.filter(id => member.roles.cache.has(id));
+			log(`[assignLevelReward] prevRoleIds=[${prevRoleIds.join(',')}]`);
 
 			const botMember = guild.members.me;
+			if (!botMember) {
+				log('[assignLevelReward] FAIL: guild.members.me is undefined');
+				return null;
+			}
+			log(`[assignLevelReward] botMember=${botMember.id}, highestRolePos=${botMember.roles.highest.comparePositionTo(role)}, hasManageRoles=${botMember.permissions.has('ManageRoles')}`);
+
 			if (botMember.roles.highest.comparePositionTo(role) >= 0 && botMember.permissions.has('ManageRoles')) {
 				await member.roles.remove(prevRoleIds);
 				await member.roles.add(role.id);
+				log(`[assignLevelReward] SUCCESS: assigned role "${role.name}" to ${member.id}`);
 				return role.name;
 			}
 
-			console.warn('LevelService: hierarchy/permission blocked level reward assignment', 'warn');
+			log(`[assignLevelReward] FAIL: hierarchy/permission blocked (botPos=${botMember.roles.highest.comparePositionTo(role)}, hasPerm=${botMember.permissions.has('ManageRoles')})`);
 			return null;
 		}
 		catch (err) {
