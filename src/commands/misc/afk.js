@@ -100,7 +100,47 @@ exports.execute = async (client, interaction) => {
 			client.logger?.debug?.('AFK: Deferring reply para reset...');
 			await interaction.deferReply();
 
-			await AfkController.resetAfk(interaction, interaction.guildId, client.config);
+			const hasManageGuild = interaction.member.permissions.has('ManageGuild');
+			if (!hasManageGuild) {
+				return interaction.editReply({ content: 'Necesitas el permiso Manage Server para usar este comando' });
+			}
+
+			const targetUser = interaction.options.getUser('target');
+			const result = await AfkController.resetAfk(interaction.guildId, targetUser?.id || null);
+
+			if (!result.success) {
+				if (result.error === 'not_afk') {
+					return interaction.editReply({ content: `${targetUser} no está actualmente AFK` });
+				}
+				return interaction.editReply({ content: 'No hay usuarios AFK para reiniciar' });
+			}
+
+			if (result.type === 'user') {
+				const embed = baseEmbed(client, { color: COLORS.SUCCESS })
+					.setTitle('✅ AFK')
+					.setDescription(`<@${result.targetUser.id}> ya no está AFK\n**Motivo:** ${result.targetUser.reason}`);
+				await interaction.editReply({ embeds: [embed] });
+
+				if (client.config.afkNotify && client.config.afkChannelId) {
+					const channel = interaction.guild?.channels.cache.get(client.config.afkChannelId);
+					if (channel) {
+						channel.send(`<@${result.targetUser.id}> fue marcado como no AFK por un administrador`).catch(() => null);
+					}
+				}
+			}
+			else {
+				const embed = baseEmbed(client, { color: COLORS.SUCCESS })
+					.setTitle('✅ AFK')
+					.setDescription(`Se reinició AFK a ${result.count} usuario(s)`);
+				await interaction.editReply({ embeds: [embed] });
+
+				if (client.config.afkNotify && client.config.afkChannelId) {
+					const channel = interaction.guild?.channels.cache.get(client.config.afkChannelId);
+					if (channel) {
+						channel.send(`${result.count} usuario(s) fueron marcados como no AFK por un administrador`).catch(() => null);
+					}
+				}
+			}
 		}
 	}
 	catch (err) {

@@ -1,5 +1,4 @@
 const LevelService = require('../../services/LevelService');
-const Reward = require('./Reward');
 
 /**
  * Load all models: create tables, indexes, etc.
@@ -15,4 +14,4 @@ async function loadModels(_pool) {
 	// Settings.createTable();
 }
 
-module.exports = { loadModels, LevelService, Reward };
+module.exports = { loadModels, LevelService };

@@ -125,43 +125,48 @@ describe('AfkController.resetAfk', () => {
 		jest.clearAllMocks();
 	});
 
-	it('should handle reset with target user', async () => {
-		const interaction = {
-			options: { getUser: jest.fn().mockReturnValue({ id: '123' }) },
-			guildId: '456',
-			member: { permissions: { has: jest.fn().mockReturnValue(true) } },
-			guild: { channels: { cache: new Map() } },
-			editReply: jest.fn().mockResolvedValue(),
-			client: { logger: { debug: jest.fn() }, user: { username: 'test', avatarURL: jest.fn() } },
-		};
-		const config = { afkNotify: false, afkChannelId: null };
-		AfkService.isAfk.mockResolvedValue({ user_id: '123', reason: 'Testing' });
+	it('should reset for target user and return structured data', async () => {
+		const guildId = '456';
+		const targetUserId = '123';
+		AfkService.isAfk.mockResolvedValue({ user_id: targetUserId, reason: 'Testing' });
 		AfkService.remove.mockResolvedValue();
 
-		await AfkController.resetAfk(interaction, '456', config);
+		const result = await AfkController.resetAfk(guildId, targetUserId);
 
-		expect(AfkService.isAfk).toHaveBeenCalledWith('123', '456');
-		expect(AfkService.remove).toHaveBeenCalledWith('123', '456');
-		expect(interaction.editReply).toHaveBeenCalledWith(
-			expect.objectContaining({ embeds: expect.any(Array) }),
-		);
+		expect(result).toEqual({
+			success: true,
+			type: 'user',
+			targetUser: { id: targetUserId, reason: 'Testing' },
+		});
+		expect(AfkService.isAfk).toHaveBeenCalledWith(targetUserId, guildId);
+		expect(AfkService.remove).toHaveBeenCalledWith(targetUserId, guildId);
 	});
 
-	it('should handle reset without target user (removes all)', async () => {
-		const interaction = {
-			options: { getUser: jest.fn().mockReturnValue(null) },
-			member: { permissions: { has: jest.fn().mockReturnValue(true) } },
-			guild: { channels: { cache: new Map() } },
-			editReply: jest.fn().mockResolvedValue(),
-			client: { logger: { debug: jest.fn() }, user: { username: 'test', avatarURL: jest.fn() } },
-		};
-		const config = { afkNotify: false, afkChannelId: null };
-		AfkService.getAfkUsers.mockResolvedValue([{ user_id: '123' }]);
+	it('should return not_afk error when target user is not AFK', async () => {
+		AfkService.isAfk.mockResolvedValue(null);
+
+		const result = await AfkController.resetAfk('456', 'nonexistent');
+
+		expect(result).toEqual({ success: false, error: 'not_afk' });
+	});
+
+	it('should reset all users and return count', async () => {
+		const guildId = '456';
+		AfkService.getAfkUsers.mockResolvedValue([{ user_id: '123' }, { user_id: '456' }]);
 		AfkService.removeAll.mockResolvedValue();
 
-		await AfkController.resetAfk(interaction, '456', config);
+		const result = await AfkController.resetAfk(guildId);
 
-		expect(AfkService.getAfkUsers).toHaveBeenCalledWith('456');
-		expect(AfkService.removeAll).toHaveBeenCalledWith('456');
+		expect(result).toEqual({ success: true, type: 'all', count: 2 });
+		expect(AfkService.getAfkUsers).toHaveBeenCalledWith(guildId);
+		expect(AfkService.removeAll).toHaveBeenCalledWith(guildId);
+	});
+
+	it('should return no_users error when no AFK users', async () => {
+		AfkService.getAfkUsers.mockResolvedValue([]);
+
+		const result = await AfkController.resetAfk('456');
+
+		expect(result).toEqual({ success: false, error: 'no_users' });
 	});
 });
