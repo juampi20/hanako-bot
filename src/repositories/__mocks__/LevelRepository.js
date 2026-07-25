@@ -29,12 +29,18 @@ class LevelRepository extends ILevelRepository {
 		return updated;
 	}
 
-	async getLeaderboard(guildId, limit = 10) {
+	async getLeaderboard(guildId, limit = 10, offset = 0) {
 		const guildScores = Array.from(this.scores.values())
 			.filter(score => score.guild === guildId)
 			.sort((a, b) => b.points - a.points || b.level - a.level)
-			.slice(0, limit);
+			.slice(offset, offset + limit);
 		return guildScores;
+	}
+
+	async getLeaderboardCount(guildId) {
+		return Array.from(this.scores.values())
+			.filter(score => score.guild === guildId)
+			.length;
 	}
 }
 

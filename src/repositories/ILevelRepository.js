@@ -28,10 +28,20 @@ class ILevelRepository {
 	 * Gets the leaderboard for a guild.
 	 * @param {string} guildId - The guild ID.
 	 * @param {number} [_limit=10] - The maximum number of levels to return.
+	 * @param {number} [_offset=0] - The number of levels to skip.
 	 * @returns {Promise<Array<Object>>} The leaderboard levels.
 	 */
-	async getLeaderboard(guildId, _limit = 10) {
+	async getLeaderboard(guildId, _limit = 10, _offset = 0) {
 		throw new Error('Method \'getLeaderboard()\' must be implemented.');
+	}
+
+	/**
+	 * Gets the total count of levels for a guild.
+	 * @param {string} guildId - The guild ID.
+	 * @returns {Promise<number>} The total count.
+	 */
+	async getLeaderboardCount(_guildId) {
+		throw new Error('Method \'getLeaderboardCount()\' must be implemented.');
 	}
 }
 

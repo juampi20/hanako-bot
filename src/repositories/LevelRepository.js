@@ -35,14 +35,25 @@ class LevelRepository extends ILevelRepository {
 	}
 
 	/**
-	 * Get the top N levels for a guild.
+	 * Get the top N levels for a guild with pagination.
 	 */
-	async getLeaderboard(guildId, limit = 10) {
+	async getLeaderboard(guildId, limit = 10, offset = 0) {
 		const res = await this.pool.query(
-			'SELECT * FROM scores WHERE guild = $1 ORDER BY points DESC, level DESC LIMIT $2',
-			[guildId, limit],
+			'SELECT * FROM scores WHERE guild = $1 ORDER BY points DESC, level DESC LIMIT $2 OFFSET $3',
+			[guildId, limit, offset],
 		);
 		return res.rows;
+	}
+
+	/**
+	 * Get total count of levels for a guild.
+	 */
+	async getLeaderboardCount(guildId) {
+		const res = await this.pool.query(
+			'SELECT COUNT(*)::int AS count FROM scores WHERE guild = $1',
+			[guildId],
+		);
+		return res.rows[0].count;
 	}
 }
 

@@ -35,13 +35,23 @@ async function getRank(userId, guildId) {
 }
 
 /**
- * Get guild leaderboard.
+ * Get guild leaderboard with pagination.
  * @param {string} guildId - Guild ID.
  * @param {number} limit - Maximum entries (default: 10).
+ * @param {number} offset - Offset for pagination (default: 0).
  * @returns {Promise<Array<Object>>} Array of leaderboard entries.
  */
-async function getLeaderboard(guildId, limit = 10) {
-	return await LevelService.getLeaderboard(guildId, limit);
+async function getLeaderboard(guildId, limit = 10, offset = 0) {
+	return await LevelService.getLeaderboard(guildId, limit, offset);
+}
+
+/**
+ * Get total leaderboard entries for a guild.
+ * @param {string} guildId - Guild ID.
+ * @returns {Promise<number>} Total count.
+ */
+async function getLeaderboardCount(guildId) {
+	return await LevelService.getLeaderboardCount(guildId);
 }
 
 /**
@@ -69,6 +79,7 @@ async function setLevel(userId, guildId, level) {
 module.exports = {
 	getRank,
 	getLeaderboard,
+	getLeaderboardCount,
 	setXP,
 	setLevel,
 };

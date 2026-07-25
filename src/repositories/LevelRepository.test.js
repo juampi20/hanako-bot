@@ -88,23 +88,35 @@ describe('LevelRepository', () => {
 			const result = await repository.getLeaderboard('guild1', 5);
 			expect(result).toEqual([]);
 			expect(mockPool.query).toHaveBeenCalledWith(
-				'SELECT * FROM scores WHERE guild = $1 ORDER BY points DESC, level DESC LIMIT $2',
-				['guild1', 5],
+				'SELECT * FROM scores WHERE guild = $1 ORDER BY points DESC, level DESC LIMIT $2 OFFSET $3',
+				['guild1', 5, 0],
 			);
 		});
 
-		it('should return top scores', async () => {
+		it('should return top scores with offset', async () => {
 			const mockScores = [
 				{ id: 'guild1-user1', user: 'user1', guild: 'guild1', points: 200, level: 5 },
 				{ id: 'guild1-user2', user: 'user2', guild: 'guild1', points: 150, level: 4 },
 			];
 			mockPool.query.mockResolvedValueOnce({ rows: mockScores });
 
-			const result = await repository.getLeaderboard('guild1', 2);
+			const result = await repository.getLeaderboard('guild1', 2, 10);
 			expect(result).toEqual(mockScores);
 			expect(mockPool.query).toHaveBeenCalledWith(
-				'SELECT * FROM scores WHERE guild = $1 ORDER BY points DESC, level DESC LIMIT $2',
-				['guild1', 2],
+				'SELECT * FROM scores WHERE guild = $1 ORDER BY points DESC, level DESC LIMIT $2 OFFSET $3',
+				['guild1', 2, 10],
+			);
+		});
+	});
+
+	describe('getLeaderboardCount', () => {
+		it('should return total count', async () => {
+			mockPool.query.mockResolvedValueOnce({ rows: [{ count: 5 }] });
+			const result = await repository.getLeaderboardCount('guild1');
+			expect(result).toBe(5);
+			expect(mockPool.query).toHaveBeenCalledWith(
+				'SELECT COUNT(*)::int AS count FROM scores WHERE guild = $1',
+				['guild1'],
 			);
 		});
 	});
