@@ -1,6 +1,0 @@
-schema_version: 1
-applied:
-  002:
-    name: profile-schema-simplification
-    applied_at: "2026-07-24T02:37:44.156Z"
-    backup_path: /home/chester/projects/hanako-bot/router/backups/pre-002-1784860664138
