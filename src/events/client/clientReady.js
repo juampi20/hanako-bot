@@ -17,7 +17,7 @@ module.exports = async (client) => {
 		await createLevelTable();
 		await createLevelRewardsTable();
 		await createAfkTable();
-		await initializeContainer();
+		await initializeContainer(pool);
 		client.levelingService = LevelService;
 		client.rewardService = RewardService;
 		client.afkService = AfkService;

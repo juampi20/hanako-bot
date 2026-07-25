@@ -105,8 +105,13 @@ async function tick(client) {
 			const result = await client.levelingService?.addXP(userId, guildIdSession, amount);
 			if (result) {
 				client.logger?.debug?.(`Voice XP: granted ${amount} XP to ${userId} in ${guildIdSession}, level: ${result.level}`);
+				// Always try to assign reward for the resulting level
+				// (handles rewards created after user already reached that level)
+				const assigned = await LevelService.assignLevelReward(guild, member, result.level);
+				if (assigned) {
+					client.logger?.debug?.(`Voice XP: reward role '${assigned}' assigned to ${userId} for level ${result.level}`);
+				}
 				if (result.level > result.oldLevel) {
-					await LevelService.assignLevelReward(guild, member, result.level);
 					await LevelService.notifyLevelUp(guild, member, result.level, client.config);
 					client.logger?.debug?.(`Voice XP: level-up for ${userId} from ${result.oldLevel} to ${result.level}`);
 				}
