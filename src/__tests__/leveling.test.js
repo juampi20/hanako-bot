@@ -21,9 +21,7 @@ jest.mock('../database/connect', () => {
 				const [guildId, level, roleId] = params;
 				const dup = level_rewards.find(r => r.guild_id === guildId && r.level === level);
 				if (dup) {
-					const err = new Error('duplicate key');
-					err.code = '23505';
-					throw err;
+					return { rows: [], rowCount: 0 };
 				}
 				rewardSeq++;
 				const reward = { id: rewardSeq, guild_id: guildId, level, role_id: roleId, created_at: new Date().toISOString() };
@@ -86,7 +84,7 @@ jest.mock('../database/connect', () => {
 
 const { initialize, getPool, close } = require('../database/connect');
 const LvlService = require('../services/LevelService');
-const { loadModels, LevelService, Reward } = require('../database/models');
+const { loadModels, LevelService } = require('../database/models');
 const LevelRepository = require('../repositories/LevelRepository');
 const RewardRepository = require('../repositories/RewardRepository');
 const RewardService = require('../services/RewardService');

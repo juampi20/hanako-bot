@@ -1,7 +1,10 @@
 'use strict';
 
-class RewardRepository {
+const IRewardRepository = require('./IRewardRepository');
+
+class RewardRepository extends IRewardRepository {
 	constructor(pool) {
+		super();
 		this.pool = pool;
 	}
 
