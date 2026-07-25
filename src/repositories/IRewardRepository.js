@@ -1,65 +1,67 @@
 'use strict';
 
+/* eslint-disable no-unused-vars */
+
 /**
-* Interface for RewardRepository.
-* Defines the contract for reward persistence operations.
-*/
+ * Interface for RewardRepository.
+ * Defines the contract for reward persistence operations.
+ */
 class IRewardRepository {
 	/**
-	 * Creates a new reward row.
-	 * @param {string} _guildId - The guild ID.
-	 * @param {number} _level - The level.
-	 * @param {string} _roleId - The role ID.
-	 * @returns {Promise<Object|null>} The created reward object or null if duplicate.
-	 */
-	async create(_guildId, _level, _roleId) {
+   * Creates a new reward assignment for a guild level.
+   * @param {string} guildId - Guild ID.
+   * @param {number} level - Level for the reward.
+   * @param {string} roleId - Discord role ID.
+   * @returns {Promise<Object>} The created reward object.
+   */
+	async create(guildId, level, roleId) {
 		throw new Error('Method \'create()\' must be implemented.');
 	}
 
 	/**
-	 * Finds a reward by guild and level.
-	 * @param {string} _guildId - The guild ID.
-	 * @param {number} _level - The level.
-	 * @returns {Promise<Object|null>} The reward object or null if not found.
-	 */
-	async findByGuildAndLevel(_guildId, _level) {
+   * Finds a reward by guild and level.
+   * @param {string} guildId - Guild ID.
+   * @param {number} level - Level.
+   * @returns {Promise<Object|null>} The reward object or null if not found.
+   */
+	async findByGuildAndLevel(guildId, level) {
 		throw new Error('Method \'findByGuildAndLevel()\' must be implemented.');
 	}
 
 	/**
-	 * Finds a reward by ID.
-	 * @param {number} _id - The reward ID.
-	 * @returns {Promise<Object|null>} The reward object or null if not found.
-	 */
-	async findById(_id) {
+   * Finds a reward by its ID.
+   * @param {string} id - Reward ID.
+   * @returns {Promise<Object|null>} The reward object or null if not found.
+   */
+	async findById(id) {
 		throw new Error('Method \'findById()\' must be implemented.');
 	}
 
 	/**
-	 * Finds all rewards for a guild.
-	 * @param {string} _guildId - The guild ID.
-	 * @returns {Promise<Array<Object>>} The reward objects.
-	 */
-	async findAllByGuild(_guildId) {
+   * Finds all rewards for a guild.
+   * @param {string} guildId - Guild ID.
+   * @returns {Promise<Array<Object>>} Array of reward objects.
+   */
+	async findAllByGuild(guildId) {
 		throw new Error('Method \'findAllByGuild()\' must be implemented.');
 	}
 
 	/**
-	 * Deletes a reward by ID.
-	 * @param {number} _id - The reward ID.
-	 * @returns {Promise<Object>} Result object with rowCount property.
-	 */
-	async deleteById(_id) {
+   * Deletes a reward by ID.
+   * @param {string} id - Reward ID.
+   * @returns {Promise<Object>} Deletion result.
+   */
+	async deleteById(id) {
 		throw new Error('Method \'deleteById()\' must be implemented.');
 	}
 
 	/**
-	 * Verifies ownership of a reward belongs to a guild.
-	 * @param {number} _id - The reward ID.
-	 * @param {string} _guildId - The guild ID.
-	 * @returns {Promise<boolean>} True if ownership verified.
-	 */
-	async verifyGuildOwnership(_id, _guildId) {
+   * Verifies that a reward belongs to a specific guild.
+   * @param {string} id - Reward ID.
+   * @param {string} guildId - Guild ID.
+   * @returns {Promise<boolean>} True if reward belongs to guild, false otherwise.
+   */
+	async verifyGuildOwnership(id, guildId) {
 		throw new Error('Method \'verifyGuildOwnership()\' must be implemented.');
 	}
 }

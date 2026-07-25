@@ -11,13 +11,12 @@ const models = require('../src/database/models');
 // Map model keys to actual table names (explicit due to naming exceptions)
 const TABLE_MAPPING = {
     LevelService: 'scores',
-    Reward: 'level_rewards',
-    Afk: 'afk',
 };
 
 const TABLES = Object.keys(models)
   .filter(key => TABLE_MAPPING[key])
-  .map(key => TABLE_MAPPING[key]);
+  .map(key => TABLE_MAPPING[key])
+  .concat(['level_rewards', 'afk']); // no longer exported from models, hardcoded
 
 async function main() {
 	const DATABASE_URL = process.env.DATABASE_URL;

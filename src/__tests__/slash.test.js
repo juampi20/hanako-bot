@@ -9,7 +9,8 @@ jest.mock('../database/connect', () => ({
 
 jest.mock('../database/models', () => ({
 	loadModels: jest.fn().mockResolvedValue(),
-	Afk: {},
+	Score: {},
+	Reward: {},
 }));
 
 const { initialize, close } = require('../database/connect');

@@ -3,71 +3,61 @@
 const IRewardRepository = require('../IRewardRepository');
 
 /**
- * In-memory mock implementation of RewardRepository for unit testing.
- * No database dependency, supports the same operations as the real repo.
+ * Mock implementation of RewardRepository for testing.
+ * Uses in-memory storage with Map for fast lookup.
  */
 class RewardRepository extends IRewardRepository {
 	constructor() {
 		super();
-		// Primary key: `${guildId}-${level}`
-		this.map = new Map();
-		this.counter = 0;
+		this.rewards = new Map();
+		this.nextId = 1;
 	}
 
 	async create(guildId, level, roleId) {
 		const key = `${guildId}-${level}`;
+		if (this.rewards.has(key)) return null;
 
-		// Simulate duplicate key violation - return null as the real implementation does
-		if (this.map.has(key)) {
-			return null;
-		}
-
-		const id = ++this.counter;
-		const reward = {
-			id,
-			guild_id: guildId,
-			level,
-			role_id: roleId,
-			created_at: new Date().toISOString(),
-		};
-		this.map.set(key, reward);
+		const id = this.nextId++;
+		const reward = { id, guild_id: guildId, level, role_id: roleId };
+		this.rewards.set(key, reward);
 		return reward;
 	}
 
 	async findByGuildAndLevel(guildId, level) {
 		const key = `${guildId}-${level}`;
-		return this.map.get(key) || null;
+		return this.rewards.get(key) || null;
 	}
 
 	async findById(id) {
-		for (const reward of this.map.values()) {
+		for (const reward of this.rewards.values()) {
 			if (reward.id === id) return reward;
 		}
 		return null;
 	}
 
 	async findAllByGuild(guildId) {
-		const rewards = [];
-		for (const reward of this.map.values()) {
-			if (reward.guild_id === guildId) rewards.push(reward);
-		}
-		return rewards.sort((a, b) => a.level - b.level);
+		const rewards = Array.from(this.rewards.values())
+			.filter(reward => reward.guild_id === guildId)
+			.sort((a, b) => a.level - b.level);
+		return rewards;
 	}
 
 	async deleteById(id) {
-		let deleted = false;
-		for (const [key, reward] of this.map.entries()) {
-			if (reward.id === id) {
-				this.map.delete(key);
-				deleted = true;
+		const reward = await this.findById(id);
+		if (!reward) return { rowCount: 0 };
+
+		for (const [key, stored] of this.rewards.entries()) {
+			if (stored.id === id) {
+				this.rewards.delete(key);
+				return { rowCount: 1 };
 			}
 		}
-		return { rowCount: deleted ? 1 : 0 };
+		return { rowCount: 0 };
 	}
 
 	async verifyGuildOwnership(id, guildId) {
 		const reward = await this.findById(id);
-		return reward && reward.guild_id === guildId;
+		return reward ? reward.guild_id === guildId : false;
 	}
 }
 

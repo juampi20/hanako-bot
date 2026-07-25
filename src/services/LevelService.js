@@ -31,6 +31,14 @@ class LevelService {
 	}
 
 	/**
+	 * Initialize the reward service.
+	 * @param {import('./RewardService')} rewardService - The RewardService instance.
+	 */
+	static useRewardService(rewardService) {
+		LevelService.rewardService = rewardService;
+	}
+
+	/**
 	 * Find a level by user + guild.
 	 * Returns a plain object or default if not found.
 	 */
@@ -144,6 +152,95 @@ class LevelService {
 		return { points: minXP, level, oldLevel };
 	}
 
+	/**
+	 * Assign a level reward role to a member.
+	 * @param {Object} guild - Discord guild object.
+	 * @param {Object} member - Discord member object.
+	 * @param {number} level - Target level.
+	 * @returns {Promise<string|null>} role name or null.
+	 */
+	static async assignLevelReward(guild, member, level) {
+		if (!LevelService.rewardService) {
+			console.error('LevelService: reward service not configured for assignLevelReward');
+			return null;
+		}
+		try {
+			const reward = await LevelService.rewardService.findByGuildAndLevel(guild.id, level);
+			if (!reward) {
+				return null;
+			}
+
+			const role = guild.roles.cache.get(reward.role_id);
+			if (!role) {
+				return null;
+			}
+
+			if (member.roles.cache.has(role.id)) {
+				return null;
+			}
+
+			// Remove previous reward roles (mutually exclusive per guild)
+			const allRewards = await LevelService.rewardService.findAllByGuild(guild.id);
+			const prevRoleIds = allRewards
+				.filter(r => r.role_id !== reward.role_id)
+				.map(r => r.role_id)
+				.filter(id => member.roles.cache.has(id));
+
+			const botMember = guild.members.me;
+			if (botMember.roles.highest.comparePositionTo(role) >= 0 && botMember.permissions.has('ManageRoles')) {
+				await member.roles.remove(prevRoleIds);
+				await member.roles.add(role.id);
+				return role.name;
+			}
+
+			console.warn('LevelService: hierarchy/permission blocked level reward assignment', 'warn');
+			return null;
+		}
+		catch (err) {
+			console.error('LevelService: assignLevelReward exception', err);
+			return null;
+		}
+	}
+
+	/**
+	 * Send level-up notification.
+	 * @param {Object} guild - Discord guild object.
+	 * @param {Object} member - Discord member object.
+	 * @param {number} level - Target level.
+	 * @param {Object} config - Bot configuration (levelUpNotify, levelUpNotifyInterval, levelUpChannel).
+	 * @returns {Promise<void>} Resolves when notification sent or skipped.
+	 */
+	static async notifyLevelUp(guild, member, level, config) {
+		if (!config.levelUpNotify) return;
+
+		try {
+			const interval = config.levelUpNotifyInterval || 5;
+			const levelReward = await LevelService.rewardService?.findByGuildAndLevel(guild.id, level);
+			if (level % interval !== 0 && !levelReward) {return;}
+
+			const channelId = config.levelUpChannel;
+			const targetChannel = channelId
+				? await guild.channels.fetch(channelId).catch(() => null)
+				: guild.systemChannel;
+
+			if (!targetChannel) {return;}
+
+			let msg = `🎉 ¡${member} subió al nivel **${level}**!`;
+
+			if (levelReward) {
+				const role = guild.roles.cache.get(levelReward.role_id);
+				if (role) {
+					msg += `\n📜 Has recibido el rol **${role.name}**`;
+				}
+			}
+
+			await targetChannel.send(msg).catch(err => console.error('LevelService: notifyLevelUp exception', err));
+		}
+		catch (err) {
+			console.error('LevelService: notifyLevelUp exception', err);
+		}
+	}
+
 	// ── Compatibility aliases ────────────────────────────
 	// These match the method names used by existing commands.
 
@@ -152,7 +249,7 @@ class LevelService {
 		return this.findByUser(userId, guildId);
 	}
 
-	/** Expose formula — used by rank command */
+	/** Expose formula — returns minimum XP for a given level */
 	static getXPForLevel(level) {
 		return getXPForLevel(level);
 	}

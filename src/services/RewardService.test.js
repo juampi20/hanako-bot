@@ -1,164 +1,115 @@
 'use strict';
 
 const RewardService = require('./RewardService');
-
-// Mock implementation of RewardRepository for testing
-const mockRepository = {
-	create: jest.fn(),
-	findByGuildAndLevel: jest.fn(),
-	findById: jest.fn(),
-	findAllByGuild: jest.fn(),
-	deleteById: jest.fn(),
-	verifyGuildOwnership: jest.fn(),
-};
+const MockRewardRepository = require('../repositories/__mocks__/RewardRepository');
 
 describe('RewardService', () => {
-	beforeAll(() => {
-		RewardService.useRepository(mockRepository);
-	});
+	let repo;
 
 	beforeEach(() => {
-		mockRepository.create.mockClear();
-		mockRepository.findByGuildAndLevel.mockClear();
-		mockRepository.findById.mockClear();
-		mockRepository.findAllByGuild.mockClear();
-		mockRepository.deleteById.mockClear();
-		mockRepository.verifyGuildOwnership.mockClear();
+		repo = new MockRewardRepository();
+		RewardService.useRepository(repo);
+	});
+
+	afterEach(() => {
+		repo.rewards.clear();
+	});
+
+	describe('useRepository injection guard', () => {
+		test('should guard against non-repository injection', () => {
+			expect(() => RewardService.useRepository({ notA: 'repo' })).toThrow('Invalid repository instance');
+		});
 	});
 
 	describe('create', () => {
-		it('should create a new reward', async () => {
-			const reward = { id: 1, guild_id: 'guild1', level: 1, role_id: 'role1' };
-			mockRepository.create.mockResolvedValueOnce(reward);
-
-			const result = await RewardService.create('guild1', 1, 'role1');
-
-			expect(result).toEqual(reward);
-			expect(mockRepository.create).toHaveBeenCalledWith('guild1', 1, 'role1');
+		test('should create a new reward', async () => {
+			const reward = await RewardService.create('guild1', 5, 'role123');
+			expect(reward).toEqual({ id: expect.any(Number), guild_id: 'guild1', level: 5, role_id: 'role123' });
+			expect(repo.rewards.size).toBe(1);
 		});
 
-		it('should return null on duplicate', async () => {
-			mockRepository.create.mockResolvedValueOnce(null);
-
-			const result = await RewardService.create('guild2', 2, 'role2');
-
-			expect(result).toBeNull();
-			expect(mockRepository.create).toHaveBeenCalledWith('guild2', 2, 'role2');
+		test('should return null for duplicate reward', async () => {
+			await RewardService.create('guild1', 5, 'role123');
+			const reward2 = await RewardService.create('guild1', 5, 'role456');
+			expect(reward2).toBeNull();
+			expect(repo.rewards.size).toBe(1);
 		});
 	});
 
 	describe('findByGuildAndLevel', () => {
-		it('should find reward by guild and level', async () => {
-			const reward = { id: 1, guild_id: 'guild1', level: 2, role_id: 'role2' };
-			mockRepository.findByGuildAndLevel.mockResolvedValueOnce(reward);
-
-			const result = await RewardService.findByGuildAndLevel('guild1', 2);
-
-			expect(result).toEqual(reward);
-			expect(mockRepository.findByGuildAndLevel).toHaveBeenCalledWith('guild1', 2);
+		test('should find reward by guild and level', async () => {
+			await RewardService.create('guild1', 3, 'role123');
+			const reward = await RewardService.findByGuildAndLevel('guild1', 3);
+			expect(reward).toEqual({ id: expect.any(Number), guild_id: 'guild1', level: 3, role_id: 'role123' });
 		});
 
-		it('should return null if not found', async () => {
-			mockRepository.findByGuildAndLevel.mockResolvedValueOnce(null);
-
-			const result = await RewardService.findByGuildAndLevel('guild1', 3);
-
-			expect(result).toBeNull();
-			expect(mockRepository.findByGuildAndLevel).toHaveBeenCalledWith('guild1', 3);
+		test('should return null when reward not found', async () => {
+			const reward = await RewardService.findByGuildAndLevel('guild1', 999);
+			expect(reward).toBeNull();
 		});
 	});
 
 	describe('findById', () => {
-		it('should find reward by ID', async () => {
-			const reward = { id: 10, guild_id: 'guild1', level: 5, role_id: 'role5' };
-			mockRepository.findById.mockResolvedValueOnce(reward);
-
-			const result = await RewardService.findById(10);
-
-			expect(result).toEqual(reward);
-			expect(mockRepository.findById).toHaveBeenCalledWith(10);
+		test('should find reward by ID', async () => {
+			const created = await RewardService.create('guild1', 7, 'role123');
+			const reward = await RewardService.findById(created.id);
+			expect(reward).toEqual(created);
 		});
 
-		it('should return null if not found', async () => {
-			mockRepository.findById.mockResolvedValueOnce(null);
-
-			const result = await RewardService.findById(999);
-
-			expect(result).toBeNull();
-			expect(mockRepository.findById).toHaveBeenCalledWith(999);
+		test('should return null for non-existent ID', async () => {
+			const reward = await RewardService.findById(999);
+			expect(reward).toBeNull();
 		});
 	});
 
 	describe('findAllByGuild', () => {
-		it('should return all rewards for a guild', async () => {
-			const rewards = [
-				{ id: 1, guild_id: 'guild1', level: 1, role_id: 'role1' },
-				{ id: 2, guild_id: 'guild1', level: 2, role_id: 'role2' },
-			];
-			mockRepository.findAllByGuild.mockResolvedValueOnce(rewards);
+		test('should find all rewards for a guild', async () => {
+			await RewardService.create('guild1', 2, 'role1');
+			await RewardService.create('guild1', 4, 'role2');
+			await RewardService.create('guild2', 3, 'role3');
 
-			const result = await RewardService.findAllByGuild('guild1');
-
-			expect(result).toEqual(rewards);
-			expect(mockRepository.findAllByGuild).toHaveBeenCalledWith('guild1');
+			const rewards = await RewardService.findAllByGuild('guild1');
+			expect(rewards).toHaveLength(2);
+			expect(rewards.map(r => r.level)).toEqual([2, 4]);
 		});
 
-		it('should return empty array if none exist', async () => {
-			mockRepository.findAllByGuild.mockResolvedValueOnce([]);
-
-			const result = await RewardService.findAllByGuild('guild999');
-
-			expect(result).toEqual([]);
-			expect(mockRepository.findAllByGuild).toHaveBeenCalledWith('guild999');
+		test('should return empty array for guild with no rewards', async () => {
+			const rewards = await RewardService.findAllByGuild('guild999');
+			expect(rewards).toEqual([]);
 		});
 	});
 
 	describe('deleteById', () => {
-		it('should delete reward by ID', async () => {
-			const result = { rowCount: 1 };
-			mockRepository.deleteById.mockResolvedValueOnce(result);
-
-			const output = await RewardService.deleteById(10);
-
-			expect(output).toEqual(result);
-			expect(mockRepository.deleteById).toHaveBeenCalledWith(10);
+		test('should delete existing reward', async () => {
+			const created = await RewardService.create('guild1', 10, 'role123');
+			const result = await RewardService.deleteById(created.id);
+			expect(result.rowCount).toBe(1);
+			const reward = await RewardService.findById(created.id);
+			expect(reward).toBeNull();
 		});
 
-		it('should return rowCount 0 if nothing deleted', async () => {
-			const result = { rowCount: 0 };
-			mockRepository.deleteById.mockResolvedValueOnce(result);
-
-			const output = await RewardService.deleteById(999);
-
-			expect(output).toEqual(result);
-			expect(mockRepository.deleteById).toHaveBeenCalledWith(999);
+		test('should return rowCount 0 for non-existent ID', async () => {
+			const result = await RewardService.deleteById(999);
+			expect(result.rowCount).toBe(0);
 		});
 	});
 
 	describe('verifyGuildOwnership', () => {
-		it('should verify ownership when true', async () => {
-			mockRepository.verifyGuildOwnership.mockResolvedValueOnce(true);
-
-			const result = await RewardService.verifyGuildOwnership(1, 'guild1');
-
-			expect(result).toBe(true);
-			expect(mockRepository.verifyGuildOwnership).toHaveBeenCalledWith(1, 'guild1');
+		test('should verify guild ownership when true', async () => {
+			const created = await RewardService.create('guild1', 5, 'role123');
+			const isOwned = await RewardService.verifyGuildOwnership(created.id, 'guild1');
+			expect(isOwned).toBe(true);
 		});
 
-		it('should verify ownership when false (reward not found)', async () => {
-			mockRepository.verifyGuildOwnership.mockResolvedValueOnce(false);
-
-			const result = await RewardService.verifyGuildOwnership(999, 'guild1');
-
-			expect(result).toBe(false);
-			expect(mockRepository.verifyGuildOwnership).toHaveBeenCalledWith(999, 'guild1');
+		test('should return false for wrong guild ownership', async () => {
+			const created = await RewardService.create('guild1', 5, 'role123');
+			const isOwned = await RewardService.verifyGuildOwnership(created.id, 'guild2');
+			expect(isOwned).toBe(false);
 		});
-	});
 
-	describe('useRepository', () => {
-		it('should inject repository', () => {
-			// Test that repository is injected properly
-			RewardService.useRepository(mockRepository);
+		test('should return false for non-existent ID', async () => {
+			const isOwned = await RewardService.verifyGuildOwnership(999, 'guild1');
+			expect(isOwned).toBe(false);
 		});
 	});
 });

@@ -1,5 +1,6 @@
 const { SlashCommandBuilder, InteractionContextType, PermissionFlagsBits } = require('discord.js');
 const { baseEmbed, COLORS } = require('../../utils/embed');
+const RewardController = require('../../controllers/RewardController');
 
 exports.data = new SlashCommandBuilder()
 	.setName('delete-reward')
@@ -12,20 +13,15 @@ exports.execute = async (client, interaction) => {
 	const rewardId = interaction.options.getInteger('reward_id');
 	const guildId = interaction.guild.id;
 
-	// Verify reward belongs to this guild and exists
-	if (!await client.rewardService.verifyGuildOwnership(rewardId, guildId)) {
-		return interaction.reply({ content: 'Esta recompensa no pertenece a este servidor.', ephemeral: true });
-	}
-
-	// Find reward by ID first to show in response
-	const reward = await client.rewardService.findById(rewardId);
+	// Find reward by ID first to show in response (verify ownership and get the reward)
+	const reward = await RewardController.listRewards(guildId).then(rewards => rewards.find(r => r.id === rewardId));
 	if (!reward) {
 		return interaction.reply({ content: 'Recompensa no encontrada.', ephemeral: true });
 	}
 
-	const result = await client.rewardService.deleteById(rewardId);
-	if (!result.rowCount) {
-		return interaction.reply({ content: 'No se pudo eliminar la recompensa.', ephemeral: true });
+	// Verify guild ownership
+	if (!await RewardController.deleteReward(rewardId, guildId)) {
+		return interaction.reply({ content: 'Esta recompensa no pertenece a este servidor.', ephemeral: true });
 	}
 
 	const role = interaction.guild.roles.cache.get(reward.role_id);
