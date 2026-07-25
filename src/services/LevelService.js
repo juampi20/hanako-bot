@@ -74,9 +74,9 @@ class LevelService {
 	/**
 	 * Get the top N levels for a guild.
 	 */
-	static async getLeaderboard(guildId, limit = 10) {
+	static async getLeaderboard(guildId, limit = 10, offset = 0) {
 		if (!levelRepository) throw new Error('LevelRepository not injected.');
-		const rows = await levelRepository.getLeaderboard(guildId, limit);
+		const rows = await levelRepository.getLeaderboard(guildId, limit, offset);
 		return rows.map((row) => ({
 			id: row.id,
 			user: row.user,
@@ -84,6 +84,11 @@ class LevelService {
 			points: row.points,
 			level: getLevelFromXP(row.points),
 		}));
+	}
+
+	static async getLeaderboardCount(guildId) {
+		if (!levelRepository) throw new Error('LevelRepository not injected.');
+		return await levelRepository.getLeaderboardCount(guildId);
 	}
 
 	/**

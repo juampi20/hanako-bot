@@ -58,7 +58,7 @@ describe('LevelController.getLeaderboard', () => {
 
 		const result = await LevelController.getLeaderboard(guildId, limit);
 
-		expect(LevelService.getLeaderboard).toHaveBeenCalledWith(guildId, limit);
+		expect(LevelService.getLeaderboard).toHaveBeenCalledWith(guildId, limit, 0);
 		expect(result).toEqual(mockLeaderboard);
 	});
 });
