@@ -1,6 +1,5 @@
 const { SlashCommandBuilder, InteractionContextType, PermissionFlagsBits } = require('discord.js');
 const { baseEmbed, COLORS } = require('../../utils/embed');
-const RewardController = require('../../controllers/RewardController');
 
 exports.data = new SlashCommandBuilder()
 	.setName('create-reward')
@@ -33,7 +32,7 @@ exports.execute = async (client, interaction) => {
 
 	let result;
 	try {
-		result = await RewardController.createReward(guildId, level, targetRole.id, botMember);
+		result = await client.rewardController.createReward(guildId, level, targetRole.id, botMember);
 	}
 	catch (error) {
 		if (error.message === 'BOT_HIERARCHY') {

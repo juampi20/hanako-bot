@@ -1,10 +1,9 @@
 const { SlashCommandBuilder, InteractionContextType } = require('discord.js');
 const { baseEmbed, COLORS } = require('../../utils/embed');
 const { progressBar } = require('../../utils/progress');
-const LevelController = require('../../controllers/LevelController');
 
 async function buildRankEmbed(client, target, guildId) {
-	const rankData = await LevelController.getRank(target.id, guildId);
+	const rankData = await client.levelController.getRank(target.id, guildId);
 	const { score, xpForNext, xpIntoLevel, xpNeeded, rank } = rankData;
 	const currentLevel = score.level;
 	const currentXP = score.points;

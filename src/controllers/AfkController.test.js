@@ -1,26 +1,38 @@
 'use strict';
 
-const AfkController = require('../controllers/AfkController');
-const AfkService = require('../services/AfkService');
+const AfkController = require('./AfkController');
 
 /**
  * Test AfkController.setAfk function
  */
-
 describe('AfkController.setAfk', () => {
+	let afkController;
+	let mockAfkService;
+
+	beforeEach(() => {
+		mockAfkService = {
+			set: jest.fn(),
+			remove: jest.fn(),
+			isAfk: jest.fn(),
+			getAfkUsers: jest.fn(),
+			removeAll: jest.fn(),
+		};
+		afkController = new AfkController(mockAfkService);
+	});
+
 	afterEach(() => {
 		jest.clearAllMocks();
 	});
 
-	it('should call AfkService.set with correct parameters', async () => {
+	it('should call afkService.set with correct parameters', async () => {
 		const userId = '123';
 		const guildId = '456';
 		const reason = 'Testing';
-		AfkService.set = jest.fn().mockResolvedValue({ id: 'test' });
+		mockAfkService.set.mockResolvedValue({ id: 'test' });
 
-		const result = await AfkController.setAfk(userId, guildId, reason);
+		const result = await afkController.setAfk(userId, guildId, reason);
 
-		expect(AfkService.set).toHaveBeenCalledWith(userId, guildId, reason, expect.any(Number));
+		expect(mockAfkService.set).toHaveBeenCalledWith(userId, guildId, reason, expect.any(Number));
 		expect(result.id).toBe('test');
 	});
 });
@@ -28,20 +40,33 @@ describe('AfkController.setAfk', () => {
 /**
  * Test AfkController.removeAfk function
  */
-
 describe('AfkController.removeAfk', () => {
+	let afkController;
+	let mockAfkService;
+
+	beforeEach(() => {
+		mockAfkService = {
+			set: jest.fn(),
+			remove: jest.fn(),
+			isAfk: jest.fn(),
+			getAfkUsers: jest.fn(),
+			removeAll: jest.fn(),
+		};
+		afkController = new AfkController(mockAfkService);
+	});
+
 	afterEach(() => {
 		jest.clearAllMocks();
 	});
 
-	it('should call AfkService.remove with correct parameters', async () => {
+	it('should call afkService.remove with correct parameters', async () => {
 		const userId = '123';
 		const guildId = '456';
-		AfkService.remove = jest.fn().mockResolvedValue({ id: 'test' });
+		mockAfkService.remove.mockResolvedValue({ id: 'test' });
 
-		const result = await AfkController.removeAfk(userId, guildId);
+		const result = await afkController.removeAfk(userId, guildId);
 
-		expect(AfkService.remove).toHaveBeenCalledWith(userId, guildId);
+		expect(mockAfkService.remove).toHaveBeenCalledWith(userId, guildId);
 		expect(result.id).toBe('test');
 	});
 });
@@ -49,20 +74,33 @@ describe('AfkController.removeAfk', () => {
 /**
  * Test AfkController.isAfk function
  */
-
 describe('AfkController.isAfk', () => {
+	let afkController;
+	let mockAfkService;
+
+	beforeEach(() => {
+		mockAfkService = {
+			set: jest.fn(),
+			remove: jest.fn(),
+			isAfk: jest.fn(),
+			getAfkUsers: jest.fn(),
+			removeAll: jest.fn(),
+		};
+		afkController = new AfkController(mockAfkService);
+	});
+
 	afterEach(() => {
 		jest.clearAllMocks();
 	});
 
-	it('should call AfkService.isAfk with correct parameters', async () => {
+	it('should call afkService.isAfk with correct parameters', async () => {
 		const userId = '123';
 		const guildId = '456';
-		AfkService.isAfk = jest.fn().mockResolvedValue({ id: 'test' });
+		mockAfkService.isAfk.mockResolvedValue({ id: 'test' });
 
-		const result = await AfkController.isAfk(userId, guildId);
+		const result = await afkController.isAfk(userId, guildId);
 
-		expect(AfkService.isAfk).toHaveBeenCalledWith(userId, guildId);
+		expect(mockAfkService.isAfk).toHaveBeenCalledWith(userId, guildId);
 		expect(result.id).toBe('test');
 	});
 });
@@ -70,20 +108,33 @@ describe('AfkController.isAfk', () => {
 /**
  * Test AfkController.getAfkUsers function
  */
-
 describe('AfkController.getAfkUsers', () => {
+	let afkController;
+	let mockAfkService;
+
+	beforeEach(() => {
+		mockAfkService = {
+			set: jest.fn(),
+			remove: jest.fn(),
+			isAfk: jest.fn(),
+			getAfkUsers: jest.fn(),
+			removeAll: jest.fn(),
+		};
+		afkController = new AfkController(mockAfkService);
+	});
+
 	afterEach(() => {
 		jest.clearAllMocks();
 	});
 
-	it('should call AfkService.getAfkUsers with correct parameters', async () => {
+	it('should call afkService.getAfkUsers with correct parameters', async () => {
 		const guildId = '456';
 		const mockUsers = [{ user_id: '123', reason: 'Testing' }];
-		AfkService.getAfkUsers = jest.fn().mockResolvedValue(mockUsers);
+		mockAfkService.getAfkUsers.mockResolvedValue(mockUsers);
 
-		const result = await AfkController.getAfkUsers(guildId);
+		const result = await afkController.getAfkUsers(guildId);
 
-		expect(AfkService.getAfkUsers).toHaveBeenCalledWith(guildId);
+		expect(mockAfkService.getAfkUsers).toHaveBeenCalledWith(guildId);
 		expect(result).toEqual(mockUsers);
 	});
 });
@@ -91,20 +142,33 @@ describe('AfkController.getAfkUsers', () => {
 /**
  * Test AfkController.removeAllAfk function
  */
-
 describe('AfkController.removeAllAfk', () => {
+	let afkController;
+	let mockAfkService;
+
+	beforeEach(() => {
+		mockAfkService = {
+			set: jest.fn(),
+			remove: jest.fn(),
+			isAfk: jest.fn(),
+			getAfkUsers: jest.fn(),
+			removeAll: jest.fn(),
+		};
+		afkController = new AfkController(mockAfkService);
+	});
+
 	afterEach(() => {
 		jest.clearAllMocks();
 	});
 
-	it('should call AfkService.removeAll with correct parameters', async () => {
+	it('should call afkService.removeAll with correct parameters', async () => {
 		const guildId = '456';
 		const mockUsers = [{ user_id: '123' }];
-		AfkService.removeAll = jest.fn().mockResolvedValue(mockUsers);
+		mockAfkService.removeAll.mockResolvedValue(mockUsers);
 
-		const result = await AfkController.removeAllAfk(guildId);
+		const result = await afkController.removeAllAfk(guildId);
 
-		expect(AfkService.removeAll).toHaveBeenCalledWith(guildId);
+		expect(mockAfkService.removeAll).toHaveBeenCalledWith(guildId);
 		expect(result).toEqual(mockUsers);
 	});
 });
@@ -112,13 +176,19 @@ describe('AfkController.removeAllAfk', () => {
 /**
  * Test AfkController.resetAfk function
  */
-
 describe('AfkController.resetAfk', () => {
+	let afkController;
+	let mockAfkService;
+
 	beforeEach(() => {
-		AfkService.isAfk = jest.fn();
-		AfkService.remove = jest.fn();
-		AfkService.getAfkUsers = jest.fn();
-		AfkService.removeAll = jest.fn();
+		mockAfkService = {
+			set: jest.fn(),
+			remove: jest.fn(),
+			isAfk: jest.fn(),
+			getAfkUsers: jest.fn(),
+			removeAll: jest.fn(),
+		};
+		afkController = new AfkController(mockAfkService);
 	});
 
 	afterEach(() => {
@@ -128,44 +198,44 @@ describe('AfkController.resetAfk', () => {
 	it('should reset for target user and return structured data', async () => {
 		const guildId = '456';
 		const targetUserId = '123';
-		AfkService.isAfk.mockResolvedValue({ user_id: targetUserId, reason: 'Testing' });
-		AfkService.remove.mockResolvedValue();
+		mockAfkService.isAfk.mockResolvedValue({ user_id: targetUserId, reason: 'Testing' });
+		mockAfkService.remove.mockResolvedValue();
 
-		const result = await AfkController.resetAfk(guildId, targetUserId);
+		const result = await afkController.resetAfk(guildId, targetUserId);
 
 		expect(result).toEqual({
 			success: true,
 			type: 'user',
 			targetUser: { id: targetUserId, reason: 'Testing' },
 		});
-		expect(AfkService.isAfk).toHaveBeenCalledWith(targetUserId, guildId);
-		expect(AfkService.remove).toHaveBeenCalledWith(targetUserId, guildId);
+		expect(mockAfkService.isAfk).toHaveBeenCalledWith(targetUserId, guildId);
+		expect(mockAfkService.remove).toHaveBeenCalledWith(targetUserId, guildId);
 	});
 
 	it('should return not_afk error when target user is not AFK', async () => {
-		AfkService.isAfk.mockResolvedValue(null);
+		mockAfkService.isAfk.mockResolvedValue(null);
 
-		const result = await AfkController.resetAfk('456', 'nonexistent');
+		const result = await afkController.resetAfk('456', 'nonexistent');
 
 		expect(result).toEqual({ success: false, error: 'not_afk' });
 	});
 
 	it('should reset all users and return count', async () => {
 		const guildId = '456';
-		AfkService.getAfkUsers.mockResolvedValue([{ user_id: '123' }, { user_id: '456' }]);
-		AfkService.removeAll.mockResolvedValue();
+		mockAfkService.getAfkUsers.mockResolvedValue([{ user_id: '123' }, { user_id: '456' }]);
+		mockAfkService.removeAll.mockResolvedValue();
 
-		const result = await AfkController.resetAfk(guildId);
+		const result = await afkController.resetAfk(guildId);
 
 		expect(result).toEqual({ success: true, type: 'all', count: 2 });
-		expect(AfkService.getAfkUsers).toHaveBeenCalledWith(guildId);
-		expect(AfkService.removeAll).toHaveBeenCalledWith(guildId);
+		expect(mockAfkService.getAfkUsers).toHaveBeenCalledWith(guildId);
+		expect(mockAfkService.removeAll).toHaveBeenCalledWith(guildId);
 	});
 
 	it('should return no_users error when no AFK users', async () => {
-		AfkService.getAfkUsers.mockResolvedValue([]);
+		mockAfkService.getAfkUsers.mockResolvedValue([]);
 
-		const result = await AfkController.resetAfk('456');
+		const result = await afkController.resetAfk('456');
 
 		expect(result).toEqual({ success: false, error: 'no_users' });
 	});

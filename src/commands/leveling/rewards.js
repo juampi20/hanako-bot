@@ -1,6 +1,5 @@
 const { SlashCommandBuilder, InteractionContextType } = require('discord.js');
 const { baseEmbed, COLORS } = require('../../utils/embed');
-const RewardController = require('../../controllers/RewardController');
 
 exports.data = new SlashCommandBuilder()
 	.setName('rewards')
@@ -10,7 +9,7 @@ exports.data = new SlashCommandBuilder()
 exports.execute = async (client, interaction) => {
 	const guildId = interaction.guild.id;
 
-	const rewards = await RewardController.listRewards(guildId);
+	const rewards = await client.rewardController.listRewards(guildId);
 
 	if (!rewards || rewards.length === 0) {
 		return interaction.reply({ content: 'No hay recompensas configuradas para este servidor.', ephemeral: true });

@@ -1,6 +1,5 @@
 const { SlashCommandBuilder, InteractionContextType, MessageFlags } = require('discord.js');
 const { baseEmbed, COLORS } = require('../../utils/embed');
-const AfkController = require('../../controllers/AfkController');
 
 exports.run = (_client, _message, _args) => {
 	// Slash-only command; prefix path is not supported
@@ -48,7 +47,7 @@ exports.execute = async (client, interaction) => {
 
 			const reason = interaction.options.getString('reason') || 'Está ausente';
 
-			await AfkController.setAfk(interaction.user.id, interaction.guildId, reason);
+			await client.afkController.setAfk(interaction.user.id, interaction.guildId, reason);
 
 			client.logger?.debug?.('AFK: Estado AFK guardado exitosamente en afkService.');
 
@@ -74,7 +73,7 @@ exports.execute = async (client, interaction) => {
 			client.logger?.debug?.('AFK: Deferring reply para list...');
 			await interaction.deferReply();
 
-			const users = await AfkController.getAfkUsers(interaction.guildId);
+			const users = await client.afkController.getAfkUsers(interaction.guildId);
 
 			if (users.length === 0) {
 				return interaction.editReply({
@@ -106,7 +105,7 @@ exports.execute = async (client, interaction) => {
 			}
 
 			const targetUser = interaction.options.getUser('target');
-			const result = await AfkController.resetAfk(interaction.guildId, targetUser?.id || null);
+			const result = await client.afkController.resetAfk(interaction.guildId, targetUser?.id || null);
 
 			if (!result.success) {
 				if (result.error === 'not_afk') {
