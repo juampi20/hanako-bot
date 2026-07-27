@@ -1,5 +1,3 @@
-const LevelService = require('../../services/LevelService');
-
 /**
  * Load all models: create tables, indexes, etc.
  * Called once at database initialization.
@@ -14,4 +12,4 @@ async function loadModels(_pool) {
 	// Settings.createTable();
 }
 
-module.exports = { loadModels, LevelService };
+module.exports = { loadModels };

@@ -1,6 +1,5 @@
 const { SlashCommandBuilder, InteractionContextType, ButtonBuilder, ButtonStyle, ActionRowBuilder, ComponentType } = require('discord.js');
 const { baseEmbed, COLORS } = require('../../utils/embed');
-const LevelController = require('../../controllers/LevelController');
 
 const PAGE_SIZE = 10;
 const MEDALS = ['🥇', '🥈', '🥉'];
@@ -8,8 +7,8 @@ const MEDALS = ['🥇', '🥈', '🥉'];
 async function buildLeaderboardPage(client, guildId, page) {
 	const offset = page * PAGE_SIZE;
 	const [entries, total] = await Promise.all([
-		LevelController.getLeaderboard(guildId, PAGE_SIZE, offset),
-		LevelController.getLeaderboardCount(guildId),
+		client.levelController.getLeaderboard(guildId, PAGE_SIZE, offset),
+		client.levelController.getLeaderboardCount(guildId),
 	]);
 
 	const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));

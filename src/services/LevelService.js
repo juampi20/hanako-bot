@@ -19,32 +19,33 @@ function getXPForLevel(level) {
 	return 330 * n * n + 300 * n;
 }
 
-let levelRepository;
-
 class LevelService {
 	/**
 	 * Initialize the repository.
 	 * @param {import('./repositories/ILevelRepository')} repository - The LevelRepository instance implementing ILevelRepository.
 	 */
-	static useRepository(repository) {
-		levelRepository = repository;
+	constructor(levelRepository, rewardService = null) {
+		this.#repository = levelRepository;
+		this.#rewardService = rewardService;
 	}
 
+	#repository;
+	#rewardService;
+
 	/**
-	 * Initialize the reward service.
-	 * @param {import('./RewardService')} rewardService - The RewardService instance.
+	 * Get the reward service instance.
+	 * @returns {Object|null}
 	 */
-	static useRewardService(rewardService) {
-		LevelService.rewardService = rewardService;
+	get rewardService() {
+		return this.#rewardService;
 	}
 
 	/**
 	 * Find a level by user + guild.
 	 * Returns a plain object or default if not found.
 	 */
-	static async findByUser(userId, guildId) {
-		if (!levelRepository) throw new Error('LevelRepository not injected.');
-		const row = await levelRepository.findByUser(userId, guildId);
+	async findByUser(userId, guildId) {
+		const row = await this.#repository.findByUser(userId, guildId);
 		if (row) {
 			return {
 				id: row.id,
@@ -66,17 +67,15 @@ class LevelService {
 	/**
 	 * Upsert a level row.
 	 */
-	static async upsert(data) {
-		if (!levelRepository) throw new Error('LevelRepository not injected.');
-		return await levelRepository.upsert(data);
+	async upsert(data) {
+		return await this.#repository.upsert(data);
 	}
 
 	/**
 	 * Get the top N levels for a guild.
 	 */
-	static async getLeaderboard(guildId, limit = 10, offset = 0) {
-		if (!levelRepository) throw new Error('LevelRepository not injected.');
-		const rows = await levelRepository.getLeaderboard(guildId, limit, offset);
+	async getLeaderboard(guildId, limit = 10, offset = 0) {
+		const rows = await this.#repository.getLeaderboard(guildId, limit, offset);
 		return rows.map((row) => ({
 			id: row.id,
 			user: row.user,
@@ -86,16 +85,15 @@ class LevelService {
 		}));
 	}
 
-	static async getLeaderboardCount(guildId) {
-		if (!levelRepository) throw new Error('LevelRepository not injected.');
-		return await levelRepository.getLeaderboardCount(guildId);
+	async getLeaderboardCount(guildId) {
+		return await this.#repository.getLeaderboardCount(guildId);
 	}
 
 	/**
 	 * Add XP to a user's level and recalculate level.
 	 * Returns the updated level object with oldLevel, or null if amount is invalid.
 	 */
-	static async addXP(userId, guildId, amount) {
+	async addXP(userId, guildId, amount) {
 		if (!amount || amount <= 0) return null;
 
 		const current = await this.findByUser(userId, guildId);
@@ -122,7 +120,7 @@ class LevelService {
 	}
 
 	/** Set XP directly, recalculate level. Can go up or down. */
-	static async setXP(userId, guildId, xp) {
+	async setXP(userId, guildId, xp) {
 		if (xp < 0) return null;
 		const current = await this.findByUser(userId, guildId);
 		const oldLevel = current.level;
@@ -140,7 +138,7 @@ class LevelService {
 	}
 
 	/** Set level directly, compute minimum XP for that level. */
-	static async setLevel(userId, guildId, level) {
+	async setLevel(userId, guildId, level) {
 		if (level < 1) return null;
 		const minXP = getXPForLevel(level);
 		const current = await this.findByUser(userId, guildId);
@@ -164,17 +162,17 @@ class LevelService {
 	 * @param {number} level - Target level.
 	 * @returns {Promise<string|null>} role name or null.
 	 */
-	static async assignLevelReward(guild, member, level, logger) {
+	async assignLevelReward(guild, member, level, logger) {
 		const log = typeof logger?.debug === 'function' ? (...args) => logger.debug(...args) : console.log;
 		log(`[assignLevelReward] called for ${member.id} guild=${guild.id} level=${level}`);
 
-		if (!LevelService.rewardService) {
+		if (!this.rewardService) {
 			log('[assignLevelReward] FAIL: rewardService not injected');
 			return null;
 		}
 
 		try {
-			const reward = await LevelService.rewardService.findByGuildAndLevel(guild.id, level);
+			const reward = await this.rewardService.findByGuildAndLevel(guild.id, level);
 			if (!reward) {
 				log(`[assignLevelReward] FAIL: no reward found for level ${level}`);
 				return null;
@@ -193,7 +191,7 @@ class LevelService {
 				return null;
 			}
 
-			const allRewards = await LevelService.rewardService.findAllByGuild(guild.id);
+			const allRewards = await this.rewardService.findAllByGuild(guild.id);
 			const prevRoleIds = allRewards
 				.filter(r => r.role_id !== reward.role_id)
 				.map(r => r.role_id)
@@ -231,12 +229,12 @@ class LevelService {
 	 * @param {Object} config - Bot configuration (levelUpNotify, levelUpNotifyInterval, levelUpChannel).
 	 * @returns {Promise<void>} Resolves when notification sent or skipped.
 	 */
-	static async notifyLevelUp(guild, member, level, config) {
+	async notifyLevelUp(guild, member, level, config) {
 		if (!config.levelUpNotify) return;
 
 		try {
 			const interval = config.levelUpNotifyInterval || 5;
-			const levelReward = await LevelService.rewardService?.findByGuildAndLevel(guild.id, level);
+			const levelReward = await this.rewardService?.findByGuildAndLevel(guild.id, level);
 			if (level % interval !== 0 && !levelReward) {return;}
 
 			const channelId = config.levelUpChannel;
@@ -266,17 +264,17 @@ class LevelService {
 	// These match the method names used by existing commands.
 
 	/** Alias for findByUser — used by rank command */
-	static async getScore(userId, guildId) {
+	async getScore(userId, guildId) {
 		return this.findByUser(userId, guildId);
 	}
 
 	/** Expose formula — returns minimum XP for a given level */
-	static getXPForLevel(level) {
+	getXPForLevel(level) {
 		return getXPForLevel(level);
 	}
 
 	/** Expose inverse formula — used internally and by tests */
-	static getLevelFromXP(xp) {
+	getLevelFromXP(xp) {
 		return getLevelFromXP(xp);
 	}
 }

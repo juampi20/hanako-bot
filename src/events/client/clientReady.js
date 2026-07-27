@@ -1,13 +1,14 @@
 const { initialize } = require('../../database/connect');
-const { loadModels, LevelService } = require('../../database/models');
+const { loadModels } = require('../../database/models');
 const { registerSlashCommands } = require('../../handlers/loaders/commands');
 const { initSessions } = require('./voiceStateUpdate');
 const createLevelTable = require('../../database/migrations/createLevelTable');
 const createLevelRewardsTable = require('../../database/migrations/createLevelRewardsTable');
 const createAfkTable = require('../../database/migrations/createAfkTable');
 const initializeContainer = require('../../container');
-const AfkService = require('../../services/AfkService');
-const RewardService = require('../../services/RewardService');
+const LevelController = require('../../controllers/LevelController');
+const RewardController = require('../../controllers/RewardController');
+const AfkController = require('../../controllers/AfkController');
 
 module.exports = async (client) => {
 	try {
@@ -17,10 +18,14 @@ module.exports = async (client) => {
 		await createLevelTable();
 		await createLevelRewardsTable();
 		await createAfkTable();
-		await initializeContainer(pool);
-		client.levelingService = LevelService;
-		client.rewardService = RewardService;
-		client.afkService = AfkService;
+		const { levelService, rewardService, afkService } = await initializeContainer(pool);
+		client.levelingService = levelService;
+		client.rewardService = rewardService;
+		client.afkService = afkService;
+
+		client.levelController = new LevelController(levelService);
+		client.rewardController = new RewardController(rewardService);
+		client.afkController = new AfkController(afkService);
 
 		client.logger?.debug?.('ClientReady: database initialization successful');
 	}
@@ -59,7 +64,7 @@ module.exports = async (client) => {
 		await guild.roles.fetch();
 		// Force members cache (including bot's own member) before scanning
 		const members = await guild.members.fetch();
-		const allRewards = await LevelService.rewardService.findAllByGuild(guild.id);
+		const allRewards = await client.levelingService.rewardService.findAllByGuild(guild.id);
 		let registered = 0;
 		let rewarded = 0;
 		let cleaned = 0;
@@ -68,11 +73,11 @@ module.exports = async (client) => {
 		for (const [, member] of members) {
 			if (member.user.bot) continue;
 			try {
-				const record = await LevelService.findByUser(member.id, guild.id);
+				const record = await client.levelingService.findByUser(member.id, guild.id);
 
 				// Register in DB if not present (synthetic id means no DB row)
 				if (record.id === `${guild.id}-${member.id}` && record.points === 0) {
-					await LevelService.upsert({
+					await client.levelingService.upsert({
 						id: record.id,
 						user: member.id,
 						guild: guild.id,
@@ -84,7 +89,7 @@ module.exports = async (client) => {
 				}
 
 				// Assign reward for current level (if one exists and member doesn't have it)
-				const assigned = await LevelService.assignLevelReward(guild, member, record.level, client.logger);
+				const assigned = await client.levelingService.assignLevelReward(guild, member, record.level, client.logger);
 				if (assigned) {
 					rewarded++;
 					client.logger?.debug?.(`ClientReady: reward '${assigned}' assigned to ${member.id} for level ${record.level}`);

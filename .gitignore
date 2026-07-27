@@ -5,9 +5,9 @@ node_modules/
 
 # ── Environment ───────────────────────────────────────────
 .env
-.env.local
-.env.production
-.env.development
+.env.*
+!.env.example
+!.env.prod.example
 
 # ── Runtime data ──────────────────────────────────────────
 data/
@@ -47,6 +47,12 @@ Thumbs.db
 # ── AI agent config (local, not app code) ─────────────────
 opencode.json
 router/
+
+# ── Temp files & artifacts ────────────────────────────────
+tmp/
+*.tmp
+.eslintcache
+.jest-cache/
 
 # ── Build artifacts ───────────────────────────────────────
 dist/

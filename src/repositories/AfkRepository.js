@@ -7,9 +7,11 @@ const IAfkRepository = require('./IAfkRepository');
  * Includes exact SQL matching the legacy Afk.js model.
  */
 class AfkRepository extends IAfkRepository {
+	#pool;
+
 	constructor(pool) {
 		super();
-		this.pool = pool;
+		this.#pool = pool;
 	}
 
 	/**
@@ -22,7 +24,7 @@ class AfkRepository extends IAfkRepository {
 				VALUES ($1, $2, $3, $4)
 				ON CONFLICT (user_id, guild_id) DO UPDATE SET reason = $3, started_at = $4
 				RETURNING *`;
-			const res = await this.pool.query(sql, [userId, guildId, reason, startedAt]);
+			const res = await this.#pool.query(sql, [userId, guildId, reason, startedAt]);
 			return res.rows[0] || null;
 		}
 		catch (error) {
@@ -36,7 +38,7 @@ class AfkRepository extends IAfkRepository {
 	async remove(userId, guildId) {
 		try {
 			const sql = 'DELETE FROM afk WHERE user_id = $1 AND guild_id = $2 RETURNING *';
-			const res = await this.pool.query(sql, [userId, guildId]);
+			const res = await this.#pool.query(sql, [userId, guildId]);
 			return res.rows[0] || null;
 		}
 		catch (error) {
@@ -50,7 +52,7 @@ class AfkRepository extends IAfkRepository {
 	async isAfk(userId, guildId) {
 		try {
 			const sql = 'SELECT * FROM afk WHERE user_id = $1 AND guild_id = $2';
-			const res = await this.pool.query(sql, [userId, guildId]);
+			const res = await this.#pool.query(sql, [userId, guildId]);
 			return res.rows[0] || null;
 		}
 		catch (error) {
@@ -64,7 +66,7 @@ class AfkRepository extends IAfkRepository {
 	async getAfkUsers(guildId) {
 		try {
 			const sql = 'SELECT * FROM afk WHERE guild_id = $1';
-			const res = await this.pool.query(sql, [guildId]);
+			const res = await this.#pool.query(sql, [guildId]);
 			return res.rows;
 		}
 		catch (error) {
@@ -78,7 +80,7 @@ class AfkRepository extends IAfkRepository {
 	async removeAll(guildId) {
 		try {
 			const sql = 'DELETE FROM afk WHERE guild_id = $1 RETURNING *';
-			const res = await this.pool.query(sql, [guildId]);
+			const res = await this.#pool.query(sql, [guildId]);
 			return res.rows;
 		}
 		catch (error) {

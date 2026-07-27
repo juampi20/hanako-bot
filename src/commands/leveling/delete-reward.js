@@ -1,6 +1,5 @@
 const { SlashCommandBuilder, InteractionContextType, PermissionFlagsBits } = require('discord.js');
 const { baseEmbed, COLORS } = require('../../utils/embed');
-const RewardController = require('../../controllers/RewardController');
 
 exports.data = new SlashCommandBuilder()
 	.setName('delete-reward')
@@ -14,13 +13,13 @@ exports.execute = async (client, interaction) => {
 	const guildId = interaction.guild.id;
 
 	// Find reward by ID first to show in response
-	const reward = await RewardController.getRewardById(rewardId);
+	const reward = await client.rewardController.getRewardById(rewardId);
 	if (!reward) {
 		return interaction.reply({ content: 'Recompensa no encontrada.', ephemeral: true });
 	}
 
 	// Verify guild ownership and delete
-	if (!await RewardController.deleteReward(rewardId, guildId)) {
+	if (!await client.rewardController.deleteReward(rewardId, guildId)) {
 		return interaction.reply({ content: 'Esta recompensa no pertenece a este servidor.', ephemeral: true });
 	}
 
