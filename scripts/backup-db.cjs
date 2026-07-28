@@ -6,17 +6,9 @@ const path = require('path');
 const fs = require('fs');
 
 const BACKUP_DIR = path.resolve(__dirname, '..', 'backups');
-const models = require('../src/database/models');
 
-// Map model keys to actual table names (explicit due to naming exceptions)
-const TABLE_MAPPING = {
-    LevelService: 'scores',
-};
-
-const TABLES = Object.keys(models)
-  .filter(key => TABLE_MAPPING[key])
-  .map(key => TABLE_MAPPING[key])
-  .concat(['level_rewards', 'afk']); // no longer exported from models, hardcoded
+// Tables to back up (hardcoded — models were removed in the 2-tier restructure)
+const TABLES = ['scores', 'level_rewards', 'afk'];
 
 async function main() {
 	const DATABASE_URL = process.env.DATABASE_URL;

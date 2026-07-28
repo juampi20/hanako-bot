@@ -1,12 +1,31 @@
 const { SlashCommandBuilder, InteractionContextType } = require('discord.js');
 const { baseEmbed, COLORS } = require('../../utils/embed');
 const { progressBar } = require('../../utils/progress');
+const LevelRepository = require('../../database/repositories/LevelRepository');
 
 async function buildRankEmbed(client, target, guildId) {
-	const rankData = await client.levelController.getRank(target.id, guildId);
-	const { score, xpForNext, xpIntoLevel, xpNeeded, rank } = rankData;
+	const score = await LevelRepository.findByUser(target.id, guildId);
+	if (!score || score.points === 0) {
+		const embed = baseEmbed(client, { color: COLORS.LEVELING })
+			.setAuthor({ name: target.username, iconURL: target.avatarURL() })
+			.setDescription('Todavía no tenés XP registrado.')
+			.addFields(
+				{ name: 'Nivel', value: '1', inline: true },
+				{ name: 'XP Total', value: '0', inline: true },
+				{ name: 'Rank', value: '—', inline: true },
+			);
+		return embed;
+	}
+
 	const currentLevel = score.level;
 	const currentXP = score.points;
+	const xpForCurrent = LevelRepository.getXPForLevel(currentLevel);
+	const xpForNext = LevelRepository.getXPForLevel(currentLevel + 1);
+	const xpFloor = currentLevel <= 1 ? 0 : xpForCurrent;
+	const xpIntoLevel = Math.max(0, currentXP - xpFloor);
+	const xpNeeded = xpForNext - xpFloor;
+	const leaderboard = await LevelRepository.getLeaderboard(guildId, 1000);
+	const rank = leaderboard.findIndex(entry => entry.user === target.id) + 1;
 
 	const bar = progressBar(xpIntoLevel, xpNeeded);
 	const pct = xpNeeded > 0 ? Math.round((xpIntoLevel / xpNeeded) * 100) : 100;
@@ -28,9 +47,7 @@ async function buildRankEmbed(client, target, guildId) {
 exports.run = async (client, message, _args) => {
 	const target = message.author;
 
-	// Check if guildId is not set and we're in a different guild
 	if (!client.config.guildId && message.guild.id !== client.guilds.cache.first()?.id) {
-		// Return friendly error with ephemeral reply
 		if (message.channel && message.channel.reply) {
 			return message.channel.reply({
 				content: '⚠️ Este comando solo funciona en el servidor configurado como servidor de desarrollo. Configura `GUILD_ID` en tu archivo .env.',
@@ -48,11 +65,9 @@ exports.run = async (client, message, _args) => {
 exports.execute = async (client, interaction) => {
 	const target = interaction.options.getUser('user') || interaction.user;
 
-	// Check if guildId is not set and we're in a different guild
 	if (!client.config.guildId && interaction.guild.id !== client.guilds.cache.first()?.id) {
-		// Return friendly error with ephemeral reply
 		await interaction.reply({
-			content: '⚠️ Este comando solo funciona en el servidor configurado como servidor de desarrollo. Configura `GUUILD_ID` en tu archivo .env.',
+			content: '⚠️ Este comando solo funciona en el servidor configurado como servidor de desarrollo. Configura `GUILD_ID` en tu archivo .env.',
 			ephemeral: true,
 		});
 		return;
