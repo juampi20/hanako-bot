@@ -208,9 +208,12 @@ class Bot extends Client {
 
 	async _loadGuildConfig() {
 		try {
+			const { SETTINGS_REGISTRY } = require('../config/bot');
 			const rows = await GuildConfigRepository.getAll(this.config.guildId);
 			for (const { key, value } of rows) {
-				this.config[key] = value;
+				const def = SETTINGS_REGISTRY[key];
+				const configKey = def ? def.configKey : key;
+				this.config[configKey] = value;
 			}
 			this.logger?.debug?.(`GuildConfig: loaded ${rows.length} overrides`);
 		}

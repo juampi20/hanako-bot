@@ -96,12 +96,13 @@ describe('Settings registry', () => {
 		expect(Object.keys(SETTINGS_REGISTRY)).toHaveLength(12);
 	});
 
-	test('each key has env, type, default, description', () => {
+	test('each key has env, type, default, description, configKey', () => {
 		for (const key of Object.keys(SETTINGS_REGISTRY)) {
 			expect(SETTINGS_REGISTRY[key]).toHaveProperty('env');
 			expect(SETTINGS_REGISTRY[key]).toHaveProperty('type');
 			expect(SETTINGS_REGISTRY[key]).toHaveProperty('default');
 			expect(SETTINGS_REGISTRY[key]).toHaveProperty('description');
+			expect(SETTINGS_REGISTRY[key]).toHaveProperty('configKey');
 		}
 	});
 

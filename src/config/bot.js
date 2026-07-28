@@ -76,17 +76,17 @@ module.exports = config;
 module.exports.validate = validate;
 
 const SETTINGS_REGISTRY = {
-	'prefix':              { env: 'PREFIX', type: 'string', default: '!', description: 'Command prefix' },
-	'chat-xp-min':         { env: 'CHAT_XP_MIN', type: 'number', default: 15, description: 'Minimum XP per chat message' },
-	'chat-xp-max':         { env: 'CHAT_XP_MAX', type: 'number', default: 25, description: 'Maximum XP per chat message' },
-	'voice-xp-min':        { env: 'VOICE_XP_MIN', type: 'number', default: 3, description: 'Minimum XP per minute in voice' },
-	'voice-xp-max':        { env: 'VOICE_XP_MAX', type: 'number', default: 5, description: 'Maximum XP per minute in voice' },
-	'level-up-notify':     { env: 'LEVEL_UP_NOTIFY', type: 'boolean', default: false, description: 'Enable level-up notifications' },
-	'level-up-interval':   { env: 'LEVEL_UP_NOTIFY_INTERVAL', type: 'number', default: 5, description: 'Level-up notification interval' },
-	'level-up-channel':    { env: 'LEVEL_UP_CHANNEL_ID', type: 'snowflake', default: null, description: 'Channel for level-up notifications' },
-	'afk-notify':          { env: 'AFK_NOTIFY', type: 'boolean', default: false, description: 'Send AFK notifications' },
-	'afk-autoreply':       { env: 'AFK_AUTOREPLY', type: 'boolean', default: true, description: 'Auto-reply when mentioned AFK' },
-	'afk-channel':         { env: 'AFK_CHANNEL_ID', type: 'snowflake', default: null, description: 'Channel for AFK notifications' },
-	'moderator-role':      { env: 'MODERATOR_ROLE_ID', type: 'snowflake', default: null, description: 'Moderator role ID' },
+	'prefix':              { env: 'PREFIX', type: 'string', default: '!', description: 'Command prefix', configKey: 'prefix' },
+	'chat-xp-min':         { env: 'CHAT_XP_MIN', type: 'number', default: 15, description: 'Minimum XP per chat message', configKey: 'chatXpMin' },
+	'chat-xp-max':         { env: 'CHAT_XP_MAX', type: 'number', default: 25, description: 'Maximum XP per chat message', configKey: 'chatXpMax' },
+	'voice-xp-min':        { env: 'VOICE_XP_MIN', type: 'number', default: 3, description: 'Minimum XP per minute in voice', configKey: 'voiceXpMin' },
+	'voice-xp-max':        { env: 'VOICE_XP_MAX', type: 'number', default: 5, description: 'Maximum XP per minute in voice', configKey: 'voiceXpMax' },
+	'level-up-notify':     { env: 'LEVEL_UP_NOTIFY', type: 'boolean', default: false, description: 'Enable level-up notifications', configKey: 'levelUpNotify' },
+	'level-up-interval':   { env: 'LEVEL_UP_NOTIFY_INTERVAL', type: 'number', default: 5, description: 'Level-up notification interval', configKey: 'levelUpNotifyInterval' },
+	'level-up-channel':    { env: 'LEVEL_UP_CHANNEL_ID', type: 'snowflake', default: null, description: 'Channel for level-up notifications', configKey: 'levelUpChannel' },
+	'afk-notify':          { env: 'AFK_NOTIFY', type: 'boolean', default: false, description: 'Send AFK notifications', configKey: 'afkNotify' },
+	'afk-autoreply':       { env: 'AFK_AUTOREPLY', type: 'boolean', default: true, description: 'Auto-reply when mentioned AFK', configKey: 'afkAutoReply' },
+	'afk-channel':         { env: 'AFK_CHANNEL_ID', type: 'snowflake', default: null, description: 'Channel for AFK notifications', configKey: 'afkChannelId' },
+	'moderator-role':      { env: 'MODERATOR_ROLE_ID', type: 'snowflake', default: null, description: 'Moderator role ID', configKey: 'moderatorRoleId' },
 };
 module.exports.SETTINGS_REGISTRY = SETTINGS_REGISTRY;

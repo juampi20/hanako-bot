@@ -229,7 +229,7 @@ async function cmdSet(client, ctx, guildId, key, rawValue) {
 	const validated = validateSettingValue(key, rawValue, registry);
 
 	await GuildConfigRepository.set(guildId, key, String(validated));
-	client.config[key] = validated;
+	client.config[def.configKey || key] = validated;
 
 	const embed = baseEmbed(client, { color: COLORS.SUCCESS })
 		.setTitle('Configuración actualizada')
@@ -246,7 +246,7 @@ async function cmdReset(client, ctx, guildId, key) {
 	}
 
 	const deleted = await GuildConfigRepository.remove(guildId, key);
-	client.config[key] = def.default;
+	client.config[def.configKey || key] = def.default;
 
 	const embed = baseEmbed(client, { color: COLORS.WARNING })
 		.setTitle('Configuración restablecida')
