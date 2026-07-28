@@ -1,3 +1,6 @@
+const LevelRepository = require('../database/repositories/LevelRepository');
+const AfkRepository = require('../database/repositories/AfkRepository');
+
 // key: `${guildId}:${userId}`, value: true
 const sessions = new Map();
 let timerHandle = null;
@@ -64,9 +67,6 @@ function stopTimer(client) {
 	}
 }
 
-/**
- * Return a random integer between min and max (inclusive).
- */
 function randomInt(min, max) {
 	return Math.floor(Math.random() * (max - min + 1)) + min;
 }
@@ -77,7 +77,6 @@ async function tick(client) {
 	for (const [key] of sessions) {
 		try {
 			const [guildIdSession, userId] = key.split(':');
-			// Skip sessions for non-allowed guild if guildId is configured
 			if (guildId && guildIdSession !== guildId) {
 				continue;
 			}
@@ -100,12 +99,12 @@ async function tick(client) {
 				continue;
 			}
 
-			const result = await client.levelingService?.addXP(userId, guildIdSession, amount);
+			const result = await LevelRepository.addXP(userId, guildIdSession, amount);
 			if (result) {
 				client.logger?.debug?.(`Voice XP: granted ${amount} XP to ${userId} in ${guildIdSession}, level: ${result.level}`);
 				if (result.level > result.oldLevel) {
-					await client.levelingService.assignLevelReward(guild, member, result.level, client.logger);
-					await client.levelingService.notifyLevelUp(guild, member, result.level, client.config);
+					await LevelRepository.assignLevelReward(guild, member, result.level, client.logger);
+					await LevelRepository.notifyLevelUp(guild, member, result.level, client.config);
 					client.logger?.debug?.(`Voice XP: level-up for ${userId} from ${result.oldLevel} to ${result.level}`);
 				}
 			}
@@ -134,31 +133,27 @@ module.exports = async (client, oldState, newState) => {
 			const isInAfkChannel = targetChannelId === guild.afkChannelId;
 			const wasInAfkChannel = oldChannelId === guild.afkChannelId;
 
-			// Resolve notification target
 			const afkNotifyTarget = client.config.afkNotify && client.config.afkChannelId
 				? guild.channels.cache.get(client.config.afkChannelId)
 				: null;
 
-			// Join or move INTO AFK channel: set AFK (if not already)
 			if (isInAfkChannel && !wasInAfkChannel) {
 				const member = newState.member || (await newState.guild?.members.fetch(userId).catch(() => null));
 				if (!member || member.user?.bot) { return; }
-				const existing = await client.afkService?.isAfk(userId, guildId);
-				// Re-check channel after await (TOCTOU guard)
+				const existing = await AfkRepository.isAfk(userId, guildId);
 				const currentChannelId = member.voice?.channelId;
 				if (!existing && currentChannelId === guild.afkChannelId) {
-					await client.afkService.set(userId, guildId, 'Está ausente', Math.floor(Date.now() / 1000));
+					await AfkRepository.set(userId, guildId, 'Está ausente', Math.floor(Date.now() / 1000));
 					if (afkNotifyTarget) {
 						afkNotifyTarget.send(`${member.displayName} está ahora AFK (canal de voz AFK).`).catch(() => null);
 					}
 				}
 			}
 
-			// Leave or move OUT OF AFK channel: remove AFK (if present)
 			if (!isInAfkChannel && wasInAfkChannel) {
-				const existing = await client.afkService?.isAfk(userId, guildId);
+				const existing = await AfkRepository.isAfk(userId, guildId);
 				if (existing) {
-					await client.afkService.remove(userId, guildId);
+					await AfkRepository.remove(userId, guildId);
 					if (afkNotifyTarget) {
 						afkNotifyTarget.send(`${newState.member?.displayName || userId} ya no está AFK (salió del canal AFK).`).catch(() => null);
 					}
@@ -199,17 +194,9 @@ module.exports = async (client, oldState, newState) => {
 	}
 };
 
-/**
- * Scan all guilds for members already in voice channels and add them to sessions.
- * Called once on bot ready to catch users who joined before the bot started.
- *
- * Uses guild.voiceStates.cache directly instead of channel.members because
- * channel.members depends on guild.members.cache which may be empty at ready time.
- */
 async function initSessions(client) {
 	const guildId = client.config.guildId;
 	for (const [, guild] of client.guilds.cache) {
-		// Filter by allowed guild if guildId is configured
 		if (guildId && guild.id !== guildId) {continue;}
 		if (!guild.voiceStates || !guild.voiceStates.cache) {continue;}
 		for (const [, vs] of guild.voiceStates.cache) {
@@ -222,15 +209,14 @@ async function initSessions(client) {
 			}
 		}
 
-		// AFK: mark members already in the AFK voice channel
-		if (guild.afkChannelId && client.afkService) {
+		if (guild.afkChannelId) {
 			for (const [, vs] of guild.voiceStates.cache) {
 				if (vs.channelId !== guild.afkChannelId) {continue;}
 				if (!vs.member || vs.member.user?.bot) {continue;}
 				try {
-					const existing = await client.afkService.isAfk(vs.member.id, guild.id);
+					const existing = await AfkRepository.isAfk(vs.member.id, guild.id);
 					if (!existing) {
-						await client.afkService.set(
+						await AfkRepository.set(
 							vs.member.id,
 							guild.id,
 							'Está ausente',
@@ -246,8 +232,6 @@ async function initSessions(client) {
 	}
 }
 
-// Export for testing — keep even if unused
-sessions;
 module.exports.sessions = sessions;
 module.exports.tick = tick;
 module.exports.initSessions = initSessions;

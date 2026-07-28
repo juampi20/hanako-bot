@@ -1,49 +1,7 @@
-const { initialize } = require('../../database/connect');
-const { loadModels } = require('../../database/models');
-const { registerSlashCommands } = require('../../handlers/loaders/commands');
 const { initSessions } = require('./voiceStateUpdate');
-const createLevelTable = require('../../database/migrations/createLevelTable');
-const createLevelRewardsTable = require('../../database/migrations/createLevelRewardsTable');
-const createAfkTable = require('../../database/migrations/createAfkTable');
-const initializeContainer = require('../../container');
-const LevelController = require('../../controllers/LevelController');
-const RewardController = require('../../controllers/RewardController');
-const AfkController = require('../../controllers/AfkController');
+const LevelRepository = require('../database/repositories/LevelRepository');
 
 module.exports = async (client) => {
-	try {
-		client.logger?.debug?.('ClientReady: initializing database');
-		const pool = await initialize();
-		await loadModels(pool);
-		await createLevelTable();
-		await createLevelRewardsTable();
-		await createAfkTable();
-		const { levelService, rewardService, afkService } = await initializeContainer(pool);
-		client.levelingService = levelService;
-		client.rewardService = rewardService;
-		client.afkService = afkService;
-
-		client.levelController = new LevelController(levelService);
-		client.rewardController = new RewardController(rewardService);
-		client.afkController = new AfkController(afkService);
-
-		client.logger?.debug?.('ClientReady: database initialization successful');
-	}
-	catch (err) {
-		client.logger.error('Startup failed: ', err);
-		process.exit(1);
-	}
-
-	try {
-		client.logger?.debug?.('ClientReady: registering slash commands');
-		await registerSlashCommands(client);
-		client.logger?.debug?.('ClientReady: slash commands registered');
-	}
-	catch (err) {
-		client.logger.warn('Slash command registration failed: ' + (err?.message || err));
-		client.logger?.debug?.(`ClientReady: slash command registration failed: ${err}`);
-	}
-
 	// Scan existing voice channels for users who joined before the bot started
 	try {
 		client.logger?.debug?.('ClientReady: initializing voice XP sessions');
@@ -60,11 +18,9 @@ module.exports = async (client) => {
 	try {
 		client.logger?.debug?.('ClientReady: scanning members for level rewards');
 		const guild = await client.guilds.fetch(client.config.guildId);
-		// Force roles cache before scanning
 		await guild.roles.fetch();
-		// Force members cache (including bot's own member) before scanning
 		const members = await guild.members.fetch();
-		const allRewards = await client.levelingService.rewardService.findAllByGuild(guild.id);
+		const allRewards = await LevelRepository.findAllRewardsByGuild(guild.id);
 		let registered = 0;
 		let rewarded = 0;
 		let cleaned = 0;
@@ -73,11 +29,10 @@ module.exports = async (client) => {
 		for (const [, member] of members) {
 			if (member.user.bot) continue;
 			try {
-				const record = await client.levelingService.findByUser(member.id, guild.id);
+				const record = await LevelRepository.findByUser(member.id, guild.id);
 
-				// Register in DB if not present (synthetic id means no DB row)
 				if (record.id === `${guild.id}-${member.id}` && record.points === 0) {
-					await client.levelingService.upsert({
+					await LevelRepository.upsert({
 						id: record.id,
 						user: member.id,
 						guild: guild.id,
@@ -88,15 +43,12 @@ module.exports = async (client) => {
 					client.logger?.debug?.(`ClientReady: registered ${member.id} in DB`);
 				}
 
-				// Assign reward for current level (if one exists and member doesn't have it)
-				const assigned = await client.levelingService.assignLevelReward(guild, member, record.level, client.logger);
+				const assigned = await LevelRepository.assignLevelReward(guild, member, record.level, client.logger);
 				if (assigned) {
 					rewarded++;
 					client.logger?.debug?.(`ClientReady: reward '${assigned}' assigned to ${member.id} for level ${record.level}`);
 				}
 
-				// Remove reward roles that are ABOVE the member's actual level
-				// (handles cases where someone was manually assigned a higher-tier role)
 				const unearnedRewardRoleIds = allRewards
 					.filter(r => r.level > record.level)
 					.map(r => r.role_id)

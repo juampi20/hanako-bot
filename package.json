@@ -2,14 +2,14 @@
   "name": "hanako-bot",
   "version": "1.0.0",
   "description": "A simple bot.",
-  "main": "src/index.js",
+  "main": "main.js",
   "scripts": {
-    "start": "node ./src/index.js",
-    "dev": "nodemon ./src/index.js",
     "test": "jest",
     "lint": "eslint src/",
     "lint:fix": "eslint src/ --fix",
-    "prepare": "husky"
+    "prepare": "husky",
+    "dev": "nodemon .",
+    "start": "node ."
   },
   "repository": {
     "type": "git",
@@ -23,8 +23,13 @@
   "homepage": "https://github.com/juampi20/hanako-bot#readme",
   "dependencies": {
     "chalk": "^4.0.0",
+    "cors": "^2.8.6",
     "discord.js": "^14.26.5",
     "dotenv": "^16.4.7",
+    "express": "^4.21.1",
+    "express-validator": "^7.2.1",
+    "express-rate-limit": "^8.6.1",
+    "helmet": "^8.3.0",
     "pg": "^8.22.0"
   },
   "devDependencies": {
@@ -32,6 +37,7 @@
     "eslint": "^10.7.0",
     "globals": "^17.7.0",
     "husky": "^9.1.7",
-    "jest": "^30.4.2"
+    "jest": "^30.4.2",
+    "supertest": "^7.2.2"
   }
 }
