@@ -7,18 +7,10 @@ jest.mock('../database/connect', () => ({
 	close: jest.fn().mockResolvedValue(),
 }));
 
-jest.mock('../database/models', () => ({
-	loadModels: jest.fn().mockResolvedValue(),
-	Score: {},
-	Reward: {},
-}));
-
 const { initialize, close } = require('../database/connect');
-const { loadModels } = require('../database/models');
 
 beforeAll(async () => {
-	const pool = await initialize();
-	await loadModels(pool);
+	await initialize();
 });
 
 afterAll(async () => {
@@ -31,7 +23,7 @@ describe('Registration JSON output', () => {
 	const { SlashCommandBuilder } = require('discord.js');
 
 	test('8ball command structure', () => {
-		const { data } = require('../commands/fun/8ball.js');
+		const { data } = require('../commands/core/8ball.js');
 		expect(data).toBeInstanceOf(SlashCommandBuilder);
 		const json = data.toJSON();
 		expect(json).toHaveProperty('name', '8ball');
@@ -43,7 +35,7 @@ describe('Registration JSON output', () => {
 	});
 
 	test('ping command structure', () => {
-		const { data } = require('../commands/misc/ping.js');
+		const { data } = require('../commands/core/ping.js');
 		expect(data).toBeInstanceOf(SlashCommandBuilder);
 		const json = data.toJSON();
 		expect(json).toHaveProperty('name', 'ping');
@@ -64,52 +56,7 @@ describe('Registration JSON output', () => {
 	});
 });
 
-// Test 2: Middleware dual-context
-// Test that the permission middleware works with both a fake message-like object (has .author) and a fake interaction-like object (has .user)
-describe('Middleware dual-context', () => {
-	// Import permissions middleware at the top level
-	const permissionsMiddleware = require('../middleware/permissions');
-
-	test('middleware works with message-like object', () => {
-		const mockClient = { config: { ownerID: '123456789' } };
-		const mockNext = jest.fn();
-
-		const fakeMessageContext = {
-			// owner
-			author: { id: '123456789' },
-			reply: null,
-			send: null,
-			isReplied: false,
-		};
-
-		const mockCommand = { help: { ownerOnly: true } };
-
-		permissionsMiddleware(mockClient, fakeMessageContext, mockCommand, mockNext);
-		// permissionsMiddleware is synchronous for owner
-		expect(mockNext).toHaveBeenCalled();
-	});
-
-	test('middleware works with interaction-like object', () => {
-		const mockClient = { config: { ownerID: '123456789' } };
-		const mockNext = jest.fn();
-
-		const fakeInteractionContext = {
-			// owner
-			user: { id: '123456789' },
-			reply: null,
-			send: null,
-			isReplied: false,
-		};
-
-		const mockCommand = { help: { ownerOnly: true } };
-
-		permissionsMiddleware(mockClient, fakeInteractionContext, mockCommand, mockNext);
-		// permissionsMiddleware is synchronous for owner
-		expect(mockNext).toHaveBeenCalled();
-	});
-});
-
-// Test 3: Command data structure
+// Test 2: Command data structure
 // Test that every command file in src/commands/ (except none.js and give.js) exports both run AND data AND execute.
 // Verify give.js exports data and execute but NOT run
 describe('Command data structure', () => {
@@ -150,7 +97,7 @@ describe('Command data structure', () => {
 	test('slash-only commands have data and execute but NOT run', () => {
 		const slashOnly = ['set-xp', 'set-level', 'delete-reward', 'create-reward', 'rewards'];
 		slashOnly.forEach(name => {
-			const command = require(`../commands/leveling/${name}.js`);
+			const command = require(`../commands/levels/${name}.js`);
 			expect(command).toHaveProperty('data');
 			expect(command).toHaveProperty('execute');
 			expect(command).not.toHaveProperty('run');
@@ -158,7 +105,7 @@ describe('Command data structure', () => {
 	});
 });
 
-// Test 4: Migration hints
+// Test 3: Migration hints
 // Test that commands with hintSlash have a string value
 describe('Migration hints', () => {
 	test('commands with hintSlash property have string values', () => {

@@ -1,18 +1,53 @@
+# ──────────────────────────────────────────────────────────
+# Desarrollo local autocontenido.
+# Incluye PostgreSQL, no necesita infraestructura externa.
+#
+# Uso:
+#   docker compose up -d
+# ──────────────────────────────────────────────────────────
+
 services:
   bot:
     build: .
     container_name: hanako-bot
     restart: unless-stopped
+    ports:
+      - "3000:3000"
     env_file:
       - .env
+    depends_on:
+      postgres:
+        condition: service_healthy
     healthcheck:
       test: ["CMD", "node", "-e", "process.exit(0)"]
       interval: 30s
       timeout: 10s
       retries: 3
     networks:
-      - infra-red
+      - hanako-net
+
+  postgres:
+    image: postgres:17-alpine
+    container_name: hanako-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: hanako
+      POSTGRES_USER: hanako
+      POSTGRES_PASSWORD: hanako
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U hanako"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - hanako-net
+
+volumes:
+  pgdata:
 
 networks:
-  infra-red:
-    external: true
+  hanako-net:
