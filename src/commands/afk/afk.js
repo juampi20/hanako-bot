@@ -1,5 +1,6 @@
 const { SlashCommandBuilder, InteractionContextType, MessageFlags } = require('discord.js');
 const { baseEmbed, COLORS } = require('../../utils/embed');
+const AfkRepository = require('../../database/repositories/AfkRepository');
 
 exports.run = (_client, _message, _args) => {
 	// Slash-only command; prefix path is not supported
@@ -47,9 +48,9 @@ exports.execute = async (client, interaction) => {
 
 			const reason = interaction.options.getString('reason') || 'Está ausente';
 
-			await client.afkController.setAfk(interaction.user.id, interaction.guildId, reason);
+			await AfkRepository.set(interaction.user.id, interaction.guildId, reason, Math.floor(Date.now() / 1000));
 
-			client.logger?.debug?.('AFK: Estado AFK guardado exitosamente en afkService.');
+			client.logger?.debug?.('AFK: Estado AFK guardado exitosamente.');
 
 			const embed = baseEmbed(client, { color: COLORS.INFO })
 				.setTitle('💤 AFK')
@@ -73,7 +74,7 @@ exports.execute = async (client, interaction) => {
 			client.logger?.debug?.('AFK: Deferring reply para list...');
 			await interaction.deferReply();
 
-			const users = await client.afkController.getAfkUsers(interaction.guildId);
+			const users = await AfkRepository.getAfkUsers(interaction.guildId);
 
 			if (users.length === 0) {
 				return interaction.editReply({
@@ -105,38 +106,38 @@ exports.execute = async (client, interaction) => {
 			}
 
 			const targetUser = interaction.options.getUser('target');
-			const result = await client.afkController.resetAfk(interaction.guildId, targetUser?.id || null);
+			const removed = await AfkRepository.removeAll(interaction.guildId, targetUser?.id || null);
 
-			if (!result.success) {
-				if (result.error === 'not_afk') {
-					return interaction.editReply({ content: `${targetUser} no está actualmente AFK` });
-				}
-				return interaction.editReply({ content: 'No hay usuarios AFK para reiniciar' });
+			if (removed.rowCount === 0) {
+				const msg = targetUser
+					? `${targetUser} no está actualmente AFK`
+					: 'No hay usuarios AFK para reiniciar';
+				return interaction.editReply({ content: msg });
 			}
 
-			if (result.type === 'user') {
+			if (targetUser) {
 				const embed = baseEmbed(client, { color: COLORS.SUCCESS })
 					.setTitle('✅ AFK')
-					.setDescription(`<@${result.targetUser.id}> ya no está AFK\n**Motivo:** ${result.targetUser.reason}`);
+					.setDescription(`<@${targetUser.id}> ya no está AFK`);
 				await interaction.editReply({ embeds: [embed] });
 
 				if (client.config.afkNotify && client.config.afkChannelId) {
 					const channel = interaction.guild?.channels.cache.get(client.config.afkChannelId);
 					if (channel) {
-						channel.send(`<@${result.targetUser.id}> fue marcado como no AFK por un administrador`).catch(() => null);
+						channel.send(`<@${targetUser.id}> fue marcado como no AFK por un administrador`).catch(() => null);
 					}
 				}
 			}
 			else {
 				const embed = baseEmbed(client, { color: COLORS.SUCCESS })
 					.setTitle('✅ AFK')
-					.setDescription(`Se reinició AFK a ${result.count} usuario(s)`);
+					.setDescription(`Se reinició AFK a ${removed.rowCount} usuario(s)`);
 				await interaction.editReply({ embeds: [embed] });
 
 				if (client.config.afkNotify && client.config.afkChannelId) {
 					const channel = interaction.guild?.channels.cache.get(client.config.afkChannelId);
 					if (channel) {
-						channel.send(`${result.count} usuario(s) fueron marcados como no AFK por un administrador`).catch(() => null);
+						channel.send(`${removed.rowCount} usuario(s) fueron marcados como no AFK por un administrador`).catch(() => null);
 					}
 				}
 			}
