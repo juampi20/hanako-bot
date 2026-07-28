@@ -1,9 +1,9 @@
 const xpCooldowns = new Map();
 const XP_COOLDOWN_MS = 60000;
 
-const { baseEmbed, COLORS } = require('../../utils/embed');
-const LevelRepository = require('../../database/repositories/LevelRepository');
-const AfkRepository = require('../../database/repositories/AfkRepository');
+const { baseEmbed, COLORS } = require('../utils/embed');
+const LevelRepository = require('../database/repositories/LevelRepository');
+const AfkRepository = require('../database/repositories/AfkRepository');
 
 function randomInt(min, max) {
 	return Math.floor(Math.random() * (max - min + 1)) + min;
