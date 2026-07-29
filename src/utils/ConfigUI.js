@@ -1,18 +1,67 @@
 const {
 	ActionRowBuilder, ButtonBuilder, ButtonStyle,
+	StringSelectMenuBuilder,
+	ChannelSelectMenuBuilder, RoleSelectMenuBuilder,
 	ModalBuilder, TextInputBuilder, TextInputStyle,
 } = require('discord.js');
 const GuildConfigRepository = require('../database/repositories/GuildConfigRepository');
+const LevelRepository = require('../database/repositories/LevelRepository');
+const AfkRepository = require('../database/repositories/AfkRepository');
 const { baseEmbed, COLORS } = require('../utils/embed');
 const botConfig = require('../config/bot');
 
-// 120 seconds
 const NAV_TIMEOUT = 120_000;
-const PAGES = [
-	{ name: 'General', keys: ['prefix', 'moderator-role'] },
-	{ name: 'XP', keys: ['chat-xp-min', 'chat-xp-max', 'voice-xp-min', 'voice-xp-max'] },
-	{ name: 'Level-up', keys: ['level-up-notify', 'level-up-interval', 'level-up-channel'] },
-	{ name: 'AFK', keys: ['afk-notify', 'afk-autoreply', 'afk-channel'] },
+
+const CATEGORIES = [
+	{
+		name: 'General', emoji: '⚙️', color: COLORS.INFO,
+		settings: [
+			{ key: 'prefix', label: 'Prefijo' },
+			{ key: 'moderator-role', label: 'Mod Role', snowflakeKind: 'role' },
+		],
+		toggles: [],
+		extras: [],
+	},
+	{
+		name: 'XP', emoji: '✨', color: COLORS.LEVELING,
+		settings: [
+			{ key: 'chat-xp-min', label: 'Chat XP Mín' },
+			{ key: 'chat-xp-max', label: 'Chat XP Máx' },
+			{ key: 'voice-xp-min', label: 'Voice XP Mín' },
+			{ key: 'voice-xp-max', label: 'Voice XP Máx' },
+		],
+		toggles: [],
+		extras: [
+			{ id: 'rewards', label: '📃 Rewards' },
+		],
+	},
+	{
+		name: 'Level-up', emoji: '⬆️', color: COLORS.SUCCESS,
+		settings: [
+			{ key: 'level-up-notify', label: 'Notificación' },
+			{ key: 'level-up-interval', label: 'Intervalo' },
+			{ key: 'level-up-channel', label: 'Canal', snowflakeKind: 'channel' },
+		],
+		toggles: [
+			{ key: 'level-up-notify', label: '🔔 Notif.' },
+		],
+		extras: [],
+	},
+	{
+		name: 'AFK', emoji: '💤', color: COLORS.WARNING,
+		settings: [
+			{ key: 'afk-notify', label: 'Notificación' },
+			{ key: 'afk-autoreply', label: 'Auto-respuesta' },
+			{ key: 'afk-channel', label: 'Canal de notif.', snowflakeKind: 'channel' },
+		],
+		toggles: [
+			{ key: 'afk-notify', label: '🔔 Notif.' },
+			{ key: 'afk-autoreply', label: '📩 Auto-resp.' },
+		],
+		extras: [
+			{ id: 'afk-members', label: '📃 Listar AFKs' },
+		],
+	},
 ];
 
 class ConfigUI {
@@ -29,26 +78,33 @@ class ConfigUI {
 			return interaction.reply({ content: 'no tenés permiso para usar este comando.', ephemeral: true });
 		}
 
-		const payload = this._buildPage(this.page);
+		const payload = this._buildMainPage(this.page);
 		const reply = await interaction.reply({ ...payload, fetchReply: true });
 
 		const collector = reply.createMessageComponentCollector({ time: NAV_TIMEOUT });
 
-		collector.on('collect', async (btnInt) => {
-			if (btnInt.isModalSubmit()) {
-				await this._handleModalSubmit(btnInt);
-				return;
-			}
-			if (!this._isOwner(btnInt.user)) {
-				return btnInt.reply({ content: 'no tenés permiso para usar este comando.', ephemeral: true });
-			}
+		collector.on('collect', async (i) => {
 			try {
-				await this._handleButton(btnInt);
+				if (!this._isOwner(i.user)) {
+					return i.reply({ content: 'no tenés permiso para usar este comando.', ephemeral: true });
+				}
+				if (i.isStringSelectMenu()) {
+					await this._handleSelectMenu(i);
+				}
+				else if (i.isChannelSelectMenu()) {
+					await this._handlePickerSelect(i);
+				}
+				else if (i.isRoleSelectMenu()) {
+					await this._handlePickerSelect(i);
+				}
+				else if (i.isButton()) {
+					await this._handleButton(i);
+				}
 			}
 			catch (err) {
 				this.client.logger?.error?.(`ConfigUI: ${err.message}`);
-				if (!btnInt.replied && !btnInt.deferred) {
-					await btnInt.reply({ content: `❌ ${err.message}`, ephemeral: true });
+				if (!i.replied && !i.deferred) {
+					await i.reply({ content: `❌ ${err.message}`, ephemeral: true }).catch(() => undefined);
 				}
 			}
 		});
@@ -58,78 +114,247 @@ class ConfigUI {
 		});
 	}
 
-	// ── Page building ──────────────────────────────────────────────
+	// ── Main page ──────────────────────────────────────────────────
 
-	_buildPage(pageIndex) {
-		const cat = PAGES[pageIndex];
+	_buildMainPage(pageIndex) {
+		const cat = CATEGORIES[pageIndex];
 		const cfg = this.client.config;
-		const embed = baseEmbed(this.client, { color: COLORS.INFO })
-			.setTitle(`⚙️ Configuración — ${cat.name}`)
-			.setDescription(`Página ${pageIndex + 1} de ${PAGES.length}`);
+		const embed = baseEmbed(this.client, { color: cat.color })
+			.setTitle(`${cat.emoji} ${cat.name}`)
+			.setDescription(`Categoría ${pageIndex + 1} de ${CATEGORIES.length}`);
 
-		const navRow = new ActionRowBuilder().addComponents(
-			new ButtonBuilder()
-				.setCustomId('config_nav_prev').setLabel('◀ Anterior')
-				.setStyle(ButtonStyle.Secondary).setDisabled(pageIndex === 0),
-			new ButtonBuilder()
-				.setCustomId('config_nav_next').setLabel('Siguiente ▶')
-				.setStyle(ButtonStyle.Secondary).setDisabled(pageIndex === PAGES.length - 1),
-		);
-
-		const rows = [navRow];
-
-		for (const key of cat.keys) {
-			const def = botConfig.SETTINGS_REGISTRY[key];
+		for (const setting of cat.settings) {
+			const def = botConfig.SETTINGS_REGISTRY[setting.key];
 			if (!def) continue;
 
 			const val = cfg[def.configKey] ?? def.default;
-			const isDbOverride = cfg[def.configKey] !== undefined;
-			const indicator = isDbOverride ? '🟢 DB' : '⚪ .env';
-			const display = this._formatDisplay(def.type, val);
-			const desc = def.description;
+			const display = this._fieldValue(def, val);
 
-			embed.addFields({ name: `**${key}**`, value: `\`${display}\` — ${desc} ${indicator}`, inline: false });
+			embed.addFields({
+				name: setting.label,
+				value: display,
+				inline: true,
+			});
+		}
 
-			const btnRow = new ActionRowBuilder();
+		const rows = [];
 
-			if (def.type === 'boolean') {
-				btnRow.addComponents(
+		// ── Row 1: Edit + toggles + extras ──
+		const actionRow = new ActionRowBuilder();
+
+		actionRow.addComponents(
+			new ButtonBuilder()
+				.setCustomId('cat_edit')
+				.setLabel('🛠️ Editar')
+				.setStyle(ButtonStyle.Primary),
+		);
+
+		for (const tg of cat.toggles) {
+			const def = botConfig.SETTINGS_REGISTRY[tg.key];
+			if (!def || def.type !== 'boolean') continue;
+
+			const val = cfg[def.configKey] ?? def.default;
+			actionRow.addComponents(
+				new ButtonBuilder()
+					.setCustomId(`cat_toggle_${tg.key}`)
+					.setLabel(tg.label)
+					.setStyle(val ? ButtonStyle.Success : ButtonStyle.Danger),
+			);
+		}
+
+		for (const act of cat.extras) {
+			if (actionRow.components.length >= 3) break;
+			actionRow.addComponents(
+				new ButtonBuilder()
+					.setCustomId(`cat_extra_${act.id}`)
+					.setLabel(act.label)
+					.setStyle(ButtonStyle.Primary),
+			);
+		}
+
+		rows.push(actionRow);
+
+		// ── Overflow extras row (max 3 per row) ──
+		const firstRowUsed = 1 + cat.toggles.length;
+		const maxPerRow = 3;
+		if (cat.extras.length > maxPerRow - firstRowUsed) {
+			const overflowRow = new ActionRowBuilder();
+			for (const act of cat.extras.slice(maxPerRow - firstRowUsed)) {
+				if (overflowRow.components.length >= maxPerRow) break;
+				overflowRow.addComponents(
 					new ButtonBuilder()
-						.setCustomId(`config_toggle_${key}`)
-						.setLabel(val ? '✅ Habilitado' : '❌ Deshabilitado')
-						.setStyle(val ? ButtonStyle.Success : ButtonStyle.Secondary),
-				);
-			}
-			else {
-				btnRow.addComponents(
-					new ButtonBuilder()
-						.setCustomId(`config_edit_${key}`)
-						.setLabel('✏️ Editar')
+						.setCustomId(`cat_extra_${act.id}`)
+						.setLabel(act.label)
 						.setStyle(ButtonStyle.Primary),
 				);
 			}
-
-			btnRow.addComponents(
-				new ButtonBuilder()
-					.setCustomId(`config_reset_${key}`)
-					.setLabel('🔄 Restaurar')
-					.setStyle(ButtonStyle.Danger),
-			);
-
-			rows.push(btnRow);
+			if (overflowRow.components.length > 0) rows.push(overflowRow);
 		}
+
+		// ── Navigation row ──
+		rows.push(this._buildNavRow(pageIndex));
 
 		return { embeds: [embed], components: rows };
 	}
 
-	_formatDisplay(type, value) {
-		switch (type) {
-		case 'string': return String(value);
-		case 'number': return String(Number(value));
-		case 'boolean': return value ? 'true' : 'false';
-		case 'snowflake': return String(value) || '—';
-		default: return String(value);
+	_fieldValue(def, val) {
+		if (def.type === 'boolean') {
+			return val ? '✅ sí' : '❌ no';
 		}
+		if (def.type === 'snowflake' && val) {
+			const mention = this._resolveSnowflake(val);
+			if (mention) return mention;
+		}
+		return `\`${this._formatDisplay(def.type, val)}\``;
+	}
+
+	_resolveSnowflake(id) {
+		const guild = this.client.guilds.cache.get(this.guildId);
+		if (!guild) return null;
+
+		const channel = guild.channels.cache.get(id);
+		if (channel) return `${channel}`;
+
+		const role = guild.roles.cache.get(id);
+		if (role) return `${role}`;
+
+		return null;
+	}
+
+	_buildNavRow(pageIndex) {
+		return new ActionRowBuilder().addComponents(
+			new ButtonBuilder()
+				.setCustomId('nav_prev')
+				.setLabel('◀')
+				.setStyle(ButtonStyle.Secondary)
+				.setDisabled(pageIndex === 0),
+			new ButtonBuilder()
+				.setCustomId('nav_next')
+				.setLabel('▶')
+				.setStyle(ButtonStyle.Secondary)
+				.setDisabled(pageIndex === CATEGORIES.length - 1),
+		);
+	}
+
+	// ── Edit Settings — select menu ────────────────────────────────
+
+	_buildSelectView(pageIndex) {
+		const cat = CATEGORIES[pageIndex];
+		const cfg = this.client.config;
+		const embed = baseEmbed(this.client, { color: cat.color })
+			.setTitle(`${cat.emoji} ${cat.name}`)
+			.setDescription('Seleccioná un parámetro para editar su valor.');
+
+		const select = new StringSelectMenuBuilder()
+			.setCustomId('config_select_edit')
+			.setPlaceholder('Elegí un parámetro…');
+
+		for (const setting of cat.settings) {
+			const def = botConfig.SETTINGS_REGISTRY[setting.key];
+			if (!def || def.type === 'boolean') continue;
+
+			const val = cfg[def.configKey] ?? def.default;
+			const display = this._formatDisplay(def.type, val);
+			const label = setting.label || def.description || setting.key;
+			const desc = `Actual: ${display}`.slice(0, 100);
+
+			select.addOptions({
+				label: label.slice(0, 100),
+				value: setting.key,
+				description: desc,
+			});
+		}
+
+		const selectRow = new ActionRowBuilder().addComponents(select);
+
+		return {
+			embeds: [embed],
+			components: [selectRow, this._buildNavRow(pageIndex)],
+		};
+	}
+
+	// ── Rewards sub-page ──────────────────────────────────────────
+
+	async _buildRewardsView() {
+		const embed = baseEmbed(this.client, { color: COLORS.LEVELING })
+			.setTitle('🏆 Rewards Roles');
+
+		try {
+			const rewards = await LevelRepository.findAllRewardsByGuild(this.guildId);
+			if (rewards.length === 0) {
+				embed.setDescription('No hay rewards configurados aún.');
+			}
+			else {
+				const guild = this.client.guilds.cache.get(this.guildId);
+				const lines = rewards.map(r => {
+					const role = guild?.roles.cache.get(r.role_id);
+					const roleDisplay = role ? `${role}` : `\`${r.role_id}\``;
+					return `Level ${r.level} - ${roleDisplay}`;
+				});
+				embed.setDescription(`\`${rewards.length} reward${rewards.length !== 1 ? 's' : ''}\`\n${lines.join('\n')}`);
+			}
+		}
+		catch (err) {
+			this.client.logger?.error?.(`ConfigUI rewards: ${err.message}`);
+			embed.setDescription('Error al cargar los rewards.');
+		}
+
+		return {
+			embeds: [embed],
+			components: [this._backRow()],
+		};
+	}
+
+	// ── AFK Members sub-page ──────────────────────────────────────
+
+	async _buildAfkMembersView() {
+		const embed = baseEmbed(this.client, { color: COLORS.WARNING })
+			.setTitle('💤 AFK Members')
+			.setDescription('Miembros actualmente AFK en el servidor.');
+
+		try {
+			const rows = await AfkRepository.getAfkUsers(this.guildId);
+			if (rows.length === 0) {
+				embed.addFields({ name: 'Sin AFK', value: 'No hay miembros AFK en este momento.' });
+			}
+			else {
+				const display = rows.slice(0, 25);
+				const guild = await this.client.guilds.fetch(this.guildId).catch(() => null);
+				for (const r of display) {
+					const member = guild?.members.cache.get(r.user_id);
+					const name = member?.displayName || r.user_id;
+					const ago = r.started_at
+						? Math.round((Date.now() - new Date(r.started_at).getTime()) / 60000)
+						: '?';
+					embed.addFields({
+						name,
+						value: `Razón: ${r.reason || '—'}\nHace \`${ago} min\``,
+						inline: true,
+					});
+				}
+				if (rows.length > 25) {
+					embed.addFields({ name: `+${rows.length - 25} más`, value: 'Mostrando los primeros 25.' });
+				}
+			}
+		}
+		catch (err) {
+			this.client.logger?.error?.(`ConfigUI afk-members: ${err.message}`);
+			embed.addFields({ name: 'Error', value: 'No se pudieron cargar los miembros AFK.' });
+		}
+
+		return {
+			embeds: [embed],
+			components: [this._backRow()],
+		};
+	}
+
+	_backRow() {
+		return new ActionRowBuilder().addComponents(
+			new ButtonBuilder()
+				.setCustomId('back_main')
+				.setLabel('◀ Volver')
+				.setStyle(ButtonStyle.Secondary),
+		);
 	}
 
 	// ── Button routing ────────────────────────────────────────────
@@ -137,27 +362,93 @@ class ConfigUI {
 	async _handleButton(interaction) {
 		const id = interaction.customId;
 
-		if (id === 'config_nav_prev') {
+		if (id === 'nav_prev') {
 			this.page = Math.max(0, this.page - 1);
-			return interaction.update(this._buildPage(this.page));
+			return interaction.update(this._buildMainPage(this.page));
 		}
-		if (id === 'config_nav_next') {
-			this.page = Math.min(PAGES.length - 1, this.page + 1);
-			return interaction.update(this._buildPage(this.page));
+		if (id === 'nav_next') {
+			this.page = Math.min(CATEGORIES.length - 1, this.page + 1);
+			return interaction.update(this._buildMainPage(this.page));
 		}
 
-		if (id.startsWith('config_edit_')) {
-			const key = id.replace('config_edit_', '');
-			return this._showModal(interaction, key);
+		if (id === 'back_main') {
+			return interaction.update(this._buildMainPage(this.page));
 		}
-		if (id.startsWith('config_toggle_')) {
-			const key = id.replace('config_toggle_', '');
+
+		if (id === 'cat_edit') {
+			return interaction.update(this._buildSelectView(this.page));
+		}
+
+		if (id.startsWith('cat_toggle_')) {
+			const key = id.replace('cat_toggle_', '');
 			return this._toggle(key, interaction);
 		}
-		if (id.startsWith('config_reset_')) {
-			const key = id.replace('config_reset_', '');
-			return this._reset(key, interaction);
+
+		if (id.startsWith('cat_extra_')) {
+			const actionId = id.replace('cat_extra_', '');
+			if (actionId === 'rewards') {
+				return interaction.update(await this._buildRewardsView());
+			}
+			if (actionId === 'afk-members') {
+				return interaction.update(await this._buildAfkMembersView());
+			}
 		}
+	}
+
+	// ── Select Menu handler ───────────────────────────────────────
+
+	async _handleSelectMenu(interaction) {
+		const key = interaction.values[0];
+		const def = botConfig.SETTINGS_REGISTRY[key];
+		if (!def) return;
+
+		if (def.type === 'snowflake') {
+			await this._showPicker(interaction, key);
+		}
+		else {
+			await this._showModal(interaction, key);
+		}
+	}
+
+	async _showPicker(interaction, key) {
+		const cat = CATEGORIES[this.page];
+		const setting = cat.settings.find(s => s.key === key);
+		const kind = setting?.snowflakeKind;
+
+		let select;
+		if (kind === 'channel') {
+			select = new ChannelSelectMenuBuilder()
+				.setCustomId(`config_picker_${key}`)
+				.setPlaceholder('Seleccioná un canal…');
+		}
+		else if (kind === 'role') {
+			select = new RoleSelectMenuBuilder()
+				.setCustomId(`config_picker_${key}`)
+				.setPlaceholder('Seleccioná un rol…');
+		}
+		else {
+			return this._showModal(interaction, key);
+		}
+
+		const embed = baseEmbed(this.client, { color: cat.color })
+			.setTitle(`${cat.emoji} ${cat.name}`)
+			.setDescription(`Seleccioná ${kind === 'channel' ? 'un canal' : 'un rol'} para **${setting.label}**`);
+
+		const row = new ActionRowBuilder().addComponents(select);
+		await interaction.update({ embeds: [embed], components: [row, this._backRow()] });
+	}
+
+	async _handlePickerSelect(interaction) {
+		const key = interaction.customId.replace('config_picker_', '');
+		const def = botConfig.SETTINGS_REGISTRY[key];
+		if (!def) return;
+
+		const selectedId = interaction.values[0];
+
+		await GuildConfigRepository.set(this.guildId, key, selectedId);
+		this.client.config[def.configKey] = selectedId;
+
+		await interaction.update(this._buildMainPage(this.page));
 	}
 
 	// ── Modal ────────────────────────────────────────────────────
@@ -183,7 +474,6 @@ class ConfigUI {
 
 		await interaction.showModal(modal);
 
-		// Await the modal submit
 		let submitted;
 		try {
 			submitted = await interaction.awaitModalSubmit({
@@ -192,7 +482,6 @@ class ConfigUI {
 			});
 		}
 		catch {
-			// Timed out — do nothing
 			return;
 		}
 
@@ -218,7 +507,7 @@ class ConfigUI {
 		await GuildConfigRepository.set(this.guildId, key, String(validated));
 		this.client.config[def.configKey] = validated;
 
-		await interaction.update(this._buildPage(this.page));
+		await interaction.update(this._buildMainPage(this.page));
 	}
 
 	// ── Toggle boolean ───────────────────────────────────────────
@@ -238,22 +527,20 @@ class ConfigUI {
 		}
 		this.client.config[def.configKey] = next;
 
-		await interaction.update(this._buildPage(this.page));
-	}
-
-	// ── Reset to default ─────────────────────────────────────────
-
-	async _reset(key, interaction) {
-		const def = botConfig.SETTINGS_REGISTRY[key];
-		if (!def) throw new Error(`Clave '${key}' no encontrada.`);
-
-		await GuildConfigRepository.remove(this.guildId, key);
-		this.client.config[def.configKey] = def.default;
-
-		await interaction.update(this._buildPage(this.page));
+		await interaction.update(this._buildMainPage(this.page));
 	}
 
 	// ── Validation ───────────────────────────────────────────────
+
+	_formatDisplay(type, value) {
+		switch (type) {
+		case 'string': return String(value);
+		case 'number': return String(Number(value));
+		case 'boolean': return value ? 'true' : 'false';
+		case 'snowflake': return String(value) || '—';
+		default: return String(value);
+		}
+	}
 
 	_validate(key, raw) {
 		const def = botConfig.SETTINGS_REGISTRY[key];
@@ -292,7 +579,12 @@ class ConfigUI {
 		if (!message.editable) return;
 		const disabled = message.components.map((row) => {
 			const r = ActionRowBuilder.from(row);
-			r.setComponents(row.components.map((c) => ButtonBuilder.from(c).setDisabled(true)));
+			r.setComponents(row.components.map((c) => {
+				if (c.type === 2) {
+					return ButtonBuilder.from(c).setDisabled(true);
+				}
+				return c;
+			}));
 			return r;
 		});
 		try {
