@@ -1,5 +1,5 @@
 const {
-	ActionRowBuilder, ButtonBuilder, ButtonStyle,
+	ActionRowBuilder, ButtonBuilder, ButtonStyle, ComponentType,
 	StringSelectMenuBuilder,
 	ChannelSelectMenuBuilder, RoleSelectMenuBuilder,
 	ModalBuilder, TextInputBuilder, TextInputStyle,
@@ -387,10 +387,12 @@ class ConfigUI {
 		if (id.startsWith('cat_extra_')) {
 			const actionId = id.replace('cat_extra_', '');
 			if (actionId === 'rewards') {
-				return interaction.update(await this._buildRewardsView());
+				await interaction.deferUpdate();
+				return interaction.editReply(await this._buildRewardsView());
 			}
 			if (actionId === 'afk-members') {
-				return interaction.update(await this._buildAfkMembersView());
+				await interaction.deferUpdate();
+				return interaction.editReply(await this._buildAfkMembersView());
 			}
 		}
 	}
@@ -439,6 +441,8 @@ class ConfigUI {
 	}
 
 	async _handlePickerSelect(interaction) {
+		await interaction.deferUpdate();
+
 		const key = interaction.customId.replace('config_picker_', '');
 		const def = botConfig.SETTINGS_REGISTRY[key];
 		if (!def) return;
@@ -448,7 +452,7 @@ class ConfigUI {
 		await GuildConfigRepository.set(this.guildId, key, selectedId);
 		this.client.config[def.configKey] = selectedId;
 
-		await interaction.update(this._buildMainPage(this.page));
+		await interaction.editReply(this._buildMainPage(this.page));
 	}
 
 	// ── Modal ────────────────────────────────────────────────────
@@ -504,15 +508,19 @@ class ConfigUI {
 			return interaction.reply({ content: `❌ ${err.message}`, ephemeral: true });
 		}
 
+		await interaction.deferUpdate();
+
 		await GuildConfigRepository.set(this.guildId, key, String(validated));
 		this.client.config[def.configKey] = validated;
 
-		await interaction.update(this._buildMainPage(this.page));
+		await interaction.editReply(this._buildMainPage(this.page));
 	}
 
 	// ── Toggle boolean ───────────────────────────────────────────
 
 	async _toggle(key, interaction) {
+		await interaction.deferUpdate();
+
 		const def = botConfig.SETTINGS_REGISTRY[key];
 		if (!def || def.type !== 'boolean') throw new Error(`'${key}' no es booleano.`);
 
@@ -527,7 +535,7 @@ class ConfigUI {
 		}
 		this.client.config[def.configKey] = next;
 
-		await interaction.update(this._buildMainPage(this.page));
+		await interaction.editReply(this._buildMainPage(this.page));
 	}
 
 	// ── Validation ───────────────────────────────────────────────
@@ -537,7 +545,7 @@ class ConfigUI {
 		case 'string': return String(value);
 		case 'number': return String(Number(value));
 		case 'boolean': return value ? 'true' : 'false';
-		case 'snowflake': return String(value) || '—';
+		case 'snowflake': return value ? String(value) : '—';
 		default: return String(value);
 		}
 	}
@@ -580,7 +588,7 @@ class ConfigUI {
 		const disabled = message.components.map((row) => {
 			const r = ActionRowBuilder.from(row);
 			r.setComponents(row.components.map((c) => {
-				if (c.type === 2) {
+				if (c.type === ComponentType.Button) {
 					return ButtonBuilder.from(c).setDisabled(true);
 				}
 				return c;
