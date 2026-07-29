@@ -10,23 +10,26 @@ exports.data = new SlashCommandBuilder()
 exports.execute = async (client, interaction) => {
 	const guildId = interaction.guild.id;
 
+	await interaction.deferReply();
+
 	const rewards = await LevelRepository.findAllRewardsByGuild(guildId);
 
+	const embed = baseEmbed(client, { color: COLORS.LEVELING })
+		.setTitle('🏆 Rewards Roles');
+
 	if (!rewards || rewards.length === 0) {
-		return interaction.reply({ content: 'No hay recompensas configuradas para este servidor.', ephemeral: true });
+		embed.setDescription('No hay rewards configurados aún.');
+	}
+	else {
+		const lines = rewards.map(r => {
+			const role = interaction.guild.roles.cache.get(r.role_id);
+			const roleDisplay = role ? `${role}` : `\`${r.role_id}\``;
+			return `Level ${r.level} - ${roleDisplay}`;
+		});
+		embed.setDescription(`\`${rewards.length} reward${rewards.length !== 1 ? 's' : ''}\`\n${lines.join('\n')}`);
 	}
 
-	const embed = baseEmbed(client, { color: COLORS.LEVELING })
-		.setTitle('🎖️ Recompensas de Nivel')
-		.setDescription(
-			rewards.sort((a, b) => a.level - b.level).map(reward => {
-				const role = interaction.guild.roles.cache.get(reward.role_id);
-				const roleName = role ? role.toString() : `#${reward.role_id}`;
-				return `#${reward.id} · Lv ${reward.level} · ${roleName}`;
-			}).join('\n'),
-		);
-
-	await interaction.reply({ embeds: [embed] });
+	await interaction.editReply({ embeds: [embed] });
 };
 
 exports.help = {
