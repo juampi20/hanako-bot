@@ -92,8 +92,8 @@ describe('Settings registry', () => {
 		expect(SETTINGS_REGISTRY).toBeDefined();
 	});
 
-	test('has exactly 15 keys', () => {
-		expect(Object.keys(SETTINGS_REGISTRY)).toHaveLength(15);
+	test('has exactly 20 keys', () => {
+		expect(Object.keys(SETTINGS_REGISTRY)).toHaveLength(20);
 	});
 
 	test('each key has env, type, default, description, configKey', () => {

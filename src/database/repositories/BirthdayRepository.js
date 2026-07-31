@@ -10,14 +10,14 @@ function init(p) {
 	pool = p;
 }
 
-async function set(userId, guildId, date) {
+async function set(userId, guildId, date, timezone, ping) {
 	try {
 		const sql = `
-			INSERT INTO birthdays (user_id, guild_id, birthday)
-			VALUES ($1, $2, $3)
-			ON CONFLICT (user_id) DO UPDATE SET guild_id = $2, birthday = $3
+			INSERT INTO birthdays (user_id, guild_id, birthday, timezone, ping)
+			VALUES ($1, $2, $3, $4, $5)
+			ON CONFLICT (user_id) DO UPDATE SET guild_id = $2, birthday = $3, timezone = $4, ping = $5
 			RETURNING *`;
-		const res = await pool.query(sql, [userId, guildId, date]);
+		const res = await pool.query(sql, [userId, guildId, date, timezone, ping]);
 		return res.rows[0] || null;
 	}
 	catch (error) {

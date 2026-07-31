@@ -1,4 +1,17 @@
 module.exports = async (client, interaction) => {
+	if (interaction.isAutocomplete()) {
+		const cmd = client.interactions.get(interaction.commandName);
+		if (cmd && typeof cmd.autocomplete === 'function') {
+			try {
+				await cmd.autocomplete(client, interaction);
+			}
+			catch (err) {
+				client.logger?.debug?.(`InteractionCreate: autocomplete falló para ${interaction.commandName}: ${err.message}`);
+			}
+		}
+		return;
+	}
+
 	if (interaction.isChatInputCommand()) {
 		const commandName = interaction.commandName;
 		const cmd = client.interactions.get(commandName);
