@@ -61,6 +61,9 @@ const config = {
 	afkAutoReply: toBool(process.env.AFK_AUTOREPLY) || false,
 	afkChannelId: process.env.AFK_CHANNEL_ID || null,
 
+	// Auto-role
+	autoRoleId: process.env.AUTO_ROLE_ID || null,
+
 	// REST API
 	apiPort: parseInt(process.env.API_PORT, 10) || 3000,
 	apiKey: process.env.API_KEY || null,
@@ -88,5 +91,6 @@ const SETTINGS_REGISTRY = {
 	'afk-autoreply':       { env: 'AFK_AUTOREPLY', type: 'boolean', default: true, description: 'Auto-reply when mentioned AFK', configKey: 'afkAutoReply' },
 	'afk-channel':         { env: 'AFK_CHANNEL_ID', type: 'snowflake', default: null, description: 'Channel for AFK notifications', configKey: 'afkChannelId' },
 	'moderator-role':      { env: 'MODERATOR_ROLE_ID', type: 'snowflake', default: null, description: 'Moderator role ID', configKey: 'moderatorRoleId' },
+	'auto-role':           { env: 'AUTO_ROLE_ID', type: 'snowflake', default: null, description: 'Role assigned to new members', configKey: 'autoRoleId' },
 };
 module.exports.SETTINGS_REGISTRY = SETTINGS_REGISTRY;

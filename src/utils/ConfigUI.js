@@ -18,6 +18,7 @@ const CATEGORIES = [
 		settings: [
 			{ key: 'prefix', label: 'Prefijo' },
 			{ key: 'moderator-role', label: 'Mod Role', snowflakeKind: 'role' },
+			{ key: 'auto-role', label: 'Auto Role', snowflakeKind: 'role' },
 		],
 		toggles: [],
 		extras: [],
