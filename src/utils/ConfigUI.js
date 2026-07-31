@@ -63,6 +63,17 @@ const CATEGORIES = [
 			{ id: 'afk-members', label: '📃 Listar AFKs' },
 		],
 	},
+	{
+		name: 'Birthday', emoji: '🎂', color: COLORS.SUCCESS,
+		settings: [
+			{ key: 'birthday-channel', label: 'Canal de cumpleaños', snowflakeKind: 'channel' },
+			{ key: 'birthday-notify', label: 'Notificación' },
+		],
+		toggles: [
+			{ key: 'birthday-notify', label: '🔔 Notif.' },
+		],
+		extras: [],
+	},
 ];
 
 class ConfigUI {
