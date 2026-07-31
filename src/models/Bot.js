@@ -9,10 +9,12 @@ const { initialize } = require('../database/connect');
 const LevelRepository = require('../database/repositories/LevelRepository');
 const AfkRepository = require('../database/repositories/AfkRepository');
 const GuildConfigRepository = require('../database/repositories/GuildConfigRepository');
+const BirthdayRepository = require('../database/repositories/BirthdayRepository');
 const createLevelTable = require('../database/migrations/createLevelTable');
 const createLevelRewardsTable = require('../database/migrations/createLevelRewardsTable');
 const createAfkTable = require('../database/migrations/createAfkTable');
 const createGuildConfigTable = require('../database/migrations/createGuildConfigTable');
+const createBirthdaysTable = require('../database/migrations/createBirthdaysTable');
 
 // ── Inline middleware ────────────────────────────────────────
 
@@ -170,9 +172,11 @@ class Bot extends Client {
 			const pool = await initialize();
 			LevelRepository.init(pool);
 			AfkRepository.init(pool);
+			BirthdayRepository.init(pool);
 			await createLevelTable();
 			await createLevelRewardsTable();
 			await createAfkTable();
+			await createBirthdaysTable();
 			this.logger?.debug?.('Bot: database initialization successful');
 
 			// 2. Load guild config table
@@ -269,11 +273,15 @@ class Bot extends Client {
 		const files = fs.readdirSync(eventsDir).filter(f => f.endsWith('.js'));
 		let count = 0;
 
+		// Modules whose file name is not a Discord event but run on bot startup
+		const startupEvents = new Set(['birthdayAnnouncement', 'clientReady']);
+
 		for (const file of files) {
 			const eventName = file.split('.')[0];
+			const bindName = startupEvents.has(eventName) ? 'ready' : eventName;
 			const eventFn = require(path.join(eventsDir, file));
 
-			this.on(eventName, async (...args) => {
+			this.on(bindName, async (...args) => {
 				try {
 					await eventFn(this, ...args);
 				}

@@ -63,6 +63,22 @@ const CATEGORIES = [
 			{ id: 'afk-members', label: '📃 Listar AFKs' },
 		],
 	},
+	{
+		name: 'Birthday', emoji: '🎂', color: COLORS.SUCCESS,
+		settings: [
+			{ key: 'birthday-channel', label: 'Canal de cumpleaños', snowflakeKind: 'channel' },
+			{ key: 'birthday-notify', label: 'Notificación' },
+			{ key: 'birthday-ping-role', label: 'Rol a mencionar', snowflakeKind: 'role' },
+			{ key: 'birthday-role', label: 'Rol de cumpleaños', snowflakeKind: 'role' },
+		],
+		toggles: [
+			{ key: 'birthday-notify', label: '🔔 Notif.' },
+			{ key: 'birthday-ping-everyone', label: '📣 @everyone' },
+			{ key: 'birthday-ping-here', label: '👋 @here' },
+			{ key: 'birthday-ping-user', label: '🎂 @user' },
+		],
+		extras: [],
+	},
 ];
 
 class ConfigUI {
