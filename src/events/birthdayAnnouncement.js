@@ -18,8 +18,8 @@ async function checkBirthdays(client) {
 	}
 
 	const now = new Date();
-	const month = now.getMonth() + 1;
-	const day = now.getDate();
+	const month = now.getUTCMonth() + 1;
+	const day = now.getUTCDate();
 
 	client.logger?.debug?.(`Birthday: chequeo diario ${day}-${month}`);
 
@@ -57,6 +57,10 @@ async function checkBirthdays(client) {
 }
 
 module.exports = async (client) => {
+	if (intervalHandle) {
+		clearInterval(intervalHandle);
+	}
+
 	setTimeout(() => {
 		checkBirthdays(client)
 			.catch(err => client.logger?.warn?.(`Birthday: falló el primer chequeo: ${err.message}`));
