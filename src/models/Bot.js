@@ -274,7 +274,7 @@ class Bot extends Client {
 		let count = 0;
 
 		// Modules whose file name is not a Discord event but run on bot startup
-		const startupEvents = new Set(['birthdayAnnouncement']);
+		const startupEvents = new Set(['birthdayAnnouncement', 'clientReady']);
 
 		for (const file of files) {
 			const eventName = file.split('.')[0];
