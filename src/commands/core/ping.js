@@ -24,7 +24,8 @@ exports.execute = async (client, interaction) => {
 	const embed = baseEmbed(client, { color: COLORS.FUN })
 		.setTitle('🏓 Pong!')
 		.setDescription(`**Calculando...**\n**Ping WebSocket:** \`${apiPing}ms\``);
-	const sent = await interaction.reply({ embeds: [embed], fetchReply: true });
+	const response = await interaction.reply({ embeds: [embed], withResponse: true });
+	const sent = response.resource.message;
 	const roundTripPing = sent.createdTimestamp - interaction.createdTimestamp;
 	embed.setDescription(
 		`**Latencia:** \`${roundTripPing}ms\`\n**Ping WebSocket:** \`${apiPing}ms\``,

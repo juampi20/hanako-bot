@@ -55,10 +55,13 @@ exports.data = new SlashCommandBuilder()
 	.setContexts(InteractionContextType.Guild);
 
 exports.execute = async (client, interaction) => {
+	const response = await interaction.deferReply({ withResponse: true });
+	const msg = response.resource.message;
+
 	const { embed, totalPages } = await buildLeaderboardPage(client, interaction.guild.id, 0);
 	const row = buildButtons(0, totalPages);
 
-	const msg = await interaction.reply({ embeds: [embed], components: totalPages > 1 ? [row] : [], fetchReply: true });
+	await interaction.editReply({ embeds: [embed], components: totalPages > 1 ? [row] : [] });
 
 	if (totalPages <= 1) return;
 

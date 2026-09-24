@@ -96,7 +96,8 @@ class ConfigUI {
 		}
 
 		const payload = this._buildMainPage(this.page);
-		const reply = await interaction.reply({ ...payload, fetchReply: true });
+		const response = await interaction.reply({ ...payload, withResponse: true });
+		const reply = response.resource.message;
 
 		const collector = reply.createMessageComponentCollector({ time: NAV_TIMEOUT });
 
