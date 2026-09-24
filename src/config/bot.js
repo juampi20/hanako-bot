@@ -75,10 +75,6 @@ const config = {
 	colors: COLORS,
 };
 
-if (!config.guildId) {
-	throw new Error('GUILD_ID is required — this bot only works on a single guild.');
-}
-
 module.exports = config;
 module.exports.validate = validate;
 

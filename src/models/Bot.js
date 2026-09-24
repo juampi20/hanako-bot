@@ -166,6 +166,10 @@ class Bot extends Client {
 	}
 
 	async start(token = this.config.token) {
+		if (!this.config.guildId) {
+			throw new Error('GUILD_ID is required — this bot only works on a single guild.');
+		}
+
 		try {
 			// 1. Init database + repos
 			this.logger?.debug?.('Bot: initializing database');
