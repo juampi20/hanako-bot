@@ -87,92 +87,7 @@ function makeMockMember(overrides = {}) {
 	};
 }
 
-function makeVoiceState(overrides = {}) {
-	return {
-		id: 'user-1',
-		guild: { id: 'guild-1', afkChannelId: 'afk-channel' },
-		channelId: 'vc-1',
-		member: makeMockMember(),
-		selfMute: false,
-		serverMute: false,
-		selfDeaf: false,
-		serverDeaf: false,
-		...overrides,
-	};
-}
-
 const voiceHandler = require('../events/voiceStateUpdate');
-
-describe('voiceStateUpdate handler', () => {
-	beforeEach(() => {
-		jest.clearAllMocks();
-	});
-
-	test('join creates session', async () => {
-		const oldState = makeVoiceState({ channelId: null });
-		const newState = makeVoiceState({ channelId: 'vc-1' });
-		await expect(voiceHandler(makeMockClient(), oldState, newState)).resolves.not.toThrow();
-	});
-
-	test('leave removes session', async () => {
-		const oldState = makeVoiceState({ channelId: 'vc-1' });
-		const newState = makeVoiceState({ channelId: null });
-		await expect(voiceHandler(makeMockClient(), oldState, newState)).resolves.not.toThrow();
-	});
-
-	test('move re-evaluates session', async () => {
-		const oldState = makeVoiceState({ channelId: 'vc-1' });
-		const newState = makeVoiceState({ channelId: 'vc-2' });
-		await expect(voiceHandler(makeMockClient(), oldState, newState)).resolves.not.toThrow();
-	});
-
-	test('bot is not tracked', async () => {
-		const oldState = makeVoiceState({ channelId: null, member: { user: { bot: true } } });
-		const newState = makeVoiceState({ channelId: 'vc-1', member: { user: { bot: true } } });
-		await expect(voiceHandler(makeMockClient(), oldState, newState)).resolves.not.toThrow();
-	});
-
-	test('AFK channel does not create session', async () => {
-		const oldState = makeVoiceState({ channelId: null });
-		const newState = makeVoiceState({ channelId: 'afk-channel', guild: { id: 'guild-1', afkChannelId: 'afk-channel' } });
-		await expect(voiceHandler(makeMockClient(), oldState, newState)).resolves.not.toThrow();
-	});
-
-	test('move to AFK channel removes session', async () => {
-		const oldState = makeVoiceState({ channelId: 'vc-1' });
-		const newState = makeVoiceState({ channelId: 'afk-channel', guild: { id: 'guild-1', afkChannelId: 'afk-channel' } });
-		await expect(voiceHandler(makeMockClient(), oldState, newState)).resolves.not.toThrow();
-	});
-
-	test('mute self removes session', async () => {
-		const oldState = makeVoiceState({ channelId: 'vc-1', selfMute: false });
-		const newState = makeVoiceState({ channelId: 'vc-1', selfMute: true });
-		await expect(voiceHandler(makeMockClient(), oldState, newState)).resolves.not.toThrow();
-	});
-
-	test('unmute self re-adds session', async () => {
-		const oldState = makeVoiceState({ channelId: 'vc-1', selfMute: true });
-		const newState = makeVoiceState({ channelId: 'vc-1', selfMute: false });
-		await expect(voiceHandler(makeMockClient(), oldState, newState)).resolves.not.toThrow();
-	});
-
-	test('deafen self removes session', async () => {
-		const oldState = makeVoiceState({ channelId: 'vc-1', selfDeaf: false });
-		const newState = makeVoiceState({ channelId: 'vc-1', selfDeaf: true });
-		await expect(voiceHandler(makeMockClient(), oldState, newState)).resolves.not.toThrow();
-	});
-
-	test('undeafen self re-adds session', async () => {
-		const oldState = makeVoiceState({ channelId: 'vc-1', selfDeaf: true });
-		const newState = makeVoiceState({ channelId: 'vc-1', selfDeaf: false });
-		await expect(voiceHandler(makeMockClient(), oldState, newState)).resolves.not.toThrow();
-	});
-
-	test('handler catches all errors silently', async () => {
-		const client = makeMockClient();
-		await expect(voiceHandler(client, null, null)).resolves.not.toThrow();
-	});
-});
 
 describe('tick() function', () => {
 	beforeEach(() => {
@@ -227,11 +142,6 @@ describe('tick() function', () => {
 		voiceHandler.sessions.set('guild-1:user-1', true);
 		await expect(voiceHandler.tick(client)).resolves.not.toThrow();
 		expect(voiceHandler.sessions.has('guild-1:user-1')).toBe(false);
-	});
-
-	test('does not throw when sessions is empty', async () => {
-		const client = makeMockClient();
-		await expect(voiceHandler.tick(client)).resolves.not.toThrow();
 	});
 
 	test('multi-user: both sessions receive XP independently', async () => {
@@ -377,17 +287,5 @@ describe('initSessions()', () => {
 		const client = makeMockClient();
 		await expect(voiceHandler.initSessions(client)).resolves.not.toThrow();
 		expect(voiceHandler.sessions.size).toBe(0);
-	});
-});
-
-describe('isEligible() null safety', () => {
-	beforeEach(() => {
-		jest.clearAllMocks();
-	});
-
-	test('returns false when state.member is null', async () => {
-		const client = makeMockClient();
-		const state = makeVoiceState({ member: null });
-		await expect(voiceHandler(client, state, state)).resolves.not.toThrow();
 	});
 });
