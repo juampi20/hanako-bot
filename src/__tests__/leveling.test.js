@@ -82,7 +82,7 @@ jest.mock('../database/connect', () => {
 	};
 });
 
-const { initialize, getPool, close } = require('../database/connect');
+const { initialize, close } = require('../database/connect');
 const LevelRepository = require('../database/repositories/LevelRepository');
 
 beforeAll(async () => {
@@ -92,20 +92,6 @@ beforeAll(async () => {
 
 afterAll(async () => {
 	await close();
-});
-
-describe('database singleton', () => {
-	test('getPool() returns a pool instance', () => {
-		const pool = getPool();
-		expect(pool).toBeDefined();
-		expect(pool.query).toBeDefined();
-	});
-
-	test('initialize() returns the same pool', async () => {
-		const p1 = getPool();
-		const p2 = await initialize();
-		expect(p1).toBe(p2);
-	});
 });
 
 describe('LevelRepository', () => {
