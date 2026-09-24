@@ -8,9 +8,13 @@ const logger = require('../utils/logger');
 const { initialize } = require('../database/connect');
 const LevelRepository = require('../database/repositories/LevelRepository');
 const AfkRepository = require('../database/repositories/AfkRepository');
+const GuildConfigRepository = require('../database/repositories/GuildConfigRepository');
+const BirthdayRepository = require('../database/repositories/BirthdayRepository');
 const createLevelTable = require('../database/migrations/createLevelTable');
 const createLevelRewardsTable = require('../database/migrations/createLevelRewardsTable');
 const createAfkTable = require('../database/migrations/createAfkTable');
+const createGuildConfigTable = require('../database/migrations/createGuildConfigTable');
+const createBirthdaysTable = require('../database/migrations/createBirthdaysTable');
 
 // ── Inline middleware ────────────────────────────────────────
 
@@ -162,27 +166,40 @@ class Bot extends Client {
 	}
 
 	async start(token = this.config.token) {
+		if (!this.config.guildId) {
+			throw new Error('GUILD_ID is required — this bot only works on a single guild.');
+		}
+
 		try {
 			// 1. Init database + repos
 			this.logger?.debug?.('Bot: initializing database');
 			const pool = await initialize();
 			LevelRepository.init(pool);
 			AfkRepository.init(pool);
+			BirthdayRepository.init(pool);
 			await createLevelTable();
 			await createLevelRewardsTable();
 			await createAfkTable();
+			await createBirthdaysTable();
 			this.logger?.debug?.('Bot: database initialization successful');
 
-			// 2. Attach helper functions (embed, succNormal, errNormal, templateEmbed)
+			// 2. Load guild config table
+			GuildConfigRepository.init(pool);
+			await createGuildConfigTable();
+
+			// 3. Attach helper functions (embed, succNormal, errNormal, templateEmbed)
 			this._attachFunctions();
 
-			// 3. Load events (flat scan of src/events/*.js)
+			// 4. Load events (flat scan of src/events/*.js)
 			this._loadEvents();
 
-			// 4. Load commands (recursive from src/commands/*/)
+			// 5. Load commands (recursive from src/commands/*/)
 			this._loadCommands();
 
-			// 5. Login to Discord
+			// 6. Load guild config overrides
+			await this._loadGuildConfig();
+
+			// 7. Login to Discord
 			this.logger?.debug?.('Bot: logging into Discord');
 			await this.login(token);
 
@@ -196,6 +213,22 @@ class Bot extends Client {
 	}
 
 	// ─── Private helpers ──────────────────────────────────────────────
+
+	async _loadGuildConfig() {
+		try {
+			const { SETTINGS_REGISTRY } = require('../config/bot');
+			const rows = await GuildConfigRepository.getAll(this.config.guildId);
+			for (const { key, value } of rows) {
+				const def = SETTINGS_REGISTRY[key];
+				const configKey = def ? def.configKey : key;
+				this.config[configKey] = value;
+			}
+			this.logger?.debug?.(`GuildConfig: loaded ${rows.length} overrides`);
+		}
+		catch (err) {
+			this.logger?.warn?.(`GuildConfig: DB unreachable, using .env defaults — ${err.message}`);
+		}
+	}
 
 	_attachFunctions() {
 		this.embed = async function(data, interaction) {
@@ -244,11 +277,15 @@ class Bot extends Client {
 		const files = fs.readdirSync(eventsDir).filter(f => f.endsWith('.js'));
 		let count = 0;
 
+		// Modules whose file name is not a Discord event but run on bot startup
+		const startupEvents = new Set(['birthdayAnnouncement', 'clientReady']);
+
 		for (const file of files) {
 			const eventName = file.split('.')[0];
+			const bindName = startupEvents.has(eventName) ? 'ready' : eventName;
 			const eventFn = require(path.join(eventsDir, file));
 
-			this.on(eventName, async (...args) => {
+			this.on(bindName, async (...args) => {
 				try {
 					await eventFn(this, ...args);
 				}

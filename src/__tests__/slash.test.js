@@ -68,7 +68,7 @@ describe('Command data structure', () => {
 
 		for (const item of items) {
 			const fullPath = path.join(dir, item);
-			const stat = fs.statSync(fullPath);
+			const stat = fsLocal.statSync(fullPath);
 
 			if (stat.isFile() && item.endsWith('.js')) {
 				files.push(fullPath);
@@ -82,7 +82,7 @@ describe('Command data structure', () => {
 	};
 
 	const commandsDir = path.join(__dirname, '../commands');
-	const noRunCommands = ['/set-xp.js', '/set-level.js', '/delete-reward.js', '/create-reward.js', '/rewards.js'];
+	const noRunCommands = ['/set-xp.js', '/set-level.js', '/delete-reward.js', '/create-reward.js', '/rewards.js', '/config.js'];
 	const commandFiles = getCommandFiles(commandsDir).filter(file => !noRunCommands.some(c => file.endsWith(c)));
 
 	test('non-owner commands have run, data, and execute exports', () => {
@@ -95,9 +95,16 @@ describe('Command data structure', () => {
 	});
 
 	test('slash-only commands have data and execute but NOT run', () => {
-		const slashOnly = ['set-xp', 'set-level', 'delete-reward', 'create-reward', 'rewards'];
-		slashOnly.forEach(name => {
-			const command = require(`../commands/levels/${name}.js`);
+		const slashOnly = [
+			['levels', 'set-xp'],
+			['levels', 'set-level'],
+			['levels', 'delete-reward'],
+			['levels', 'create-reward'],
+			['levels', 'rewards'],
+			['core', 'config'],
+		];
+		slashOnly.forEach(([category, name]) => {
+			const command = require(`../commands/${category}/${name}.js`);
 			expect(command).toHaveProperty('data');
 			expect(command).toHaveProperty('execute');
 			expect(command).not.toHaveProperty('run');
