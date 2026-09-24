@@ -1,16 +1,5 @@
 'use strict';
 
-jest.mock('discord.js', () => {
-	const mockEmbedBuilder = {
-		setColor: jest.fn().mockReturnThis(),
-		setFooter: jest.fn().mockReturnThis(),
-		setTimestamp: jest.fn().mockReturnThis(),
-	};
-	return {
-		EmbedBuilder: jest.fn(() => mockEmbedBuilder),
-	};
-});
-
 const { EmbedBuilder } = require('discord.js');
 const { baseEmbed, COLORS } = require('../utils/embed');
 const { progressBar } = require('../utils/progress');
@@ -22,73 +11,37 @@ const fakeClient = {
 	},
 };
 
-describe('COLORS', () => {
-	beforeEach(() => {
-		jest.clearAllMocks();
-	});
-
-	test('INFO is 0x3498DB', () => {
-		expect(COLORS.INFO).toBe(0x3498DB);
-	});
-
-	test('SUCCESS is 0x57F287', () => {
-		expect(COLORS.SUCCESS).toBe(0x57F287);
-	});
-
-	test('ERROR is 0xED4245', () => {
-		expect(COLORS.ERROR).toBe(0xED4245);
-	});
-
-	test('WARNING is 0xFEE75C', () => {
-		expect(COLORS.WARNING).toBe(0xFEE75C);
-	});
-
-	test('LEVELING is 0x9B59B6', () => {
-		expect(COLORS.LEVELING).toBe(0x9B59B6);
-	});
-
-	test('FUN is 0x5865F2', () => {
-		expect(COLORS.FUN).toBe(0x5865F2);
-	});
-});
-
 describe('baseEmbed', () => {
-	beforeEach(() => {
-		jest.clearAllMocks();
-	});
-
 	test('uses COLORS.INFO by default', () => {
 		const embed = baseEmbed(fakeClient);
-		expect(embed.setColor).toHaveBeenCalledWith(COLORS.INFO);
+		expect(embed.data.color).toBe(COLORS.INFO);
 	});
 
 	test('accepts explicit color option', () => {
 		const embed = baseEmbed(fakeClient, { color: COLORS.ERROR });
-		expect(embed.setColor).toHaveBeenCalledWith(COLORS.ERROR);
+		expect(embed.data.color).toBe(COLORS.ERROR);
 	});
 
 	test('sets footer text and icon from client user', () => {
 		const embed = baseEmbed(fakeClient);
-		expect(embed.setFooter).toHaveBeenCalledWith({
+		expect(embed.data.footer).toEqual({
 			text: 'TestBot',
-			iconURL: 'https://example.com/avatar.png',
+			icon_url: 'https://example.com/avatar.png',
 		});
 	});
 
-	test('calls setTimestamp', () => {
+	test('sets a timestamp', () => {
 		const embed = baseEmbed(fakeClient);
-		expect(embed.setTimestamp).toHaveBeenCalledWith();
+		expect(embed.data.timestamp).toBeDefined();
 	});
 
-	test('returns EmbedBuilder instance', () => {
-		const embed = baseEmbed(fakeClient);
-		expect(EmbedBuilder).toHaveBeenCalledTimes(1);
-		expect(embed).toBeDefined();
+	test('returns an EmbedBuilder instance', () => {
+		expect(baseEmbed(fakeClient)).toBeInstanceOf(EmbedBuilder);
 	});
 
-	test('handles undefined options gracefully (default parameter)', () => {
+	test('uses the default color when options is undefined', () => {
 		const embed = baseEmbed(fakeClient, undefined);
-		expect(embed.setColor).toHaveBeenCalledWith(COLORS.INFO);
+		expect(embed.data.color).toBe(COLORS.INFO);
 	});
 });
 

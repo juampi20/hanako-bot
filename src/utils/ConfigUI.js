@@ -9,6 +9,7 @@ const LevelRepository = require('../database/repositories/LevelRepository');
 const AfkRepository = require('../database/repositories/AfkRepository');
 const { baseEmbed, COLORS } = require('../utils/embed');
 const botConfig = require('../config/bot');
+const { validateSetting } = require('../config/validateSetting');
 
 const NAV_TIMEOUT = 120_000;
 
@@ -520,7 +521,7 @@ class ConfigUI {
 
 		let validated;
 		try {
-			validated = this._validate(key, raw);
+			validated = validateSetting(key, raw);
 		}
 		catch (err) {
 			return interaction.reply({ content: `❌ ${err.message}`, ephemeral: true });
@@ -565,37 +566,6 @@ class ConfigUI {
 		case 'boolean': return value ? 'true' : 'false';
 		case 'snowflake': return value ? String(value) : '—';
 		default: return String(value);
-		}
-	}
-
-	_validate(key, raw) {
-		const def = botConfig.SETTINGS_REGISTRY[key];
-		if (!def) throw new Error(`Clave '${key}' no existe.`);
-
-		switch (def.type) {
-		case 'string': {
-			const s = String(raw).trim();
-			if (!s) throw new Error('El valor no puede estar vacío.');
-			return s;
-		}
-		case 'number': {
-			const n = Number(raw);
-			if (!Number.isInteger(n)) throw new Error('Debe ser un número entero.');
-			if (n < 1) throw new Error('Debe ser mayor o igual a 1.');
-			return n;
-		}
-		case 'boolean': {
-			if (raw === 'true' || raw === true) return true;
-			if (raw === 'false' || raw === false) return false;
-			throw new Error('Debe ser \'true\' o \'false\'.');
-		}
-		case 'snowflake': {
-			const s = String(raw).trim();
-			if (!/^\d{17,20}$/.test(s)) throw new Error('Debe ser un ID de Discord de 17-20 dígitos.');
-			return s;
-		}
-		default:
-			throw new Error(`Tipo desconocido: ${def.type}`);
 		}
 	}
 
