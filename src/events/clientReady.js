@@ -20,7 +20,7 @@ module.exports = async (client) => {
 		const guild = await client.guilds.fetch(client.config.guildId);
 		await guild.roles.fetch();
 		const members = await guild.members.fetch();
-		const allRewards = await LevelRepository.findAllRewardsByGuild(guild.id);
+		const allRewards = await LevelRepository.findAllRewards();
 		let registered = 0;
 		let rewarded = 0;
 		let cleaned = 0;
@@ -29,15 +29,12 @@ module.exports = async (client) => {
 		for (const [, member] of members) {
 			if (member.user.bot) continue;
 			try {
-				const record = await LevelRepository.findByUser(member.id, guild.id);
+				const record = await LevelRepository.findByUser(member.id);
 
-				if (record.id === `${guild.id}-${member.id}` && record.points === 0) {
+				if (record.points === 0) {
 					await LevelRepository.upsert({
-						id: record.id,
 						user: member.id,
-						guild: guild.id,
 						points: 0,
-						level: 1,
 					});
 					registered++;
 					client.logger?.debug?.(`ClientReady: registered ${member.id} in DB`);

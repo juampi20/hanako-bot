@@ -5,27 +5,20 @@ const LevelRepository = require('../../database/repositories/LevelRepository');
 exports.data = new SlashCommandBuilder()
 	.setName('delete-reward')
 	.setDescription('Elimina una recompensa de rol')
-	.addIntegerOption(opt => opt.setName('reward_id').setDescription('ID de la recompensa a eliminar').setRequired(true))
+	.addIntegerOption(opt => opt.setName('level').setDescription('Nivel de la recompensa a eliminar').setRequired(true).setMinValue(1))
 	.setContexts(InteractionContextType.Guild)
 	.setDefaultMemberPermissions(PermissionFlagsBits.ManageRoles);
 
 exports.execute = async (client, interaction) => {
-	const rewardId = interaction.options.getInteger('reward_id');
-	const guildId = interaction.guild.id;
+	const level = interaction.options.getInteger('level');
 
-	// Find reward by ID first to show in response
-	const reward = await LevelRepository.findRewardById(rewardId);
+	// Find reward by level first to show in response
+	const reward = await LevelRepository.findRewardByLevel(level);
 	if (!reward) {
 		return interaction.reply({ content: 'Recompensa no encontrada.', ephemeral: true });
 	}
 
-	// Verify guild ownership and delete
-	const owned = await LevelRepository.verifyRewardOwnership(rewardId, guildId);
-	if (!owned) {
-		return interaction.reply({ content: 'Esta recompensa no pertenece a este servidor.', ephemeral: true });
-	}
-
-	await LevelRepository.deleteReward(rewardId);
+	await LevelRepository.deleteReward(level);
 
 	const role = interaction.guild.roles.cache.get(reward.role_id);
 	const roleName = role ? role.name : `#${reward.role_id}`;
@@ -33,7 +26,6 @@ exports.execute = async (client, interaction) => {
 	const embed = baseEmbed(client, { color: COLORS.ERROR })
 		.setTitle('🗑️ Rol desasignado')
 		.addFields(
-			{ name: 'ID de recompensa', value: rewardId.toString(), inline: true },
 			{ name: 'Nivel', value: `${reward.level}`, inline: true },
 			{ name: 'Rol', value: roleName, inline: true },
 		)
@@ -46,7 +38,7 @@ exports.help = {
 	name: 'delete-reward',
 	description: 'Eliminar una asignación de rol de nivel.',
 	category: 'leveling',
-	usage: 'delete-reward <recompensa_id>',
+	usage: 'delete-reward <nivel>',
 	hintSlash: 'delete-reward',
 	ownerOnly: false,
 };

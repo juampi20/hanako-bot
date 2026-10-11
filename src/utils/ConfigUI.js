@@ -298,7 +298,7 @@ class ConfigUI {
 			.setTitle('🏆 Rewards Roles');
 
 		try {
-			const rewards = await LevelRepository.findAllRewardsByGuild(this.guildId);
+			const rewards = await LevelRepository.findAllRewards();
 			if (rewards.length === 0) {
 				embed.setDescription('No hay rewards configurados aún.');
 			}
@@ -331,7 +331,7 @@ class ConfigUI {
 			.setDescription('Miembros actualmente AFK en el servidor.');
 
 		try {
-			const rows = await AfkRepository.getAfkUsers(this.guildId);
+			const rows = await AfkRepository.getAfkUsers();
 			if (rows.length === 0) {
 				embed.addFields({ name: 'Sin AFK', value: 'No hay miembros AFK en este momento.' });
 			}
@@ -467,7 +467,7 @@ class ConfigUI {
 
 		const selectedId = interaction.values[0];
 
-		await GuildConfigRepository.set(this.guildId, key, selectedId);
+		await GuildConfigRepository.set(key, selectedId);
 		this.client.config[def.configKey] = selectedId;
 
 		await interaction.editReply(this._buildMainPage(this.page));
@@ -528,7 +528,7 @@ class ConfigUI {
 
 		await interaction.deferUpdate();
 
-		await GuildConfigRepository.set(this.guildId, key, String(validated));
+		await GuildConfigRepository.set(key, String(validated));
 		this.client.config[def.configKey] = validated;
 
 		await interaction.editReply(this._buildMainPage(this.page));
@@ -546,10 +546,10 @@ class ConfigUI {
 		const next = !current;
 
 		if (next) {
-			await GuildConfigRepository.set(this.guildId, key, 'true');
+			await GuildConfigRepository.set(key, 'true');
 		}
 		else {
-			await GuildConfigRepository.remove(this.guildId, key);
+			await GuildConfigRepository.remove(key);
 		}
 		this.client.config[def.configKey] = next;
 

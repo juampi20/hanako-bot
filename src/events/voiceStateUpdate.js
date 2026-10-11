@@ -1,7 +1,7 @@
 const LevelRepository = require('../database/repositories/LevelRepository');
 const AfkRepository = require('../database/repositories/AfkRepository');
 
-// key: `${guildId}:${userId}`, value: true
+// key: userId, value: true
 const sessions = new Map();
 let timerHandle = null;
 
@@ -73,35 +73,29 @@ function randomInt(min, max) {
 
 async function tick(client) {
 	const amount = randomInt(client.config.voiceXpMin, client.config.voiceXpMax);
-	const guildId = client.config.guildId;
-	for (const [key] of sessions) {
+	const guild = client.guilds.cache.get(client.config.guildId);
+	for (const [userId] of sessions) {
 		try {
-			const [guildIdSession, userId] = key.split(':');
-			if (guildId && guildIdSession !== guildId) {
-				continue;
-			}
-
-			const guild = client.guilds.cache.get(guildIdSession);
 			if (!guild) {
-				sessions.delete(key);
+				sessions.delete(userId);
 				continue;
 			}
 
 			const member = await guild.members.fetch(userId).catch(() => null);
 			if (!member || member.user.bot) {
-				sessions.delete(key);
+				sessions.delete(userId);
 				continue;
 			}
 
 			const vs = member.voice;
 			if (!vs || !vs.channelId || vs.selfMute || vs.serverMute || vs.selfDeaf || vs.serverDeaf || vs.channelId === guild.afkChannelId) {
-				sessions.delete(key);
+				sessions.delete(userId);
 				continue;
 			}
 
-			const result = await LevelRepository.addXP(userId, guildIdSession, amount);
+			const result = await LevelRepository.addXP(userId, amount);
 			if (result) {
-				client.logger?.debug?.(`Voice XP: granted ${amount} XP to ${userId} in ${guildIdSession}, level: ${result.level}`);
+				client.logger?.debug?.(`Voice XP: granted ${amount} XP to ${userId}, level: ${result.level}`);
 				if (result.level > result.oldLevel) {
 					await LevelRepository.assignLevelReward(guild, member, result.level, client.logger);
 					await LevelRepository.notifyLevelUp(guild, member, result.level, client.config);
@@ -109,7 +103,7 @@ async function tick(client) {
 				}
 			}
 			else {
-				client.logger?.debug?.(`Voice XP: XP service unavailable for ${userId} in ${guildIdSession}`);
+				client.logger?.debug?.(`Voice XP: XP service unavailable for ${userId}`);
 			}
 		}
 		catch (err) {
@@ -120,9 +114,8 @@ async function tick(client) {
 
 module.exports = async (client, oldState, newState) => {
 	try {
-		const guildId = newState.guild?.id || oldState.guild?.id;
 		const userId = newState.id || oldState.id;
-		const key = `${guildId}:${userId}`;
+		const key = userId;
 
 		// ── AFK: auto-set / auto-remove on voice channel joins/moves ──────────────
 		const guild = newState.guild || oldState.guild;
@@ -140,10 +133,10 @@ module.exports = async (client, oldState, newState) => {
 			if (isInAfkChannel && !wasInAfkChannel) {
 				const member = newState.member || (await newState.guild?.members.fetch(userId).catch(() => null));
 				if (!member || member.user?.bot) { return; }
-				const existing = await AfkRepository.isAfk(userId, guildId);
+				const existing = await AfkRepository.isAfk(userId);
 				const currentChannelId = member.voice?.channelId;
 				if (!existing && currentChannelId === guild.afkChannelId) {
-					await AfkRepository.set(userId, guildId, 'Está ausente', Math.floor(Date.now() / 1000));
+					await AfkRepository.set(userId, 'Está ausente', Math.floor(Date.now() / 1000));
 					if (afkNotifyTarget) {
 						afkNotifyTarget.send(`${member.displayName} está ahora AFK (canal de voz AFK).`).catch(() => null);
 					}
@@ -151,9 +144,9 @@ module.exports = async (client, oldState, newState) => {
 			}
 
 			if (!isInAfkChannel && wasInAfkChannel) {
-				const existing = await AfkRepository.isAfk(userId, guildId);
+				const existing = await AfkRepository.isAfk(userId);
 				if (existing) {
-					await AfkRepository.remove(userId, guildId);
+					await AfkRepository.remove(userId);
 					if (afkNotifyTarget) {
 						afkNotifyTarget.send(`${newState.member?.displayName || userId} ya no está AFK (salió del canal AFK).`).catch(() => null);
 					}
@@ -203,7 +196,7 @@ async function initSessions(client) {
 			if (!vs.channelId) {continue;}
 			const member = vs.member;
 			if (!member || member.user?.bot) {continue;}
-			const key = `${guild.id}:${member.id}`;
+			const key = member.id;
 			if (isEligible(client, vs)) {
 				addSession(client, key);
 			}
@@ -214,11 +207,10 @@ async function initSessions(client) {
 				if (vs.channelId !== guild.afkChannelId) {continue;}
 				if (!vs.member || vs.member.user?.bot) {continue;}
 				try {
-					const existing = await AfkRepository.isAfk(vs.member.id, guild.id);
+					const existing = await AfkRepository.isAfk(vs.member.id);
 					if (!existing) {
 						await AfkRepository.set(
 							vs.member.id,
-							guild.id,
 							'Está ausente',
 							Math.floor(Date.now() / 1000),
 						);

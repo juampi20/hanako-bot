@@ -15,25 +15,25 @@ describe('GuildConfigRepository', () => {
 
 	test('get returns value when found', async () => {
 		mockPool.query.mockResolvedValue({ rows: [{ value: '?' }] });
-		const result = await repo.get('guild-1', 'prefix');
+		const result = await repo.get('prefix');
 		expect(result).toBe('?');
 	});
 
 	test('get returns null when not found', async () => {
 		mockPool.query.mockResolvedValue({ rows: [] });
-		const result = await repo.get('guild-1', 'prefix');
+		const result = await repo.get('prefix');
 		expect(result).toBeNull();
 	});
 
 	test('remove deletes row', async () => {
-		mockPool.query.mockResolvedValue({ rows: [{ guild_id: 'guild-1', key: 'prefix', value: '!' }] });
-		const result = await repo.remove('guild-1', 'prefix');
+		mockPool.query.mockResolvedValue({ rows: [{ key: 'prefix', value: '!' }] });
+		const result = await repo.remove('prefix');
 		expect(result.key).toBe('prefix');
 	});
 
 	test('remove returns null when row does not exist', async () => {
 		mockPool.query.mockResolvedValue({ rows: [] });
-		const result = await repo.remove('guild-1', 'prefix');
+		const result = await repo.remove('prefix');
 		expect(result).toBeNull();
 	});
 });

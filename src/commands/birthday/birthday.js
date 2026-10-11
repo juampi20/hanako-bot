@@ -129,7 +129,7 @@ exports.execute = async (client, interaction) => {
 			await interaction.deferReply({ flags: MessageFlags.Ephemeral });
 
 			const iso = `${BIRTHDAY_YEAR}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-			await BirthdayRepository.set(interaction.user.id, interaction.guildId, iso, timezone, ping);
+			await BirthdayRepository.set(interaction.user.id, iso, timezone, ping);
 
 			client.logger?.debug?.('Birthday: cumpleaños guardado exitosamente.');
 
@@ -142,7 +142,7 @@ exports.execute = async (client, interaction) => {
 			client.logger?.debug?.('Birthday: Deferring reply para list...');
 			await interaction.deferReply();
 
-			const birthdays = await BirthdayRepository.getAll(interaction.guildId);
+			const birthdays = await BirthdayRepository.getAll();
 
 			if (birthdays.length === 0) {
 				return interaction.editReply({

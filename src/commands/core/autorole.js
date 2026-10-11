@@ -46,7 +46,7 @@ exports.execute = async (client, interaction) => {
 			client.logger?.debug?.('AutoRole: Deferring reply (Ephemeral)...');
 			await interaction.deferReply({ flags: MessageFlags.Ephemeral });
 
-			await GuildConfigRepository.set(interaction.guildId, 'auto-role', role.id);
+			await GuildConfigRepository.set('auto-role', role.id);
 			client.config.autoRoleId = role.id;
 
 			client.logger?.debug?.('AutoRole: rol automático guardado exitosamente.');
@@ -82,7 +82,7 @@ exports.execute = async (client, interaction) => {
 				return client.errNormal({ error: 'No hay un rol automático configurado para desactivar.', type: 'editreply' }, interaction);
 			}
 
-			await GuildConfigRepository.remove(interaction.guildId, 'auto-role');
+			await GuildConfigRepository.remove('auto-role');
 			client.config.autoRoleId = null;
 
 			client.logger?.debug?.('AutoRole: rol automático eliminado exitosamente.');

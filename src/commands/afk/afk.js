@@ -48,7 +48,7 @@ exports.execute = async (client, interaction) => {
 
 			const reason = interaction.options.getString('reason') || 'Está ausente';
 
-			await AfkRepository.set(interaction.user.id, interaction.guildId, reason, Math.floor(Date.now() / 1000));
+			await AfkRepository.set(interaction.user.id, reason, Math.floor(Date.now() / 1000));
 
 			client.logger?.debug?.('AFK: Estado AFK guardado exitosamente.');
 
@@ -74,7 +74,7 @@ exports.execute = async (client, interaction) => {
 			client.logger?.debug?.('AFK: Deferring reply para list...');
 			await interaction.deferReply();
 
-			const users = await AfkRepository.getAfkUsers(interaction.guildId);
+			const users = await AfkRepository.getAfkUsers();
 
 			if (users.length === 0) {
 				return interaction.editReply({
@@ -106,7 +106,7 @@ exports.execute = async (client, interaction) => {
 			}
 
 			const targetUser = interaction.options.getUser('target');
-			const removed = await AfkRepository.removeAll(interaction.guildId, targetUser?.id || null);
+			const removed = await AfkRepository.removeAll();
 
 			if (removed.rowCount === 0) {
 				const msg = targetUser

@@ -71,7 +71,12 @@ Out (rejected as over-engineering):
 
 ## Progress
 
-- (pending)
+- T1 done — commit cf6c81f. Dead code deleted; 89 tests green, lint clean.
+- T2a done — commit e460549 (`settings.js` + tests).
+- T2b done — commit 09e8da2 (wired bot.js / Bot.js / ConfigUI / messageCreate / help; deleted `validateSetting`). Single runtime object `client.config` (decision B). 103 tests green, lint clean.
+- T2c (ConfigUI presentation split: cosmetic-only + drop dead `prefix` entry) — optional polish, pending.
+- T3 single-guild — DONE (ALTER migrations verified against a real Postgres: old schema + data, run twice, zero data loss).
+- T4 TIMEZONES — pending.
 
 ## Next Step
 

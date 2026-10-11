@@ -15,9 +15,9 @@ module.exports = async (client, message) => {
 	// ── AFK: sender auto-remove ──────────────────────────
 	if (message.guild) {
 		try {
-			const afkRecord = await AfkRepository.isAfk(message.author.id, message.guild.id);
+			const afkRecord = await AfkRepository.isAfk(message.author.id);
 			if (afkRecord) {
-				await AfkRepository.remove(message.author.id, message.guild.id);
+				await AfkRepository.remove(message.author.id);
 
 				if (client.config.afkNotify) {
 					const target = client.config.afkChannelId
@@ -53,7 +53,7 @@ module.exports = async (client, message) => {
 			const xpAmount = randomInt(client.config.chatXpMin, client.config.chatXpMax);
 			client.logger?.debug?.(`Message XP: processing XP for ${message.author.id} in ${message.guild.id}, amount=${xpAmount}`);
 			try {
-				const result = await LevelRepository.addXP(message.author.id, message.guild.id, xpAmount);
+				const result = await LevelRepository.addXP(message.author.id, xpAmount);
 
 				if (result) {
 					client.logger?.debug?.(`Message XP: XP recorded - user=${message.author.id} old=${result.oldLevel} new=${result.level}`);
@@ -82,14 +82,14 @@ module.exports = async (client, message) => {
 			for (const user of message.mentions.users.values()) {
 				if (user.bot || user.id === message.author.id) continue;
 
-				const record = await AfkRepository.isAfk(user.id, message.guild.id);
+				const record = await AfkRepository.isAfk(user.id);
 				if (record) {
 					mentionedAfkUsers.add(user.id);
 				}
 			}
 
 			for (const userId of mentionedAfkUsers) {
-				const record = await AfkRepository.isAfk(userId, message.guild.id);
+				const record = await AfkRepository.isAfk(userId);
 				if (!record) continue;
 
 				const targetMember = message.guild.members.cache.get(userId);

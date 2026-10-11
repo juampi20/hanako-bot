@@ -68,7 +68,7 @@ async function checkBirthdays(client) {
 
 	let birthdays;
 	try {
-		birthdays = await BirthdayRepository.getAll(client.config.guildId);
+		birthdays = await BirthdayRepository.getAll();
 	}
 	catch (err) {
 		client.logger?.warn?.(`Birthday: falló la consulta de cumpleaños: ${err.message}`);
@@ -123,7 +123,7 @@ async function checkBirthdays(client) {
 			continue;
 		}
 
-		const key = `${userId}:${record.guild_id}:${today}`;
+		const key = `${userId}:${today}`;
 		if (publishedToday.has(key)) {
 			continue;
 		}

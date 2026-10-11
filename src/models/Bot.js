@@ -224,7 +224,7 @@ class Bot extends Client {
 
 	async _loadGuildConfig() {
 		try {
-			const rows = await GuildConfigRepository.getAll(this.config.guildId);
+			const rows = await GuildConfigRepository.getAll();
 			const dbValues = Object.fromEntries(rows.map(r => [r.key, r.value]));
 			Object.assign(this.config, settings.resolve(dbValues, process.env));
 			this.logger?.debug?.(`GuildConfig: loaded ${rows.length} overrides`);
