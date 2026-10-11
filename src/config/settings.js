@@ -4,7 +4,7 @@
  * Guild settings schema and resolution.
  *
  * This module is the single source of truth for guild-scoped settings. Boot
- * secrets (CLIENT_TOKEN, API_KEY, GUILD_ID, API_PORT, OWNER_ID) are
+ * secrets (CLIENT_TOKEN, GUILD_ID, OWNER_ID) are
  * deployment-only and live outside this schema.
  *
  * The schema is keyed by the same key used by the `guild_config` table (for

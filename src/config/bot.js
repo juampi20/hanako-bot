@@ -17,17 +17,6 @@ function validate() {
 		errors.push('GUILD_ID is required');
 	}
 
-	if (!process.env.API_KEY) {
-		errors.push('API_KEY is required');
-	}
-
-	if (!process.env.API_PORT) {
-		errors.push('API_PORT is required');
-	}
-	else if (isNaN(parseInt(process.env.API_PORT, 10))) {
-		errors.push('API_PORT must be a number');
-	}
-
 	return errors;
 }
 
@@ -44,8 +33,6 @@ const config = {
 	token: process.env.CLIENT_TOKEN,
 	ownerID: process.env.OWNER_ID,
 	guildId: process.env.GUILD_ID,
-	apiPort: parseInt(process.env.API_PORT, 10) || 3000,
-	apiKey: process.env.API_KEY || null,
 	colors: COLORS,
 	...settings.defaults(),
 };
