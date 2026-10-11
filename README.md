@@ -20,7 +20,7 @@ Bot de Discord para **un solo servidor**: niveles (XP por chat y por voz), recom
 1. **Requisitos**: Node.js 22+, PostgreSQL 16 (o Docker).
 2. **Entorno**: `make setup` (crea `.env` desde `.env.example`) y editalo.
 3. **Dependencias**: `npm install`
-4. **Correr**: `make dev` (nodemon) o `make run` (Docker).
+4. **Correr**: `npm run dev` (nodemon) o `make up` (Docker).
 5. Invitá el bot al servidor y configurá todo con `/config`.
 
 ### Variables mínimas (`.env`)
@@ -63,21 +63,19 @@ flowchart LR
 
 | Comando | Hace |
 |---|---|
-| `make setup` | Crea `.env` desde `.env.example` |
-| `make dev` | nodemon (recarga automática) |
-| `make start` | Arranca el bot |
-| `make check` | lint + test (lo mismo que el CI) |
-| `make test` | Jest |
-| `make lint` / `make lint-fix` | ESLint |
-| `make build` / `make run` / `make stop` | Docker Compose |
-| `make logs` / `make ps` / `make shell` | Docker |
-| `make backup` | Backup de PostgreSQL |
 | `make help` | Lista los targets |
+| `make setup` | Crea `.env` desde `.env.example` |
+| `make check` | lint + test (lo mismo que el CI) |
+| `make backup` | Backup de PostgreSQL |
+| `make up` / `make down` | Levanta / baja el stack (Docker) |
+| `make logs` | Logs del bot |
+
+Para el día a día, los scripts de `npm`: `npm run dev`, `npm test`, `npm run lint`.
 
 ## Desarrollo
 
-- **Tests**: `make test` (Jest). El CI corre en cada PR a `master`.
-- **Lint**: `make lint` (ESLint, tabs).
+- **Tests**: `npm test` (Jest). El CI corre en cada PR a `master`.
+- **Lint**: `npm run lint` (ESLint, tabs). `make check` corre ambos.
 - **Pre-commit**: husky corre lint + test.
 - **Decisiones**: `docs/adr/`.
 - **Workflow**: trunk-based — ramas cortas desde `master`, PR obligatorio.
