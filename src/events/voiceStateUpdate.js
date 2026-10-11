@@ -1,5 +1,6 @@
 const LevelRepository = require('../database/repositories/LevelRepository');
 const AfkRepository = require('../database/repositories/AfkRepository');
+const { randomInt } = require('../utils/random');
 
 // key: userId, value: true
 const sessions = new Map();
@@ -67,10 +68,6 @@ function stopTimer(client) {
 	}
 }
 
-function randomInt(min, max) {
-	return Math.floor(Math.random() * (max - min + 1)) + min;
-}
-
 async function tick(client) {
 	const amount = randomInt(client.config.voiceXpMin, client.config.voiceXpMax);
 	const guild = client.guilds.cache.get(client.config.guildId);
@@ -97,8 +94,7 @@ async function tick(client) {
 			if (result) {
 				client.logger?.debug?.(`Voice XP: granted ${amount} XP to ${userId}, level: ${result.level}`);
 				if (result.level > result.oldLevel) {
-					await LevelRepository.assignLevelReward(guild, member, result.level, client.logger);
-					await LevelRepository.notifyLevelUp(guild, member, result.level, client.config);
+					await LevelRepository.onLevelUp(guild, member, result, client.config, client.logger);
 					client.logger?.debug?.(`Voice XP: level-up for ${userId} from ${result.oldLevel} to ${result.level}`);
 				}
 			}

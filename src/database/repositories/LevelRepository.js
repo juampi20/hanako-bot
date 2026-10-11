@@ -250,6 +250,12 @@ async function notifyLevelUp(guild, member, level, config) {
 	}
 }
 
+async function onLevelUp(guild, member, result, config, logger) {
+	if (!result || result.level <= result.oldLevel) return;
+	await assignLevelReward(guild, member, result.level, logger);
+	await notifyLevelUp(guild, member, result.level, config);
+}
+
 module.exports = {
 	init,
 	getLevelFromXP,
@@ -268,4 +274,5 @@ module.exports = {
 	isDuplicateReward,
 	assignLevelReward,
 	notifyLevelUp,
+	onLevelUp,
 };

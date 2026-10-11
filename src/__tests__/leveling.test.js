@@ -306,3 +306,41 @@ describe('notifyLevelUp', () => {
 		expect(send.mock.calls[0][0]).toContain('VIP');
 	});
 });
+
+describe('onLevelUp', () => {
+	function makeGuild(fetch) {
+		return { id: 'guild-1', systemChannel: null, roles: { cache: new Map() }, channels: { fetch } };
+	}
+
+	test('is a no-op when result is null', async () => {
+		const fetch = jest.fn().mockResolvedValue({ send: jest.fn() });
+		const member = { id: 'user-1', roles: { cache: new Map() } };
+		const config = { levelUpChannel: 'channel-1', levelUpNotify: true };
+
+		await LevelRepository.onLevelUp(makeGuild(fetch), member, null, config);
+
+		expect(fetch).not.toHaveBeenCalled();
+	});
+
+	test('is a no-op when level did not increase', async () => {
+		const fetch = jest.fn().mockResolvedValue({ send: jest.fn() });
+		const member = { id: 'user-1', roles: { cache: new Map() } };
+		const config = { levelUpChannel: 'channel-1', levelUpNotify: true };
+
+		await LevelRepository.onLevelUp(makeGuild(fetch), member, { level: 3, oldLevel: 3 }, config);
+
+		expect(fetch).not.toHaveBeenCalled();
+	});
+
+	test('delegates reward and notification when level increases', async () => {
+		const send = jest.fn().mockResolvedValue();
+		const guild = makeGuild(jest.fn().mockResolvedValue({ send }));
+		const member = { id: 'user-1', roles: { cache: new Map() } };
+		const config = { levelUpChannel: 'channel-1', levelUpNotify: true, levelUpNotifyInterval: 5 };
+
+		await LevelRepository.onLevelUp(guild, member, { level: 5, oldLevel: 4 }, config);
+
+		expect(send).toHaveBeenCalled();
+		expect(send.mock.calls[0][0]).toContain('nivel **5**');
+	});
+});

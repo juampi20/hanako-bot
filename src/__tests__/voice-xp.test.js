@@ -7,6 +7,7 @@ jest.mock('../database/repositories/LevelRepository', () => ({
 	getLeaderboard: jest.fn(),
 	assignLevelReward: jest.fn(),
 	notifyLevelUp: jest.fn(),
+	onLevelUp: jest.fn(),
 	createReward: jest.fn(),
 	findRewardByLevel: jest.fn(),
 	findAllRewards: jest.fn(),

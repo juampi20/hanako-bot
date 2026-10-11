@@ -2,12 +2,9 @@ const xpCooldowns = new Map();
 const XP_COOLDOWN_MS = 60000;
 
 const { baseEmbed, COLORS } = require('../utils/embed');
+const { randomInt } = require('../utils/random');
 const LevelRepository = require('../database/repositories/LevelRepository');
 const AfkRepository = require('../database/repositories/AfkRepository');
-
-function randomInt(min, max) {
-	return Math.floor(Math.random() * (max - min + 1)) + min;
-}
 
 module.exports = async (client, message) => {
 	if (message.author.bot) { return; }
@@ -61,9 +58,8 @@ module.exports = async (client, message) => {
 					if (result.level > result.oldLevel) {
 						const member = message.member || await message.guild.members.fetch(message.author.id).catch(() => null);
 						if (member) {
-							await LevelRepository.assignLevelReward(message.guild, member, result.level, client.logger);
+							await LevelRepository.onLevelUp(message.guild, member, result, client.config, client.logger);
 						}
-						await LevelRepository.notifyLevelUp(message.guild, message.member, result.level, client.config);
 						client.logger?.debug?.(`Message XP: level-up for ${message.author.id} to level ${result.level}`);
 					}
 				}
