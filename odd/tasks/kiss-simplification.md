@@ -80,10 +80,11 @@ Out (rejected as over-engineering):
 
 ## Post-review additions
 
-- `chore(config): drop prefix and dead API config residue` — removed the dead `prefix` entry from ConfigUI CATEGORIES, dropped `API_KEY`/`API_PORT` from boot config + `validate()`, updated the `settings.js` comment. (`.env.example` residue left for the owner: remove `PREFIX=`, `API_KEY=`, `API_PORT=`.)
+- `chore(config): drop prefix and dead API config residue` + `chore(config): drop prefix and API vars from .env.example` — removed the dead `prefix` entry from ConfigUI CATEGORIES, dropped `API_KEY`/`API_PORT` from boot config + `validate()`, and removed `PREFIX`/`API_KEY`/`API_PORT` from `.env.example`.
 - `docs: rewrite the README` — accurate stack (no Express), features, config model, architecture diagram, make table.
-- `chore(make): trim to core targets with a plain help`.
+- `chore(make): reduce Makefile to essential targets` — 7 targets (help/setup/check/backup/up/down/logs); npm is the daily runner.
+- `refactor(levels): give the level-up reaction one owner` (#1) — `LevelRepository.onLevelUp` (guard + assign + notify) used by messageCreate and voiceStateUpdate; shared `src/utils/random.js`.
 
 ## Next Step
 
-Merge PR #37 (→ master). Optional: XP→level-up dedup (#1).
+Merge PR #37 (→ master).
