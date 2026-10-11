@@ -10,18 +10,18 @@ function init(p) {
 	pool = p;
 }
 
-async function set(userId, guildId, date, timezone, ping) {
+async function set(userId, date, timezone, ping) {
 	try {
 		const sql = `
-			INSERT INTO birthdays (user_id, guild_id, birthday, timezone, ping)
-			VALUES ($1, $2, $3, $4, $5)
-			ON CONFLICT (user_id) DO UPDATE SET guild_id = $2, birthday = $3, timezone = $4, ping = $5
+			INSERT INTO birthdays (user_id, birthday, timezone, ping)
+			VALUES ($1, $2, $3, $4)
+			ON CONFLICT (user_id) DO UPDATE SET birthday = $2, timezone = $3, ping = $4
 			RETURNING *`;
-		const res = await pool.query(sql, [userId, guildId, date, timezone, ping]);
+		const res = await pool.query(sql, [userId, date, timezone, ping]);
 		return res.rows[0] || null;
 	}
 	catch (error) {
-		throw new Error(`Failed to set birthday for user ${userId}, guild ${guildId}: ${error.message}`, { cause: error });
+		throw new Error(`Failed to set birthday for user ${userId}: ${error.message}`, { cause: error });
 	}
 }
 
@@ -36,14 +36,13 @@ async function get(userId) {
 	}
 }
 
-async function getAll(guildId) {
+async function getAll() {
 	try {
-		const sql = 'SELECT * FROM birthdays WHERE guild_id = $1';
-		const res = await pool.query(sql, [guildId]);
+		const res = await pool.query('SELECT * FROM birthdays');
 		return res.rows;
 	}
 	catch (error) {
-		throw new Error(`Failed to get birthdays for guild ${guildId}: ${error.message}`, { cause: error });
+		throw new Error(`Failed to get birthdays: ${error.message}`, { cause: error });
 	}
 }
 

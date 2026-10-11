@@ -4,6 +4,7 @@ const { Client, Collection, GatewayIntentBits, EmbedBuilder, REST, Routes } = re
 const fs = require('fs');
 const path = require('path');
 const config = require('../config/bot');
+const settings = require('../config/settings');
 const logger = require('../utils/logger');
 const { initialize } = require('../database/connect');
 const LevelRepository = require('../database/repositories/LevelRepository');
@@ -166,6 +167,13 @@ class Bot extends Client {
 	}
 
 	async start(token = this.config.token) {
+		if (typeof this.config.validate === 'function') {
+			const errors = this.config.validate();
+			for (const error of errors) {
+				this.logger?.warn?.(`Config: ${error}`);
+			}
+		}
+
 		if (!this.config.guildId) {
 			throw new Error('GUILD_ID is required — this bot only works on a single guild.');
 		}
@@ -216,13 +224,9 @@ class Bot extends Client {
 
 	async _loadGuildConfig() {
 		try {
-			const { SETTINGS_REGISTRY } = require('../config/bot');
-			const rows = await GuildConfigRepository.getAll(this.config.guildId);
-			for (const { key, value } of rows) {
-				const def = SETTINGS_REGISTRY[key];
-				const configKey = def ? def.configKey : key;
-				this.config[configKey] = value;
-			}
+			const rows = await GuildConfigRepository.getAll();
+			const dbValues = Object.fromEntries(rows.map(r => [r.key, r.value]));
+			Object.assign(this.config, settings.resolve(dbValues, process.env));
 			this.logger?.debug?.(`GuildConfig: loaded ${rows.length} overrides`);
 		}
 		catch (err) {

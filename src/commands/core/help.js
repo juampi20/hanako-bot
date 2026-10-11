@@ -16,14 +16,14 @@ exports.run = (client, message, args) => {
 			embed.addFields({ name: `${category.toUpperCase()}`, value: data.join(', '), inline: true });
 			data = [];
 		});
-		embed.setDescription(`Use \`${client.config.prefix}help command\` para ver mas detalles acerca de un comando en particular.`);
+		embed.setDescription('Use `/help <comando>` para ver mas detalles acerca de un comando en particular.');
 	}
 	else {
 		client.commands.forEach(command => {
 			if (command.help.name === args[0]) {
 				const title = `**Informacion del comando:** \`${command.help.name}\``;
 				data.push(`Categoria: \`${command.help.category}\``);
-				data.push(`Uso: \`${client.config.prefix}\` \`${command.help.usage}\`\n`);
+				data.push(`Uso: \`/${command.help.usage}\`\n`);
 				data.push(`${command.help.description}`);
 				embed.setTitle(title).setDescription(data.join('\n'));
 			};

@@ -8,11 +8,9 @@ exports.data = new SlashCommandBuilder()
 	.setContexts(InteractionContextType.Guild);
 
 exports.execute = async (client, interaction) => {
-	const guildId = interaction.guild.id;
-
 	await interaction.deferReply();
 
-	const rewards = await LevelRepository.findAllRewardsByGuild(guildId);
+	const rewards = await LevelRepository.findAllRewards();
 
 	const embed = baseEmbed(client, { color: COLORS.LEVELING })
 		.setTitle('🏆 Rewards Roles');

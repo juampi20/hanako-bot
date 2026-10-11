@@ -8,8 +8,7 @@ const GuildConfigRepository = require('../database/repositories/GuildConfigRepos
 const LevelRepository = require('../database/repositories/LevelRepository');
 const AfkRepository = require('../database/repositories/AfkRepository');
 const { baseEmbed, COLORS } = require('../utils/embed');
-const botConfig = require('../config/bot');
-const { validateSetting } = require('../config/validateSetting');
+const settings = require('../config/settings');
 
 const NAV_TIMEOUT = 120_000;
 
@@ -17,7 +16,6 @@ const CATEGORIES = [
 	{
 		name: 'General', emoji: '⚙️', color: COLORS.INFO,
 		settings: [
-			{ key: 'prefix', label: 'Prefijo' },
 			{ key: 'moderator-role', label: 'Mod Role', snowflakeKind: 'role' },
 			{ key: 'auto-role', label: 'Auto Role', snowflakeKind: 'role' },
 		],
@@ -143,7 +141,7 @@ class ConfigUI {
 			.setDescription(`Categoría ${pageIndex + 1} de ${CATEGORIES.length}`);
 
 		for (const setting of cat.settings) {
-			const def = botConfig.SETTINGS_REGISTRY[setting.key];
+			const def = settings.get(setting.key);
 			if (!def) continue;
 
 			const val = cfg[def.configKey] ?? def.default;
@@ -169,7 +167,7 @@ class ConfigUI {
 		);
 
 		for (const tg of cat.toggles) {
-			const def = botConfig.SETTINGS_REGISTRY[tg.key];
+			const def = settings.get(tg.key);
 			if (!def || def.type !== 'boolean') continue;
 
 			const val = cfg[def.configKey] ?? def.default;
@@ -220,7 +218,7 @@ class ConfigUI {
 		if (def.type === 'boolean') {
 			return val ? '✅ sí' : '❌ no';
 		}
-		if (def.type === 'snowflake' && val) {
+		if ((def.type === 'role' || def.type === 'channel') && val) {
 			const mention = this._resolveSnowflake(val);
 			if (mention) return mention;
 		}
@@ -269,7 +267,7 @@ class ConfigUI {
 			.setPlaceholder('Elegí un parámetro…');
 
 		for (const setting of cat.settings) {
-			const def = botConfig.SETTINGS_REGISTRY[setting.key];
+			const def = settings.get(setting.key);
 			if (!def || def.type === 'boolean') continue;
 
 			const val = cfg[def.configKey] ?? def.default;
@@ -299,7 +297,7 @@ class ConfigUI {
 			.setTitle('🏆 Rewards Roles');
 
 		try {
-			const rewards = await LevelRepository.findAllRewardsByGuild(this.guildId);
+			const rewards = await LevelRepository.findAllRewards();
 			if (rewards.length === 0) {
 				embed.setDescription('No hay rewards configurados aún.');
 			}
@@ -332,7 +330,7 @@ class ConfigUI {
 			.setDescription('Miembros actualmente AFK en el servidor.');
 
 		try {
-			const rows = await AfkRepository.getAfkUsers(this.guildId);
+			const rows = await AfkRepository.getAfkUsers();
 			if (rows.length === 0) {
 				embed.addFields({ name: 'Sin AFK', value: 'No hay miembros AFK en este momento.' });
 			}
@@ -420,10 +418,10 @@ class ConfigUI {
 
 	async _handleSelectMenu(interaction) {
 		const key = interaction.values[0];
-		const def = botConfig.SETTINGS_REGISTRY[key];
+		const def = settings.get(key);
 		if (!def) return;
 
-		if (def.type === 'snowflake') {
+		if (def.type === 'role' || def.type === 'channel') {
 			await this._showPicker(interaction, key);
 		}
 		else {
@@ -463,12 +461,12 @@ class ConfigUI {
 		await interaction.deferUpdate();
 
 		const key = interaction.customId.replace('config_picker_', '');
-		const def = botConfig.SETTINGS_REGISTRY[key];
+		const def = settings.get(key);
 		if (!def) return;
 
 		const selectedId = interaction.values[0];
 
-		await GuildConfigRepository.set(this.guildId, key, selectedId);
+		await GuildConfigRepository.set(key, selectedId);
 		this.client.config[def.configKey] = selectedId;
 
 		await interaction.editReply(this._buildMainPage(this.page));
@@ -477,7 +475,7 @@ class ConfigUI {
 	// ── Modal ────────────────────────────────────────────────────
 
 	async _showModal(interaction, key) {
-		const def = botConfig.SETTINGS_REGISTRY[key];
+		const def = settings.get(key);
 		if (!def) throw new Error(`Clave '${key}' no encontrada.`);
 
 		const current = this.client.config[def.configKey] ?? def.default;
@@ -514,14 +512,14 @@ class ConfigUI {
 	async _handleModalSubmit(interaction) {
 		const key = interaction.customId.replace('config_modal_', '');
 		const raw = interaction.fields.getTextInputValue(`config_input_${key}`);
-		const def = botConfig.SETTINGS_REGISTRY[key];
+		const def = settings.get(key);
 		if (!def) {
 			return interaction.reply({ content: `❌ Clave '${key}' no encontrada.`, ephemeral: true });
 		}
 
 		let validated;
 		try {
-			validated = validateSetting(key, raw);
+			validated = settings.validate(key, raw);
 		}
 		catch (err) {
 			return interaction.reply({ content: `❌ ${err.message}`, ephemeral: true });
@@ -529,7 +527,7 @@ class ConfigUI {
 
 		await interaction.deferUpdate();
 
-		await GuildConfigRepository.set(this.guildId, key, String(validated));
+		await GuildConfigRepository.set(key, String(validated));
 		this.client.config[def.configKey] = validated;
 
 		await interaction.editReply(this._buildMainPage(this.page));
@@ -540,17 +538,17 @@ class ConfigUI {
 	async _toggle(key, interaction) {
 		await interaction.deferUpdate();
 
-		const def = botConfig.SETTINGS_REGISTRY[key];
+		const def = settings.get(key);
 		if (!def || def.type !== 'boolean') throw new Error(`'${key}' no es booleano.`);
 
 		const current = this.client.config[def.configKey] ?? def.default;
 		const next = !current;
 
 		if (next) {
-			await GuildConfigRepository.set(this.guildId, key, 'true');
+			await GuildConfigRepository.set(key, 'true');
 		}
 		else {
-			await GuildConfigRepository.remove(this.guildId, key);
+			await GuildConfigRepository.remove(key);
 		}
 		this.client.config[def.configKey] = next;
 
@@ -564,7 +562,8 @@ class ConfigUI {
 		case 'string': return String(value);
 		case 'number': return String(Number(value));
 		case 'boolean': return value ? 'true' : 'false';
-		case 'snowflake': return value ? String(value) : '—';
+		case 'role':
+		case 'channel': return value ? String(value) : '—';
 		default: return String(value);
 		}
 	}

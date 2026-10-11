@@ -5,11 +5,11 @@ const LevelRepository = require('../../database/repositories/LevelRepository');
 const PAGE_SIZE = 10;
 const MEDALS = ['🥇', '🥈', '🥉'];
 
-async function buildLeaderboardPage(client, guildId, page) {
+async function buildLeaderboardPage(client, page) {
 	const offset = page * PAGE_SIZE;
 	const [entries, total] = await Promise.all([
-		LevelRepository.getLeaderboard(guildId, PAGE_SIZE, offset),
-		LevelRepository.getLeaderboardCount(guildId),
+		LevelRepository.getLeaderboard(PAGE_SIZE, offset),
+		LevelRepository.getLeaderboardCount(),
 	]);
 
 	const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
@@ -45,7 +45,7 @@ function buildButtons(page, totalPages) {
 }
 
 exports.run = async (client, message, _args) => {
-	const { embed } = await buildLeaderboardPage(client, message.guild.id, 0);
+	const { embed } = await buildLeaderboardPage(client, 0);
 	await message.channel.send({ embeds: [embed] });
 };
 
@@ -58,7 +58,7 @@ exports.execute = async (client, interaction) => {
 	const response = await interaction.deferReply({ withResponse: true });
 	const msg = response.resource.message;
 
-	const { embed, totalPages } = await buildLeaderboardPage(client, interaction.guild.id, 0);
+	const { embed, totalPages } = await buildLeaderboardPage(client, 0);
 	const row = buildButtons(0, totalPages);
 
 	await interaction.editReply({ embeds: [embed], components: totalPages > 1 ? [row] : [] });
@@ -78,7 +78,7 @@ exports.execute = async (client, interaction) => {
 		}
 
 		currentPage = btnInt.customId === 'lb_next' ? currentPage + 1 : currentPage - 1;
-		const pageData = await buildLeaderboardPage(client, interaction.guild.id, currentPage);
+		const pageData = await buildLeaderboardPage(client, currentPage);
 		const newRow = buildButtons(currentPage, pageData.totalPages);
 
 		await btnInt.update({ embeds: [pageData.embed], components: [newRow] });

@@ -13,7 +13,6 @@ exports.data = new SlashCommandBuilder()
 exports.execute = async (client, interaction) => {
 	const targetRole = interaction.options.getRole('role');
 	const level = interaction.options.getInteger('level');
-	const guildId = interaction.guild.id;
 
 	// Check if role exists in guild (already covered by Discord.js option validation)
 	const role = interaction.guild.roles.cache.get(targetRole.id);
@@ -31,7 +30,7 @@ exports.execute = async (client, interaction) => {
 		return interaction.reply({ content: 'No tengo permisos para administrar roles en este servidor.', ephemeral: true });
 	}
 
-	const result = await LevelRepository.createReward(guildId, level, targetRole.id);
+	const result = await LevelRepository.createReward(level, targetRole.id);
 
 	if (!result) {
 		return interaction.reply({ content: `Ya existe un rol asignado para el nivel ${level} en este servidor.`, ephemeral: true });
@@ -40,7 +39,6 @@ exports.execute = async (client, interaction) => {
 	const embed = baseEmbed(client, { color: COLORS.SUCCESS })
 		.setTitle('🎉 Rol asignado')
 		.addFields(
-			{ name: 'ID', value: result.id.toString(), inline: true },
 			{ name: 'Nivel', value: `${level}`, inline: true },
 			{ name: 'Rol', value: role.toString(), inline: true },
 

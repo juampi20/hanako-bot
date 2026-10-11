@@ -2,12 +2,9 @@ const xpCooldowns = new Map();
 const XP_COOLDOWN_MS = 60000;
 
 const { baseEmbed, COLORS } = require('../utils/embed');
+const { randomInt } = require('../utils/random');
 const LevelRepository = require('../database/repositories/LevelRepository');
 const AfkRepository = require('../database/repositories/AfkRepository');
-
-function randomInt(min, max) {
-	return Math.floor(Math.random() * (max - min + 1)) + min;
-}
 
 module.exports = async (client, message) => {
 	if (message.author.bot) { return; }
@@ -15,9 +12,9 @@ module.exports = async (client, message) => {
 	// ── AFK: sender auto-remove ──────────────────────────
 	if (message.guild) {
 		try {
-			const afkRecord = await AfkRepository.isAfk(message.author.id, message.guild.id);
+			const afkRecord = await AfkRepository.isAfk(message.author.id);
 			if (afkRecord) {
-				await AfkRepository.remove(message.author.id, message.guild.id);
+				await AfkRepository.remove(message.author.id);
 
 				if (client.config.afkNotify) {
 					const target = client.config.afkChannelId
@@ -53,7 +50,7 @@ module.exports = async (client, message) => {
 			const xpAmount = randomInt(client.config.chatXpMin, client.config.chatXpMax);
 			client.logger?.debug?.(`Message XP: processing XP for ${message.author.id} in ${message.guild.id}, amount=${xpAmount}`);
 			try {
-				const result = await LevelRepository.addXP(message.author.id, message.guild.id, xpAmount);
+				const result = await LevelRepository.addXP(message.author.id, xpAmount);
 
 				if (result) {
 					client.logger?.debug?.(`Message XP: XP recorded - user=${message.author.id} old=${result.oldLevel} new=${result.level}`);
@@ -61,9 +58,8 @@ module.exports = async (client, message) => {
 					if (result.level > result.oldLevel) {
 						const member = message.member || await message.guild.members.fetch(message.author.id).catch(() => null);
 						if (member) {
-							await LevelRepository.assignLevelReward(message.guild, member, result.level, client.logger);
+							await LevelRepository.onLevelUp(message.guild, member, result, client.config, client.logger);
 						}
-						await LevelRepository.notifyLevelUp(message.guild, message.member, result.level, client.config);
 						client.logger?.debug?.(`Message XP: level-up for ${message.author.id} to level ${result.level}`);
 					}
 				}
@@ -82,14 +78,14 @@ module.exports = async (client, message) => {
 			for (const user of message.mentions.users.values()) {
 				if (user.bot || user.id === message.author.id) continue;
 
-				const record = await AfkRepository.isAfk(user.id, message.guild.id);
+				const record = await AfkRepository.isAfk(user.id);
 				if (record) {
 					mentionedAfkUsers.add(user.id);
 				}
 			}
 
 			for (const userId of mentionedAfkUsers) {
-				const record = await AfkRepository.isAfk(userId, message.guild.id);
+				const record = await AfkRepository.isAfk(userId);
 				if (!record) continue;
 
 				const targetMember = message.guild.members.cache.get(userId);
@@ -114,34 +110,4 @@ module.exports = async (client, message) => {
 			client.logger?.debug?.(`AFK: mention auto-reply failed: ${err.message}`);
 		}
 	}
-
-	if (message.content.indexOf(client.config.prefix) !== 0) { return; }
-
-	const args = message.content.slice(client.config.prefix.length).trim().split(/ +/g);
-	const command = args.shift().toLowerCase();
-
-	const cmd = client.commands.get(command);
-	if (!cmd) {
-		client.logger?.debug?.(`MessageCreate: command not found: ${command}`);
-		return;
-	}
-
-	client.logger.debug(`${message.author.username} (${message.author.id}) ejecuto el comando ${cmd.help.name} en ${message.guild?.name || message.guild?.id || 'DM'}`);
-
-	let index = 0;
-	const next = async () => {
-		const middleware = client.middleware[index++];
-		if (!middleware) {
-			return cmd.run(client, message, args);
-		}
-		return middleware(client, message, cmd, next);
-	};
-	next().then(() => {
-		if (cmd.help && cmd.help.hintSlash) {
-			message.channel.send(`💡 Probá también /${cmd.help.hintSlash}`)
-				.catch(() => {
-					/* silently fail */
-				});
-		}
-	}).catch(err => client.logger.log(err, 'error'));
 };

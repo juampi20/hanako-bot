@@ -3,8 +3,8 @@ const { baseEmbed, COLORS } = require('../../utils/embed');
 const { progressBar } = require('../../utils/progress');
 const LevelRepository = require('../../database/repositories/LevelRepository');
 
-async function buildRankEmbed(client, target, guildId) {
-	const score = await LevelRepository.findByUser(target.id, guildId);
+async function buildRankEmbed(client, target) {
+	const score = await LevelRepository.findByUser(target.id);
 	if (!score || score.points === 0) {
 		const embed = baseEmbed(client, { color: COLORS.LEVELING })
 			.setAuthor({ name: target.username, iconURL: target.avatarURL() })
@@ -24,7 +24,7 @@ async function buildRankEmbed(client, target, guildId) {
 	const xpFloor = currentLevel <= 1 ? 0 : xpForCurrent;
 	const xpIntoLevel = Math.max(0, currentXP - xpFloor);
 	const xpNeeded = xpForNext - xpFloor;
-	const leaderboard = await LevelRepository.getLeaderboard(guildId, 1000);
+	const leaderboard = await LevelRepository.getLeaderboard(1000);
 	const rank = leaderboard.findIndex(entry => entry.user === target.id) + 1;
 
 	const bar = progressBar(xpIntoLevel, xpNeeded);
@@ -57,8 +57,7 @@ exports.run = async (client, message, _args) => {
 		return;
 	}
 
-	const guildId = client.config.guildId || message.guild.id;
-	const embed = await buildRankEmbed(client, target, guildId);
+	const embed = await buildRankEmbed(client, target);
 	await message.channel.send({ embeds: [embed] });
 };
 
@@ -73,8 +72,7 @@ exports.execute = async (client, interaction) => {
 		return;
 	}
 
-	const guildId = client.config.guildId || interaction.guild.id;
-	const embed = await buildRankEmbed(client, target, guildId);
+	const embed = await buildRankEmbed(client, target);
 	await interaction.reply({ embeds: [embed] });
 };
 

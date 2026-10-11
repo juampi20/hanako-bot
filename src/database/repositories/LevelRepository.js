@@ -5,6 +5,8 @@
  *
  * XP formula:  xp = 330(N-1)^2 + 300(N-1)
  * Inverse:     k = floor((-300 + sqrt(90000 + 1320*xp)) / 660), level = max(k + 1, 1)
+ *
+ * Single-guild: scores are keyed by `user` alone and rewards by `level` alone.
  */
 
 let pool = null;
@@ -28,25 +30,21 @@ function getXPForLevel(level) {
 
 // ── Level data ───────────────────────────────────────────────
 
-async function findByUser(userId, guildId) {
+async function findByUser(userId) {
 	const res = await pool.query(
-		'SELECT * FROM scores WHERE "user" = $1 AND guild = $2',
-		[userId, guildId],
+		'SELECT * FROM scores WHERE "user" = $1',
+		[userId],
 	);
 	const row = res.rows[0] || null;
 	if (row) {
 		return {
-			id: row.id,
 			user: row.user,
-			guild: row.guild,
 			points: row.points,
 			level: getLevelFromXP(row.points),
 		};
 	}
 	return {
-		id: `${guildId}-${userId}`,
 		user: userId,
-		guild: guildId,
 		points: 0,
 		level: 1,
 	};
@@ -54,151 +52,114 @@ async function findByUser(userId, guildId) {
 
 async function upsert(data) {
 	const res = await pool.query(
-		`INSERT INTO scores (id, "user", guild, points, level)
-		 VALUES ($1, $2, $3, $4, $5)
-		 ON CONFLICT (id) DO UPDATE SET points = EXCLUDED.points, level = EXCLUDED.level
+		`INSERT INTO scores ("user", points)
+		 VALUES ($1, $2)
+		 ON CONFLICT ("user") DO UPDATE SET points = EXCLUDED.points
 		 RETURNING *`,
-		[data.id, data.user, data.guild, data.points, data.level],
+		[data.user, data.points],
 	);
 	return res.rows[0];
 }
 
-async function getLeaderboard(guildId, limit = 10, offset = 0) {
+async function getLeaderboard(limit = 10, offset = 0) {
 	const res = await pool.query(
-		'SELECT * FROM scores WHERE guild = $1 ORDER BY points DESC, level DESC LIMIT $2 OFFSET $3',
-		[guildId, limit, offset],
+		'SELECT * FROM scores ORDER BY points DESC LIMIT $1 OFFSET $2',
+		[limit, offset],
 	);
 	return res.rows.map((row) => ({
-		id: row.id,
 		user: row.user,
-		guild: row.guild,
 		points: row.points,
 		level: getLevelFromXP(row.points),
 	}));
 }
 
-async function getLeaderboardCount(guildId) {
+async function getLeaderboardCount() {
 	const res = await pool.query(
-		'SELECT COUNT(*)::int AS count FROM scores WHERE guild = $1',
-		[guildId],
+		'SELECT COUNT(*)::int AS count FROM scores',
 	);
 	return res.rows[0].count;
 }
 
 // ── XP mutations ─────────────────────────────────────────────
 
-async function addXP(userId, guildId, amount) {
+async function addXP(userId, amount) {
 	if (!amount || amount <= 0) return null;
 
-	const current = await findByUser(userId, guildId);
+	const current = await findByUser(userId);
 	const newPoints = current.points + amount;
 	const newLevel = getLevelFromXP(newPoints);
 	const oldLevel = current.level;
 
-	await upsert({
-		id: current.id,
-		user: current.user,
-		guild: current.guild,
-		points: newPoints,
-		level: newLevel,
-	});
+	await upsert({ user: userId, points: newPoints });
 
 	return {
-		id: current.id,
-		user: current.user,
-		guild: current.guild,
+		user: userId,
 		points: newPoints,
 		level: newLevel,
 		oldLevel,
 	};
 }
 
-async function setXP(userId, guildId, xp) {
+async function setXP(userId, xp) {
 	if (xp < 0) return null;
-	const current = await findByUser(userId, guildId);
+	const current = await findByUser(userId);
 	const oldLevel = current.level;
 	const newLevel = getLevelFromXP(xp);
 
-	await upsert({
-		id: current.id,
-		user: current.user,
-		guild: current.guild,
-		points: xp,
-		level: newLevel,
-	});
+	await upsert({ user: userId, points: xp });
 
 	return { points: xp, level: newLevel, oldLevel };
 }
 
-async function setLevel(userId, guildId, level) {
+async function setLevel(userId, level) {
 	if (level < 1) return null;
 	const minXP = getXPForLevel(level);
-	const current = await findByUser(userId, guildId);
+	const current = await findByUser(userId);
 	const oldLevel = current.level;
 
-	await upsert({
-		id: current.id,
-		user: current.user,
-		guild: current.guild,
-		points: minXP,
-		level: level,
-	});
+	await upsert({ user: userId, points: minXP });
 
 	return { points: minXP, level, oldLevel };
 }
 
 // ── Reward data ──────────────────────────────────────────────
 
-async function createReward(guildId, level, roleId) {
+async function createReward(level, roleId) {
 	const res = await pool.query(
-		`INSERT INTO level_rewards (guild_id, level, role_id)
-		 VALUES ($1, $2, $3)
-		 ON CONFLICT (guild_id, level) DO NOTHING
+		`INSERT INTO level_rewards (level, role_id)
+		 VALUES ($1, $2)
+		 ON CONFLICT (level) DO NOTHING
 		 RETURNING *`,
-		[guildId, level, roleId],
+		[level, roleId],
 	);
 	return res.rows[0] || null;
 }
 
-async function findRewardByGuildAndLevel(guildId, level) {
+async function findRewardByLevel(level) {
 	const res = await pool.query(
-		'SELECT * FROM level_rewards WHERE guild_id = $1 AND level = $2',
-		[guildId, level],
+		'SELECT * FROM level_rewards WHERE level = $1',
+		[level],
 	);
 	return res.rows[0] || null;
 }
 
-async function findRewardById(id) {
+async function findAllRewards() {
 	const res = await pool.query(
-		'SELECT * FROM level_rewards WHERE id = $1',
-		[id],
-	);
-	return res.rows[0] || null;
-}
-
-async function findAllRewardsByGuild(guildId) {
-	const res = await pool.query(
-		'SELECT * FROM level_rewards WHERE guild_id = $1 ORDER BY level ASC',
-		[guildId],
+		'SELECT * FROM level_rewards ORDER BY level ASC',
 	);
 	return res.rows;
 }
 
-async function deleteReward(id) {
+async function deleteReward(level) {
 	const res = await pool.query(
-		'DELETE FROM level_rewards WHERE id = $1 RETURNING id',
-		[id],
+		'DELETE FROM level_rewards WHERE level = $1 RETURNING level',
+		[level],
 	);
 	return { rowCount: res.rowCount };
 }
 
-async function verifyRewardOwnership(id, guildId) {
-	const result = await findRewardById(id);
-	return result ? result.guild_id === guildId : false;
-}
-
-async function isDuplicateReward(guildId, level) {
-	const existing = await findRewardByGuildAndLevel(guildId, level);
+async function isDuplicateReward(level) {
+	const existing = await findRewardByLevel(level);
 	return !!existing;
 }
 
@@ -209,7 +170,7 @@ async function assignLevelReward(guild, member, level, logger) {
 	log(`[assignLevelReward] called for ${member.id} guild=${guild.id} level=${level}`);
 
 	try {
-		const reward = await findRewardByGuildAndLevel(guild.id, level);
+		const reward = await findRewardByLevel(level);
 		if (!reward) {
 			log(`[assignLevelReward] FAIL: no reward found for level ${level}`);
 			return null;
@@ -228,7 +189,7 @@ async function assignLevelReward(guild, member, level, logger) {
 			return null;
 		}
 
-		const allRewards = await findAllRewardsByGuild(guild.id);
+		const allRewards = await findAllRewards();
 		const prevRoleIds = allRewards
 			.filter(r => r.role_id !== reward.role_id)
 			.map(r => r.role_id)
@@ -263,7 +224,7 @@ async function notifyLevelUp(guild, member, level, config) {
 
 	try {
 		const interval = config.levelUpNotifyInterval || 5;
-		const levelReward = await findRewardByGuildAndLevel(guild.id, level);
+		const levelReward = await findRewardByLevel(level);
 		if (level % interval !== 0 && !levelReward) {return;}
 
 		const channelId = config.levelUpChannel;
@@ -289,6 +250,12 @@ async function notifyLevelUp(guild, member, level, config) {
 	}
 }
 
+async function onLevelUp(guild, member, result, config, logger) {
+	if (!result || result.level <= result.oldLevel) return;
+	await assignLevelReward(guild, member, result.level, logger);
+	await notifyLevelUp(guild, member, result.level, config);
+}
+
 module.exports = {
 	init,
 	getLevelFromXP,
@@ -301,12 +268,11 @@ module.exports = {
 	setXP,
 	setLevel,
 	createReward,
-	findRewardByGuildAndLevel,
-	findRewardById,
-	findAllRewardsByGuild,
+	findRewardByLevel,
+	findAllRewards,
 	deleteReward,
-	verifyRewardOwnership,
 	isDuplicateReward,
 	assignLevelReward,
 	notifyLevelUp,
+	onLevelUp,
 };
