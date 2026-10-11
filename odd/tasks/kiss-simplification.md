@@ -74,9 +74,9 @@ Out (rejected as over-engineering):
 - T1 done — commit cf6c81f. Dead code deleted; 89 tests green, lint clean.
 - T2a done — commit e460549 (`settings.js` + tests).
 - T2b done — commit 09e8da2 (wired bot.js / Bot.js / ConfigUI / messageCreate / help; deleted `validateSetting`). Single runtime object `client.config` (decision B). 103 tests green, lint clean.
-- T2c (ConfigUI presentation split: cosmetic-only + drop dead `prefix` entry) — optional polish, pending.
+- T2c (ConfigUI presentation split) — SKIPPED under KISS: the functional single-source is already achieved in T2b; only a dead `prefix` entry remains in CATEGORIES (harmless, skipped at runtime).
 - T3 single-guild — DONE (ALTER migrations verified against a real Postgres: old schema + data, run twice, zero data loss).
-- T4 TIMEZONES — pending.
+- T4 TIMEZONES — SKIPPED: `Intl.supportedValuesOf('timeZone')` returns legacy names (`America/Buenos_Aires`, not `America/Argentina/Buenos_Aires`) and omits `UTC`; the 419-line literal is correct and stable.
 
 ## Next Step
 
