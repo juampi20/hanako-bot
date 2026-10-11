@@ -49,12 +49,6 @@ Tres decisiones que vale la pena mirar (documentadas en `docs/adr/`):
 - **Una segunda fuente de verdad siempre diverge.** Teníamos dos tablas de configuración; ya habían discrepado en producción (un default distinto en cada una).
 - **Una migración se valida contra datos reales.** Las `ALTER TABLE` que colapsan `guild_id` se probaron contra un Postgres con datos antes de tocar el servidor.
 
-## Ideas futuras
-
-- [ ] Panel de config: derivar del schema la lista de settings (hoy el layout es manual).
-- [ ] Cubrir con tests el flujo completo de la reacción de subida de nivel.
-- [ ] Desplegar desde un tag en vez del working tree.
-
 ## Licencia
 
-Proyecto personal.
+MIT — ver [`LICENSE`](LICENSE).
