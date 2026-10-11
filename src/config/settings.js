@@ -284,4 +284,22 @@ function keys() {
 	return Object.keys(SETTINGS);
 }
 
-module.exports = { defaults, resolve, validate, keys };
+/**
+ * Public metadata for a schema key.
+ * @param {string} key - schema key
+ * @returns {{ env: string, type: string, default: *, configKey: string, description: string, group: string } | undefined}
+ */
+function get(key) {
+	const entry = SETTINGS[key];
+	if (!entry) return undefined;
+	return {
+		env: entry.env,
+		type: entry.type,
+		default: entry.default,
+		configKey: entry.configKey,
+		description: entry.description,
+		group: entry.group,
+	};
+}
+
+module.exports = { get, defaults, resolve, validate, keys };

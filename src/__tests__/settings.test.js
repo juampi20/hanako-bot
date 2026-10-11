@@ -151,3 +151,20 @@ describe('settings.defaults and keys', () => {
 		expect(settings.keys()).toContain('level-up-channel');
 	});
 });
+
+describe('settings.get', () => {
+	test('returns metadata for a known key', () => {
+		expect(settings.get('chat-xp-min')).toEqual({
+			env: 'CHAT_XP_MIN',
+			type: 'number',
+			default: 15,
+			configKey: 'chatXpMin',
+			description: 'Minimum XP per chat message',
+			group: 'XP',
+		});
+	});
+
+	test('returns undefined for an unknown key', () => {
+		expect(settings.get('nonexistent')).toBeUndefined();
+	});
+});

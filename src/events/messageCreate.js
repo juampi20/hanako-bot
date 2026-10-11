@@ -114,34 +114,4 @@ module.exports = async (client, message) => {
 			client.logger?.debug?.(`AFK: mention auto-reply failed: ${err.message}`);
 		}
 	}
-
-	if (message.content.indexOf(client.config.prefix) !== 0) { return; }
-
-	const args = message.content.slice(client.config.prefix.length).trim().split(/ +/g);
-	const command = args.shift().toLowerCase();
-
-	const cmd = client.commands.get(command);
-	if (!cmd) {
-		client.logger?.debug?.(`MessageCreate: command not found: ${command}`);
-		return;
-	}
-
-	client.logger.debug(`${message.author.username} (${message.author.id}) ejecuto el comando ${cmd.help.name} en ${message.guild?.name || message.guild?.id || 'DM'}`);
-
-	let index = 0;
-	const next = async () => {
-		const middleware = client.middleware[index++];
-		if (!middleware) {
-			return cmd.run(client, message, args);
-		}
-		return middleware(client, message, cmd, next);
-	};
-	next().then(() => {
-		if (cmd.help && cmd.help.hintSlash) {
-			message.channel.send(`💡 Probá también /${cmd.help.hintSlash}`)
-				.catch(() => {
-					/* silently fail */
-				});
-		}
-	}).catch(err => client.logger.log(err, 'error'));
 };
