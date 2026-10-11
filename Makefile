@@ -19,7 +19,7 @@ check:
 	npx jest
 
 backup:
-	node scripts/backup-db.cjs
+	docker run --rm --network infra-red -u "$$(id -u):$$(id -g)" -v "$(CURDIR):/app" -w /app node:22-alpine node scripts/backup-db.cjs
 
 up:
 	docker compose up -d

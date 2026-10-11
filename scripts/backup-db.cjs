@@ -1,6 +1,8 @@
 #!/usr/bin/env node
 'use strict';
 
+require('dotenv').config();
+
 const { Pool } = require('pg');
 const path = require('path');
 const fs = require('fs');
@@ -8,7 +10,7 @@ const fs = require('fs');
 const BACKUP_DIR = path.resolve(__dirname, '..', 'backups');
 
 // Tables to back up (hardcoded — models were removed in the 2-tier restructure)
-const TABLES = ['scores', 'level_rewards', 'afk'];
+const TABLES = ['scores', 'level_rewards', 'afk', 'guild_config', 'birthdays'];
 
 async function main() {
 	const DATABASE_URL = process.env.DATABASE_URL;
