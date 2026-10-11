@@ -1,87 +1,60 @@
 # hanako-bot
 
-Bot de Discord para **un solo servidor**: niveles (XP por chat y por voz), recompensas por rol, detección de AFK, moderación y cumpleaños con timezones. Todo se configura desde Discord con el panel `/config`.
+Bot de Discord para **un solo servidor**: sistema de niveles, recompensas por rol, detección de AFK, moderación y cumpleaños con timezones. Todo se configura desde Discord con el panel `/config`.
 
-**Stack**: Node.js · discord.js v14 · PostgreSQL 16 · Docker.
+## Qué hace
 
-## Features
+Cubre las mecánicas que un servidor chico necesita sin depender de bots de terceros: da XP por mensaje y por minuto en voz, asigna roles al subir de nivel, detecta cuándo alguien se ausenta, anuncia cumpleaños y permite purgar mensajes. Lo armé para mi propio servidor, así que cada decisión prioriza algo **simple de mantener por una sola persona**.
 
-| Módulo | Qué hace |
-|---|---|
-| **Niveles** | XP por mensaje y por minuto en voz; `/rank`, `/top` |
-| **Recompensas** | Rol automático al subir de nivel |
-| **AFK** | Detección en el canal AFK de voz + auto-respuesta al mencionar |
-| **Cumpleaños** | `/birthday` con timezone y anuncio diario |
-| **Moderación** | `/purge` |
-| **Config** | Panel interactivo `/config` (slash-only) |
+## Tech stack
 
-## Quick start
+- **Runtime**: Node.js — un proceso, sin frameworks de más.
+- **Discord**: discord.js v14 — slash commands y componentes interactivos.
+- **Datos**: PostgreSQL 16 con el driver `pg` — SQL a mano, sin ORM.
+- **Deploy**: Docker + docker-compose sobre una infra compartida.
+- **Calidad**: Jest · ESLint · husky (lint + test en cada commit) · GitHub Actions.
 
-1. **Requisitos**: Node.js 22+, PostgreSQL 16 (o Docker).
-2. **Entorno**: `make setup` (crea `.env` desde `.env.example`) y editalo.
-3. **Dependencias**: `npm install`
+## Cómo empezar
+
+1. **Requisitos**: Node.js 22+ y PostgreSQL 16 (o Docker).
+2. **Entorno**: `make setup` crea `.env` desde `.env.example`; completá `CLIENT_TOKEN`, `GUILD_ID`, `DATABASE_URL` y `OWNER_ID`.
+3. **Dependencias**: `npm install`.
 4. **Correr**: `npm run dev` (nodemon) o `make up` (Docker).
 5. Invitá el bot al servidor y configurá todo con `/config`.
 
-### Variables mínimas (`.env`)
+Los comandos son **slash-only**. Cada ajuste (XP, notificaciones, canales, roles…) se edita desde el panel y se persiste en la base; no hace falta tocar `.env` para configurar el servidor.
 
-| Variable | Para qué |
-|---|---|
-| `CLIENT_TOKEN` | Token del bot |
-| `GUILD_ID` | El servidor (único) |
-| `DATABASE_URL` | Conexión a PostgreSQL |
-| `OWNER_ID` | Tu user ID (comandos owner-only) |
-
-El resto de la configuración se maneja desde `/config` y se persiste en la base.
-
-## Configuración
-
-- **Boot / secretos** (env, fuera del panel): `CLIENT_TOKEN`, `GUILD_ID`, `OWNER_ID`, `DATABASE_URL`.
-- **Guild settings** (editables con `/config`): XP, notificaciones, canales, roles, AFK, cumpleaños. Se resuelven con precedencia **DB > env > default**; el schema vive en `src/config/settings.js`.
-
-## Arquitectura
+## Cómo funciona
 
 ```
-main.js → src/models/Bot.js → commands / events → repositories → PostgreSQL
+main.js → Bot.js → commands / events → repositories → PostgreSQL
 ```
 
-- **2-tier (repo → command)**: comandos y eventos usan los repositorios directo. Sin capa de servicios ni DI (`docs/adr/0003`).
-- **Single-guild**: el bot sirve un solo servidor (`docs/adr/0001`).
-- **Slash-only**, y la configuración tiene una única fuente de verdad (`docs/adr/0002`).
+`main.js` arranca `Bot.js`, el orquestador: inicializa la base, corre las migraciones, carga comandos y eventos, y registra los slash commands. Los comandos y los eventos usan los **repositorios** directo contra PostgreSQL.
 
-```mermaid
-flowchart LR
-  M[main.js] --> B[Bot.js]
-  B --> C[commands]
-  B --> E[events]
-  C --> R[repositories]
-  E --> R
-  R --> DB[(PostgreSQL)]
-```
+![Arquitectura de hanako-bot](docs/architecture.svg)
 
-## Comandos (Make)
+_El diagrama también está como HTML autocontenido en `docs/architecture.html`._
 
-| Comando | Hace |
-|---|---|
-| `make help` | Lista los targets |
-| `make setup` | Crea `.env` desde `.env.example` |
-| `make check` | lint + test (lo mismo que el CI) |
-| `make backup` | Backup de PostgreSQL |
-| `make up` / `make down` | Levanta / baja el stack (Docker) |
-| `make logs` | Logs del bot |
+Tres decisiones que vale la pena mirar (documentadas en `docs/adr/`):
 
-Para el día a día, los scripts de `npm`: `npm run dev`, `npm test`, `npm run lint`.
+- **2-tier (repo → command)**: sin capa de servicios ni contenedor de DI. Un intento anterior de CSR (controller–service–repository) se revirtió a propósito.
+- **Single-guild**: el bot sirve un solo servidor, así que la dimensión `guild_id` se eliminó del modelo de datos.
+- **Configuración de fuente única** (`src/config/settings.js`): el runtime y el panel leen la misma tabla, con precedencia `DB > env > default`.
 
-## Desarrollo
+## Aprendizajes
 
-- **Tests**: `npm test` (Jest). El CI corre en cada PR a `master`.
-- **Lint**: `npm run lint` (ESLint, tabs). `make check` corre ambos.
-- **Pre-commit**: husky corre lint + test.
-- **Decisiones**: `docs/adr/`.
-- **Workflow**: trunk-based — ramas cortas desde `master`, PR obligatorio.
+- **Deshacer un refactor enseña más que hacerlo.** Llegar a CSR con DI y después volver a 2-tier me dejó claro cuál es el alcance real de un proyecto chico.
+- **La sobre-ingeniería se paga.** Para un bot de un solo servidor, multi-guild y una capa de servicios eran indirección sin valor.
+- **Una segunda fuente de verdad siempre diverge.** Teníamos dos tablas de configuración; ya habían discrepado en producción (un default distinto en cada una).
+- **Una migración se valida contra datos reales.** Las `ALTER TABLE` que colapsan `guild_id` se probaron contra un Postgres con datos antes de tocar el servidor.
 
-## Deploy
+## Ideas futuras
 
-`docker compose up -d` (se une a la red externa `infra-red`).
+- [ ] Panel de config: derivar del schema la lista de settings (hoy el layout es manual).
+- [ ] Cubrir con tests el flujo completo de la reacción de subida de nivel.
+- [ ] Desplegar desde un tag en vez del working tree.
 
-> ⚠️ **El build sale del working tree, no de un commit.** Taggeá lo que desplegás, o un archivo sin commitear puede terminar en producción.
+## Licencia
+
+Proyecto personal.
