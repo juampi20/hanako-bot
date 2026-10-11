@@ -78,6 +78,12 @@ Out (rejected as over-engineering):
 - T3 single-guild — DONE (ALTER migrations verified against a real Postgres: old schema + data, run twice, zero data loss).
 - T4 TIMEZONES — SKIPPED: `Intl.supportedValuesOf('timeZone')` returns legacy names (`America/Buenos_Aires`, not `America/Argentina/Buenos_Aires`) and omits `UTC`; the 419-line literal is correct and stable.
 
+## Post-review additions
+
+- `chore(config): drop prefix and dead API config residue` — removed the dead `prefix` entry from ConfigUI CATEGORIES, dropped `API_KEY`/`API_PORT` from boot config + `validate()`, updated the `settings.js` comment. (`.env.example` residue left for the owner: remove `PREFIX=`, `API_KEY=`, `API_PORT=`.)
+- `docs: rewrite the README` — accurate stack (no Express), features, config model, architecture diagram, make table.
+- `chore(make): trim to core targets with a plain help`.
+
 ## Next Step
 
-T1 first (lowest risk).
+Merge PR #37 (→ master). Optional: XP→level-up dedup (#1).
