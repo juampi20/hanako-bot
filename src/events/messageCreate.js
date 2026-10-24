@@ -9,7 +9,7 @@ const AfkRepository = require('../database/repositories/AfkRepository');
 module.exports = async (client, message) => {
 	if (message.author.bot) { return; }
 
-	// ── AFK: sender auto-remove ──────────────────────────
+	// AFK: sender auto-remove
 	if (message.guild) {
 		try {
 			const afkRecord = await AfkRepository.isAfk(message.author.id);
@@ -70,7 +70,7 @@ module.exports = async (client, message) => {
 		}
 	}
 
-	// ── AFK: mention auto-reply ──────────────────────────
+	// AFK: mention auto-reply
 	if (message.guild && !message.author.bot && !message.mentions.everyone && client.config.afkAutoReply) {
 		try {
 			const mentionedAfkUsers = new Set();

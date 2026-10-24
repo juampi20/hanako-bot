@@ -5,11 +5,11 @@ A single-guild Discord bot with a REST API: it runs leveling, rewards, AFK and b
 ## Language
 
 **Setting**:
-A guild-scoped configuration value a moderator can change from the config panel — XP rates, notification channels, roles.
+A guild-scoped configuration value a moderator can change from the config panel: XP rates, notification channels, roles.
 _Avoid_: option, preference, config value
 
 **Boot config**:
-Deployment configuration and secrets read from the environment once at startup — bot token, API key, guild ID, port. Not editable at runtime.
+Deployment configuration and secrets read from the environment once at startup: bot token, API key, guild ID, port. Not editable at runtime.
 _Avoid_: env config, secrets, environment
 
 **Settings schema**:

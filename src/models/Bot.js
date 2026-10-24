@@ -17,7 +17,7 @@ const createAfkTable = require('../database/migrations/createAfkTable');
 const createGuildConfigTable = require('../database/migrations/createGuildConfigTable');
 const createBirthdaysTable = require('../database/migrations/createBirthdaysTable');
 
-// ── Inline middleware ────────────────────────────────────────
+// Inline middleware
 
 /** Cooldown: prevent command spam */
 const cooldowns = new Map();
@@ -140,8 +140,6 @@ function denyReply(context, content) {
 	console.error(`[Middleware] ${content}`);
 }
 
-// ── Bot class ────────────────────────────────────────────────
-
 class Bot extends Client {
 	constructor() {
 		super({
@@ -175,11 +173,10 @@ class Bot extends Client {
 		}
 
 		if (!this.config.guildId) {
-			throw new Error('GUILD_ID is required — this bot only works on a single guild.');
+			throw new Error('GUILD_ID is required: this bot only works on a single guild.');
 		}
 
 		try {
-			// 1. Init database + repos
 			this.logger?.debug?.('Bot: initializing database');
 			const pool = await initialize();
 			LevelRepository.init(pool);
@@ -191,27 +188,23 @@ class Bot extends Client {
 			await createBirthdaysTable();
 			this.logger?.debug?.('Bot: database initialization successful');
 
-			// 2. Load guild config table
 			GuildConfigRepository.init(pool);
 			await createGuildConfigTable();
 
-			// 3. Attach helper functions (embed, succNormal, errNormal, templateEmbed)
+			// Attaches embed, succNormal, errNormal, templateEmbed to the client
 			this._attachFunctions();
 
-			// 4. Load events (flat scan of src/events/*.js)
+			// Flat scan of src/events/*.js
 			this._loadEvents();
 
-			// 5. Load commands (recursive from src/commands/*/)
+			// Recursive scan of src/commands/*/
 			this._loadCommands();
 
-			// 6. Load guild config overrides
 			await this._loadGuildConfig();
 
-			// 7. Login to Discord
 			this.logger?.debug?.('Bot: logging into Discord');
 			await this.login(token);
 
-			// 6. Register slash commands
 			await this._registerSlashCommands();
 		}
 		catch (err) {
@@ -219,8 +212,6 @@ class Bot extends Client {
 			process.exit(1);
 		}
 	}
-
-	// ─── Private helpers ──────────────────────────────────────────────
 
 	async _loadGuildConfig() {
 		try {
@@ -230,7 +221,7 @@ class Bot extends Client {
 			this.logger?.debug?.(`GuildConfig: loaded ${rows.length} overrides`);
 		}
 		catch (err) {
-			this.logger?.warn?.(`GuildConfig: DB unreachable, using .env defaults — ${err.message}`);
+			this.logger?.warn?.(`GuildConfig: DB unreachable, using .env defaults (${err.message})`);
 		}
 	}
 
@@ -329,7 +320,7 @@ class Bot extends Client {
 	async _registerSlashCommands() {
 		const guildId = this.config.guildId;
 		if (!guildId) {
-			this.logger.log('GUILD_ID not set — skipping slash command registration', 'warn');
+			this.logger.log('GUILD_ID not set, skipping slash command registration', 'warn');
 			return;
 		}
 

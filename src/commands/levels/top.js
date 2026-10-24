@@ -16,7 +16,7 @@ async function buildLeaderboardPage(client, page) {
 	const descriptionLines = entries.map((data, i) => {
 		const rank = offset + i + 1;
 		const prefix = rank <= 3 ? MEDALS[rank - 1] : `${rank}.`;
-		return `${prefix} <@${data.user}> — ${data.points} pts (nivel ${data.level})`;
+		return `${prefix} <@${data.user}> · ${data.points} pts (nivel ${data.level})`;
 	});
 
 	const embed = baseEmbed(client, { color: COLORS.LEVELING })

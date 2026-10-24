@@ -1,7 +1,7 @@
 'use strict';
 
 /**
- * AfkRepository — Function-style data + business logic for AFK.
+ * AfkRepository: function-style data + business logic for AFK.
  */
 
 let pool = null;

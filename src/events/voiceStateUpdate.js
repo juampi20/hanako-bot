@@ -8,27 +8,27 @@ let timerHandle = null;
 
 function isEligible(client, state) {
 	if (!state.member) {
-		client.logger?.debug?.('Voice XP: session skip — state.member is null');
+		client.logger?.debug?.('Voice XP: session skip: state.member is null');
 		return false;
 	}
 	if (state.member.user?.bot) {
-		client.logger?.debug?.(`Voice XP: session skip — bot: ${state.member.id}`);
+		client.logger?.debug?.(`Voice XP: session skip: bot: ${state.member.id}`);
 		return false;
 	}
 	if (!state.channelId) {
-		client.logger?.debug?.(`Voice XP: session skip — no channel: ${state.member.id}`);
+		client.logger?.debug?.(`Voice XP: session skip: no channel: ${state.member.id}`);
 		return false;
 	}
 	if (state.serverMute || state.serverDeaf) {
-		client.logger?.debug?.(`Voice XP: session skip — server mute/deaf: ${state.member.id}`);
+		client.logger?.debug?.(`Voice XP: session skip: server mute/deaf: ${state.member.id}`);
 		return false;
 	}
 	if (state.member.voice?.selfMute || state.member.voice?.selfDeaf) {
-		client.logger?.debug?.(`Voice XP: session skip — self mute/deaf: ${state.member.id}`);
+		client.logger?.debug?.(`Voice XP: session skip: self mute/deaf: ${state.member.id}`);
 		return false;
 	}
 	if (state.channelId === state.guild?.afkChannelId) {
-		client.logger?.debug?.(`Voice XP: session skip — AFK channel: ${state.member.id} -> ${state.channelId}`);
+		client.logger?.debug?.(`Voice XP: session skip: AFK channel: ${state.member.id} -> ${state.channelId}`);
 		return false;
 	}
 	return true;
@@ -113,7 +113,7 @@ module.exports = async (client, oldState, newState) => {
 		const userId = newState.id || oldState.id;
 		const key = userId;
 
-		// ── AFK: auto-set / auto-remove on voice channel joins/moves ──────────────
+		// AFK: auto-set / auto-remove on voice channel joins/moves
 		const guild = newState.guild || oldState.guild;
 		const targetChannelId = newState.channelId;
 		const oldChannelId = oldState.channelId;

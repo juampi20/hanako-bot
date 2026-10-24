@@ -75,7 +75,7 @@ async function checkBirthdays(client) {
 		return;
 	}
 
-	// Quién cumple hoy (en SU timezone) — map user_id -> record
+	// Quién cumple hoy en su propia timezone: map user_id -> record
 	const celebrating = new Map();
 	for (const record of birthdays) {
 		const timezone = record.timezone || 'UTC';

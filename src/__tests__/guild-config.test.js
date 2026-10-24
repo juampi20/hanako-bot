@@ -1,7 +1,5 @@
 'use strict';
 
-// ── GuildConfigRepository tests ────────────────────────────────
-
 describe('GuildConfigRepository', () => {
 	let mockPool;
 	let repo;

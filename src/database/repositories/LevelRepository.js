@@ -1,7 +1,7 @@
 'use strict';
 
 /**
- * LevelRepository — Function-style data + business logic for levels and rewards.
+ * LevelRepository: function-style data + business logic for levels and rewards.
  *
  * XP formula:  xp = 330(N-1)^2 + 300(N-1)
  * Inverse:     k = floor((-300 + sqrt(90000 + 1320*xp)) / 660), level = max(k + 1, 1)
@@ -15,8 +15,6 @@ function init(p) {
 	pool = p;
 }
 
-// ── Helpers ──────────────────────────────────────────────────
-
 function getLevelFromXP(xp) {
 	if (xp <= 0) {return 1;}
 	const k = Math.floor((-300 + Math.sqrt(90000 + 1320 * xp)) / 660);
@@ -28,7 +26,7 @@ function getXPForLevel(level) {
 	return 330 * n * n + 300 * n;
 }
 
-// ── Level data ───────────────────────────────────────────────
+// Level data
 
 async function findByUser(userId) {
 	const res = await pool.query(
@@ -80,7 +78,7 @@ async function getLeaderboardCount() {
 	return res.rows[0].count;
 }
 
-// ── XP mutations ─────────────────────────────────────────────
+// XP mutations
 
 async function addXP(userId, amount) {
 	if (!amount || amount <= 0) return null;
@@ -122,7 +120,7 @@ async function setLevel(userId, level) {
 	return { points: minXP, level, oldLevel };
 }
 
-// ── Reward data ──────────────────────────────────────────────
+// Reward data
 
 async function createReward(level, roleId) {
 	const res = await pool.query(
@@ -163,7 +161,7 @@ async function isDuplicateReward(level) {
 	return !!existing;
 }
 
-// ── Discord-side logic (needs guild/member objects) ──────────
+// Discord-side logic (needs guild/member objects)
 
 async function assignLevelReward(guild, member, level, logger) {
 	const log = typeof logger?.debug === 'function' ? (...args) => logger.debug(...args) : console.log;
