@@ -1,5 +1,5 @@
 /**
- * Progress bar generator — ascii-progress style.
+ * Progress bar generator, ascii-progress style.
  *
  *   [▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇] 100%
  *   [▇▇▇▇▇▇▇▇▇▇▇▇▇====]  89%

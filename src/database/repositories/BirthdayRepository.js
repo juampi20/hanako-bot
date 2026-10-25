@@ -1,7 +1,7 @@
 'use strict';
 
 /**
- * BirthdayRepository — Function-style data + business logic for birthdays.
+ * BirthdayRepository: function-style data + business logic for birthdays.
  */
 
 let pool = null;

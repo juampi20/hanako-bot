@@ -27,7 +27,6 @@ const LevelRepository = require('../database/repositories/LevelRepository');
 
 jest.useFakeTimers();
 
-// ── Mock helpers ────────────────────────────────────────────
 function makeMockClient(overrides = {}) {
 	return {
 		config: {

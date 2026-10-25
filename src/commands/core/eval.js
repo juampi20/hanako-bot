@@ -5,20 +5,6 @@ const clean = (text) => {
 	else {return text;}
 };
 
-exports.run = (client, message, args) => {
-	try {
-		const code = args.join(' ');
-		let evaled = eval(code);
-
-		if (typeof evaled !== 'string') {evaled = require('util').inspect(evaled);}
-
-		message.channel.send(`\`\`\`xl\n${clean(evaled)}\n\`\`\``);
-	}
-	catch (err) {
-		message.channel.send(`\`ERROR\` \`\`\`xl\n${clean(err)}\n\`\`\``);
-	}
-};
-
 exports.data = new SlashCommandBuilder()
 	.setName('eval')
 	.setDescription('Ejecuta codigo JavaScript (owner only)')
@@ -30,10 +16,10 @@ exports.execute = async (client, interaction) => {
 		const code = interaction.options.getString('code');
 		let evaled = eval(code);
 		if (typeof evaled !== 'string') {evaled = require('util').inspect(evaled);}
-		await interaction.reply(`\`\`\`xl\n${clean(evaled)}\n\`\`\``);
+		await interaction.reply({ content: `\`\`\`xl\n${clean(evaled)}\n\`\`\``, ephemeral: true });
 	}
 	catch (err) {
-		await interaction.reply(`\`ERROR\` \`\`\`xl\n${clean(err)}\n\`\`\``);
+		await interaction.reply({ content: `\`ERROR\` \`\`\`xl\n${clean(err)}\n\`\`\``, ephemeral: true });
 	}
 };
 

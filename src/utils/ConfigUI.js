@@ -87,8 +87,6 @@ class ConfigUI {
 		this.page = 0;
 	}
 
-	// ── Entry point ────────────────────────────────────────────────
-
 	async sendConfigPanel(interaction) {
 		if (!this._isOwner(interaction.user)) {
 			return interaction.reply({ content: 'no tenés permiso para usar este comando.', ephemeral: true });
@@ -131,8 +129,6 @@ class ConfigUI {
 		});
 	}
 
-	// ── Main page ──────────────────────────────────────────────────
-
 	_buildMainPage(pageIndex) {
 		const cat = CATEGORIES[pageIndex];
 		const cfg = this.client.config;
@@ -156,7 +152,7 @@ class ConfigUI {
 
 		const rows = [];
 
-		// ── Row 1: Edit + toggles + extras ──
+		// Row 1: Edit + toggles + extras
 		const actionRow = new ActionRowBuilder();
 
 		actionRow.addComponents(
@@ -191,7 +187,7 @@ class ConfigUI {
 
 		rows.push(actionRow);
 
-		// ── Overflow extras row (max 3 per row) ──
+		// Overflow extras row (max 3 per row)
 		const firstRowUsed = 1 + cat.toggles.length;
 		const maxPerRow = 3;
 		if (cat.extras.length > maxPerRow - firstRowUsed) {
@@ -208,7 +204,7 @@ class ConfigUI {
 			if (overflowRow.components.length > 0) rows.push(overflowRow);
 		}
 
-		// ── Navigation row ──
+		// Navigation row
 		rows.push(this._buildNavRow(pageIndex));
 
 		return { embeds: [embed], components: rows };
@@ -253,8 +249,6 @@ class ConfigUI {
 		);
 	}
 
-	// ── Edit Settings — select menu ────────────────────────────────
-
 	_buildSelectView(pageIndex) {
 		const cat = CATEGORIES[pageIndex];
 		const cfg = this.client.config;
@@ -290,8 +284,6 @@ class ConfigUI {
 		};
 	}
 
-	// ── Rewards sub-page ──────────────────────────────────────────
-
 	async _buildRewardsView() {
 		const embed = baseEmbed(this.client, { color: COLORS.LEVELING })
 			.setTitle('🏆 Rewards Roles');
@@ -322,8 +314,6 @@ class ConfigUI {
 		};
 	}
 
-	// ── AFK Members sub-page ──────────────────────────────────────
-
 	async _buildAfkMembersView() {
 		const embed = baseEmbed(this.client, { color: COLORS.WARNING })
 			.setTitle('💤 AFK Members')
@@ -345,7 +335,7 @@ class ConfigUI {
 						: '?';
 					embed.addFields({
 						name,
-						value: `Razón: ${r.reason || '—'}\nHace \`${ago} min\``,
+						value: `Razón: ${r.reason || '-'}\nHace \`${ago} min\``,
 						inline: true,
 					});
 				}
@@ -373,8 +363,6 @@ class ConfigUI {
 				.setStyle(ButtonStyle.Secondary),
 		);
 	}
-
-	// ── Button routing ────────────────────────────────────────────
 
 	async _handleButton(interaction) {
 		const id = interaction.customId;
@@ -413,8 +401,6 @@ class ConfigUI {
 			}
 		}
 	}
-
-	// ── Select Menu handler ───────────────────────────────────────
 
 	async _handleSelectMenu(interaction) {
 		const key = interaction.values[0];
@@ -471,8 +457,6 @@ class ConfigUI {
 
 		await interaction.editReply(this._buildMainPage(this.page));
 	}
-
-	// ── Modal ────────────────────────────────────────────────────
 
 	async _showModal(interaction, key) {
 		const def = settings.get(key);
@@ -533,8 +517,6 @@ class ConfigUI {
 		await interaction.editReply(this._buildMainPage(this.page));
 	}
 
-	// ── Toggle boolean ───────────────────────────────────────────
-
 	async _toggle(key, interaction) {
 		await interaction.deferUpdate();
 
@@ -555,20 +537,18 @@ class ConfigUI {
 		await interaction.editReply(this._buildMainPage(this.page));
 	}
 
-	// ── Validation ───────────────────────────────────────────────
-
 	_formatDisplay(type, value) {
 		switch (type) {
 		case 'string': return String(value);
 		case 'number': return String(Number(value));
 		case 'boolean': return value ? 'true' : 'false';
 		case 'role':
-		case 'channel': return value ? String(value) : '—';
+		case 'channel': return value ? String(value) : '-';
 		default: return String(value);
 		}
 	}
 
-	// ── Timeout handling ──────────────────────────────────────────
+	// Timeout handling
 
 	async _disableAll(message) {
 		if (!message.editable) return;
@@ -589,8 +569,6 @@ class ConfigUI {
 			// message may have been deleted or become uneditable
 		}
 	}
-
-	// ── Owner check ──────────────────────────────────────────────
 
 	_isOwner(user) {
 		return user.id === this.client.config.ownerID;

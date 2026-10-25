@@ -12,7 +12,7 @@ help:
 	@echo "logs    logs del bot"
 
 setup:
-	@[ -f .env ] || { cp .env.example .env; echo "Creé .env desde .env.example — actualizá los secretos."; }
+	@[ -f .env ] || { cp .env.example .env; echo "Creé .env desde .env.example; actualizá los secretos."; }
 
 check:
 	npx eslint src/

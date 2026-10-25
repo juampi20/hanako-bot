@@ -20,6 +20,16 @@ exports.execute = async (client, interaction) => {
 		return interaction.reply({ content: 'El rol especificado no se encontró en el servidor.', ephemeral: true });
 	}
 
+	if (role.managed || role.id === interaction.guild.id) {
+		return interaction.reply({ content: 'Ese rol no se puede usar como recompensa.', ephemeral: true });
+	}
+
+	// The bot would bypass Discord's hierarchy check, so enforce it for the invoker.
+	const isOwner = interaction.user.id === client.config.ownerID;
+	if (!isOwner && interaction.member.roles.highest.comparePositionTo(role) <= 0) {
+		return interaction.reply({ content: 'No podés asignar un rol igual o superior a tu rol más alto.', ephemeral: true });
+	}
+
 	// Validate bot can manage the role
 	const botMember = interaction.guild.members.me;
 	if (botMember.roles.highest.comparePositionTo(role) < 0) {

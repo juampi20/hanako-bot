@@ -83,7 +83,7 @@ exports.execute = async (client, interaction) => {
 			}
 
 			const lines = users.slice(0, 25).map(r =>
-				`<@${r.user_id}> — ${r.reason} · <t:${r.started_at}:R>`,
+				`<@${r.user_id}> · ${r.reason} · <t:${r.started_at}:R>`,
 			);
 
 			const embed = baseEmbed(client, { color: COLORS.INFO })

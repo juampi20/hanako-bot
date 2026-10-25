@@ -158,7 +158,7 @@ exports.execute = async (client, interaction) => {
 				.sort((a, b) => a.month - b.month || a.day - b.day);
 
 			const lines = sorted.slice(0, 25).map(r =>
-				`<@${r.user_id}> — ${formatBirthday(r.day, r.month)}`,
+				`<@${r.user_id}> · ${formatBirthday(r.day, r.month)}`,
 			);
 
 			const embed = baseEmbed(client, { color: COLORS.INFO })

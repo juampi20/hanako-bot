@@ -12,7 +12,7 @@ async function buildRankEmbed(client, target) {
 			.addFields(
 				{ name: 'Nivel', value: '1', inline: true },
 				{ name: 'XP Total', value: '0', inline: true },
-				{ name: 'Rank', value: '—', inline: true },
+				{ name: 'Rank', value: '-', inline: true },
 			);
 		return embed;
 	}
@@ -39,7 +39,7 @@ async function buildRankEmbed(client, target) {
 		.addFields(
 			{ name: 'Nivel', value: `${currentLevel}`, inline: true },
 			{ name: 'XP Total', value: `${currentXP}`, inline: true },
-			{ name: 'Rank', value: rank > 0 ? `#${rank}` : '—', inline: true },
+			{ name: 'Rank', value: rank > 0 ? `#${rank}` : '-', inline: true },
 		);
 	return embed;
 }

@@ -8,9 +8,9 @@ Cubre las mecánicas que un servidor chico necesita sin depender de bots de terc
 
 ## Tech stack
 
-- **Runtime**: Node.js — un proceso, sin frameworks de más.
-- **Discord**: discord.js v14 — slash commands y componentes interactivos.
-- **Datos**: PostgreSQL 16 con el driver `pg` — SQL a mano, sin ORM.
+- **Runtime**: Node.js en un solo proceso, sin frameworks de más.
+- **Discord**: discord.js v14, con slash commands y componentes interactivos.
+- **Datos**: PostgreSQL 16 con el driver `pg`: SQL a mano, sin ORM.
 - **Deploy**: Docker + docker-compose sobre una infra compartida.
 - **Calidad**: Jest · ESLint · husky (lint + test en cada commit) · GitHub Actions.
 
@@ -51,4 +51,4 @@ Tres decisiones que vale la pena mirar (documentadas en `docs/adr/`):
 
 ## Licencia
 
-MIT — ver [`LICENSE`](LICENSE).
+MIT. Ver [`LICENSE`](LICENSE).
