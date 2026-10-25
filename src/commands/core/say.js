@@ -1,16 +1,3 @@
-exports.run = async (client, message, args) => {
-	const sayMessage = args.join(' ');
-	message.delete().catch(() => {
-		/* silently fail */
-	});
-	message.channel.send(sayMessage).catch(e => {
-		client.logger.log(e, 'error');
-		message.channel.send('Error al ejecutar el comando').then(msg => {
-			setTimeout(() => msg.delete(), 5000);
-		});
-	});
-};
-
 const { SlashCommandBuilder, InteractionContextType } = require('discord.js');
 
 exports.data = new SlashCommandBuilder()
@@ -22,7 +9,7 @@ exports.data = new SlashCommandBuilder()
 exports.execute = async (client, interaction) => {
 	const message = interaction.options.getString('message');
 	try {
-		await interaction.reply(message);
+		await interaction.reply({ content: message, allowedMentions: { parse: [] } });
 	}
 	catch (error) {
 		client.logger.log(error, 'error');

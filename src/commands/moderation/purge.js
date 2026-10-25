@@ -1,41 +1,5 @@
 const { SlashCommandBuilder, PermissionFlagsBits, InteractionContextType, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
 
-exports.run = async (client, message, args) => {
-	// Permission check: require ManageMessages (same as slash version)
-	const isOwner = message.author.id === client.config.ownerID;
-	const hasPerms = message.member?.permissions.has(PermissionFlagsBits.ManageMessages);
-	let isMod = false;
-
-	if (client.config.moderatorRoleId) {
-		// Check if user has the moderator role
-		isMod = message.member?.roles?.cache?.has(client.config.moderatorRoleId);
-	}
-
-	if (!hasPerms && !isMod && !isOwner) {
-		return message.reply('no tenés permiso para usar este comando.');
-	}
-
-	const user = message.mentions.users.first();
-	const amount = parseInt(args[0]) ? parseInt(args[0]) : parseInt(args[1]);
-
-	if (!amount) {return message.reply('especifique una cantidad para eliminar!');}
-	if (!amount && !user) {return message.reply('especifique un usuario y la cantidad, o solamente la cantidad, de mensajes a eliminar!');}
-
-	message.delete().catch(() => {
-		/* silently fail */
-	});
-	const fetched = await message.channel.messages.fetch({ limit: 100 });
-	let toDelete;
-	if (user) {
-		const filterBy = user.id;
-		toDelete = Array.from(fetched.filter(m => m.author.id === filterBy).values()).slice(0, amount);
-	}
-	else {
-		toDelete = amount;
-	}
-	message.channel.bulkDelete(toDelete).catch(err => client.logger.log(err, 'error'));
-};
-
 exports.data = new SlashCommandBuilder()
 	.setName('purge')
 	.setDescription('Elimina mensajes del canal')
