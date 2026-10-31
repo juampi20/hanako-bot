@@ -1,5 +1,7 @@
 # hanako-bot
 
+[![XERJ Corpus Hub contributor](https://hub.xerj.org/contributors/juampi20/badge.svg)](https://hub.xerj.org/contributors/juampi20)
+
 Bot de Discord para **un solo servidor**: sistema de niveles, recompensas por rol, detección de AFK, moderación y cumpleaños con timezones. Todo se configura desde Discord con el panel `/config`.
 
 ## Qué hace
