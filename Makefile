@@ -1,6 +1,9 @@
 # Atajos de desarrollo. Tirá `make` para ver la lista.
 .DEFAULT_GOAL := help
 
+# Git Bash en Windows reescribe rutas tipo /app a C:/...; esto lo desactiva.
+export MSYS_NO_PATHCONV := 1
+
 .PHONY: help setup check backup up down logs
 
 help:
@@ -19,7 +22,8 @@ check:
 	npx jest
 
 backup:
-	docker run --rm --network infra-red -u "$$(id -u):$$(id -g)" -v "$(CURDIR):/app" -w /app node:22-alpine node scripts/backup-db.cjs
+	mkdir -p backups
+	docker compose run --rm --no-deps -u "$$(id -u):$$(id -g)" bot node scripts/backup-db.cjs
 
 up:
 	docker compose up -d

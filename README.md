@@ -13,13 +13,13 @@ Cubre las mecánicas que un servidor chico necesita sin depender de bots de terc
 - **Runtime**: Node.js en un solo proceso, sin frameworks de más.
 - **Discord**: discord.js v14, con slash commands y componentes interactivos.
 - **Datos**: PostgreSQL 16 con el driver `pg`: SQL a mano, sin ORM.
-- **Deploy**: Docker + docker-compose sobre una infra compartida.
+- **Deploy**: Docker + docker-compose, con un Postgres propio en una red interna.
 - **Calidad**: Jest · ESLint · husky (lint + test en cada commit) · GitHub Actions.
 
 ## Cómo empezar
 
 1. **Requisitos**: Node.js 22+ y PostgreSQL 16 (o Docker).
-2. **Entorno**: `make setup` crea `.env` desde `.env.example`; completá `CLIENT_TOKEN`, `GUILD_ID`, `DATABASE_URL` y `OWNER_ID`.
+2. **Entorno**: `make setup` crea `.env` desde `.env.example`; completá `CLIENT_TOKEN`, `GUILD_ID`, `OWNER_ID` y `POSTGRES_PASSWORD`. Con Docker, el compose arma `DATABASE_URL` desde las `POSTGRES_*`; sin Docker, definí `DATABASE_URL` en `.env`.
 3. **Dependencias**: `npm install`.
 4. **Correr**: `npm run dev` (nodemon) o `make up` (Docker).
 5. Invitá el bot al servidor y configurá todo con `/config`.

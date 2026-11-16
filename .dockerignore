@@ -5,3 +5,15 @@ node_modules
 src/__tests__
 .eslint*
 .env*
+backups
+data
+docs
+odd
+.atl
+.codegraph
+.github
+.husky
+coverage
+Dockerfile
+docker-compose*.yml
+jest.config.js
